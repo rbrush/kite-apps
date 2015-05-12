@@ -69,7 +69,7 @@ tar xzf kite-apps-tools-cdh5-0.1.0-SNAPSHOT.tar.gz
 cd kite-apps-tools-cdh5-0.1.0-SNAPSHOT
 ```
 
-## Running the Examples
+## Running the examples
 The kite-apps-examples sub-project offers several examples of using kite-apps. These include data generation and triggering Crunch jobs based on the presence of input data. To install an application that generates test data every minute, run the following:
 
 ```bash
@@ -86,7 +86,25 @@ org.kitesdk.apps.examples.triggered.TriggeredApp \
 /path/to/install/dir/on/hdfs
 ```
 
+## Kite Apps layout
+Kite Applications are installed to a target directory, which contains the following structure:
+
+```
+<app-root>/lib -- The set of JARs 
+<app-root>/oozie -- All Oozie artifacts for the application are in here.
+<app-root>/oozie/bundle.xml -- the Oozie bundle for the entire application
+<app-root>/oozie/workflows -- Each ScheduledJob has a workflow directory that is 
+                              the fully-qualified class name of the job.
+<app-root>/oozie/coordinators -- Each ScheduledJob has a coordinator directory that is 
+                                 the fully-qualified class name of the job.
+```
+
+This will be expanded in the future, with separate directories to contain user-editable configuration or other content.
+
 ## Outstanding items
 * Unit tests and documentation are very lacking
 * Use a Dataset URI Handler for Oozie integration rather than the current (fragile) shim.
+* Add a way for job configuration to be externally defined, possibly providing a job-settings.xml for each Kite job.
 * Add support for a StreamingJob, based on Spark Streaming and Kafka, to complement the existing ScheduledJob.
+* Move Kite Apps and underlying libraries to a shared library to avoid duplicating them in every application
+
