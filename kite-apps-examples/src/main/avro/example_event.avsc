@@ -1,0 +1,23 @@
+{
+  "name": "ExampleEvent",
+  "namespace": "org.kitesdk.apps.example.event",
+  "type": "record",
+  "doc": "A small event record used for examples.",
+  "fields": [
+    {
+      "name": "user_id",
+      "type": "long",
+      "doc": "A unique identifier for the user. Required."
+    },
+    {
+      "name": "session_id",
+      "type": "string",
+      "doc": "A unique identifier for the session. Required."
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "doc": "The timestamp at which the event occurred. Required."
+    }
+  ]
+}

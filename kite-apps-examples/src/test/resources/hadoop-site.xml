@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Support the use of Hive in local tests. -->
+<configuration>
+  <property>
+    <name>kite.hive.allow-local-metastore</name>
+    <value>true</value>
+  </property>
+</configuration>

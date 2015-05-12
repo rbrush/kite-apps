@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kitesdk</groupId>
+  <artifactId>kite-apps</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>kite-apps-core</module>
+    <module>kite-apps-crunch</module>
+    <module>kite-apps-cli</module>
+    <module>kite-apps-tools-cdh5</module>
+    <module>kite-apps-examples</module>
+  </modules>
+
+  <parent>
+    <groupId>org.kitesdk</groupId>
+    <artifactId>kite-app-parent-cdh5</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
+  </parent>
+
+  <name>Kite Apps Module</name>
+  <description>
+    The Kite Apps module provides a simple packaging mechanism
+    for deploying and managing Kite-based apps over Hadoop.
+  </description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Java versions -->
+    <javaVersion>1.7</javaVersion>
+    <targetJavaVersion>1.6</targetJavaVersion>
+    <Xdoclint /> <!-- set by the java8 profile to turn off doclint -->
+
+    <kite.version>1.0.1-SNAPSHOT</kite.version>
+
+    <!-- used by jdiff, semver rule -->
+    <previous.project.version>0.1.0-SNAPSHOT</previous.project.version>
+
+    <cdh4.version>4.4.0</cdh4.version>
+    <cdh5.version>5.0.0</cdh5.version>
+    <cdh.version>${cdh5.version}</cdh.version>
+
+    <!-- artifacts that depend on profiles -->
+    <artifact.hadoop-deps>kite-hadoop-dependencies</artifact.hadoop-deps>
+    <artifact.hadoop-test-deps>kite-hadoop-test-dependencies</artifact.hadoop-test-deps>
+    <artifact.hbase-deps>kite-hbase-dependencies</artifact.hbase-deps>
+    <artifact.hbase-test-deps>kite-hbase-test-dependencies</artifact.hbase-test-deps>
+    <vers.junit>4.10</vers.junit>
+    <vers.maven-surefire-plugin>2.14.1</vers.maven-surefire-plugin>
+    <vers.jodatime>2.3</vers.jodatime>
+    <vers.plexus-utils>3.0</vers.plexus-utils>
+    <vers.jcommander>1.35</vers.jcommander>
+    <vers.oozie>4.0.0-cdh${cdh5.version}</vers.oozie>
+  </properties>
+
+  <dependencyManagement>
+     <dependencies>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-apps-core</artifactId>
+         <version>${project.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-apps-crunch</artifactId>
+         <version>${project.version}</version>
+       </dependency>
+
+       <!-- Comand-line utilities -->
+       <dependency>
+         <groupId>com.beust</groupId>
+         <artifactId>jcommander</artifactId>
+         <version>${vers.jcommander}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-tools</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-core</artifactId>
+         <version>${kite.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+       </dependency>
+
+       <!-- Hadoop dependencies -->
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>${artifact.hadoop-deps}</artifactId>
+         <version>${kite.version}</version>
+         <type>pom</type>
+       </dependency>
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>${artifact.hadoop-test-deps}</artifactId>
+         <version>${kite.version}</version>
+         <type>pom</type>
+         <scope>test</scope>
+       </dependency>
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-hadoop-compatibility</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <!-- Oozie -->
+       <dependency>
+         <groupId>org.apache.oozie</groupId>
+         <artifactId>oozie-client</artifactId>
+         <version>${vers.oozie}</version>
+         <exclusions>
+
+           <!-- Oozie brings in an slf4j implementation that conflicts with others,
+                so exclude it.-->
+           <exclusion>
+             <groupId>org.slf4j</groupId>
+             <artifactId>slf4j-simple</artifactId>
+           </exclusion>
+         </exclusions>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.oozie</groupId>
+         <artifactId>oozie-core</artifactId>
+         <version>${vers.oozie}</version>
+         <classifier>tests</classifier>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.oozie</groupId>
+         <artifactId>oozie-core</artifactId>
+         <version>${vers.oozie}</version>
+       </dependency>
+
+       <!-- Misc -->
+       <dependency>
+         <groupId>com.google.guava</groupId>
+         <artifactId>guava</artifactId>
+         <version>${hadoop.guava.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>joda-time</groupId>
+         <artifactId>joda-time</artifactId>
+         <version>${vers.jodatime}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.codehaus.plexus</groupId>
+         <artifactId>plexus-utils</artifactId>
+         <version>${vers.plexus-utils}</version>
+       </dependency>
+
+       <!-- Logging -->
+       <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-api</artifactId>
+         <version>${hadoop.slf4j.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>org.slf4j</groupId>
+         <artifactId>slf4j-log4j12</artifactId>
+         <version>${hadoop.slf4j.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>${hadoop.log4j.version}</version>
+       </dependency>
+
+       <!-- Testing -->
+       <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>${vers.junit}</version>
+         <scope>test</scope>
+       </dependency>
+       <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-all</artifactId>
+         <version>${vers.mockito}</version>
+         <scope>test</scope>
+       </dependency>
+     </dependencies>
+   </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+      </plugin>
+    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgs>
+              <arg>-Werror</arg> <!-- fail on warnings -->
+              <arg>-Xlint:-options</arg> <!-- ignore cross-compilation warning -->
+              <arg>-Xlint:unchecked</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${vers.maven-surefire-plugin}</version>
+          <configuration>
+            <redirectTestOutputToFile>true</redirectTestOutputToFile>
+            <argLine>-Xmx512m -XX:MaxPermSize=128m</argLine>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <inherited>false</inherited>
+            <reports>
+              <report>index</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </reporting>
+
+</project>

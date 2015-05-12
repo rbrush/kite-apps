@@ -1,0 +1,29 @@
+#!/bin/bash
+
+
+function debug() {
+  [ -n "$debug" ] && echo "$0 debug: $@"
+}
+
+bin=`dirname $0`
+bin=`cd ${bin} && pwd`
+lib="`dirname ${bin}`/lib/*"
+
+KITE_CLASSPATH=${KITE_CLASSPATH:-$lib}
+
+if [ ! -z "$KITE_USER_CLASSPATH" ]; then
+  KITE_CLASSPATH="$KITE_USER_CLASSPATH:$KITE_CLASSPATH"
+fi
+
+if [ -d "$HIVE_CONF_DIR" ]; then
+  debug "Adding HIVE_CONF_DIR=$HIVE_CONF_DIR"
+  KITE_CLASSPATH="$HIVE_CONF_DIR:$KITE_CLASSPATH"
+fi
+
+if [ -d "$HADOOP_CONF_DIR" ]; then
+  debug "Adding HADOOP_CONF_DIR=$HADOOP_CONF_DIR"
+  KITE_CLASSPATH="$HADOOP_CONF_DIR:$KITE_CLASSPATH"
+fi
+
+debug "Using KITE_CLASSPATH=$KITE_CLASSPATH"
+exec java $flags -cp "$KITE_CLASSPATH" org.kitesdk.apps.cli.Main --dollar-zero "$0" "$@"
