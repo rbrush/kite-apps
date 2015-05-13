@@ -23,23 +23,18 @@ public class ScheduledReportAppTest extends MiniAppTest {
   @Test
   public void testGenerateAndRunReport() {
 
-    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
-
-    TestScheduler reportRunner = TestScheduler.load(ScheduledReportApp.class, getConfiguration());
-
-    Dataset<ExampleEvent> eventDataset = Datasets.load(DataGeneratorApp.EVENT_DS_URI, ExampleEvent.class);
-
     DateTime firstNominalTime = new DateTime(2015, 5, 7, 12, 0, 0);
 
     // Run the generator job at each minute.
+    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
+
     for (int i = 0; i < 5; ++i) {
-      generatorRunner.runScheduledJobs(firstNominalTime.plusMinutes(i).toInstant(),
-          Collections.<String,View>singletonMap("example.events", eventDataset));
+      generatorRunner.runScheduledJobs(firstNominalTime.plusMinutes(i).toInstant());
     }
 
     // Now run the report job to aggregate over the schedule.
+    TestScheduler reportRunner = TestScheduler.load(ScheduledReportApp.class, getConfiguration());
     reportRunner.runScheduledJobs(firstNominalTime.plusMinutes(5).toInstant());
-
 
     // Verify the expected data was written.
     Dataset<GenericData.Record> ds = Datasets.load(ScheduledReportApp.REPORT_DS_URI, GenericData.Record.class);
@@ -51,8 +46,6 @@ public class ScheduledReportAppTest extends MiniAppTest {
       int count = 0;
 
       for (GenericData.Record event: reader) {
-
-        System.out.println(event.get("user_id"));
 
         // Each had an event created in each generated data run,
         // totalling 5

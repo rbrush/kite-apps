@@ -1,6 +1,7 @@
 package org.kitesdk.apps.spi;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
@@ -9,42 +10,43 @@ import org.kitesdk.apps.scheduled.ScheduledJob;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Helper class for working with scheduled jobs.
  */
 public class ScheduledJobUtil {
 
-  public static List<DataIn> getInputs(Class<? extends ScheduledJob> jobClass) {
+  public static Map<String, DataIn> getInputs(Class<? extends ScheduledJob> jobClass) {
 
     Method runMethod = resolveRunMethod(jobClass);
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
 
-    List<DataIn> inputs = Lists.newArrayList();
+    Map<String,DataIn> inputs = Maps.newHashMap();
 
     for (Annotation[] annotations: paramAnnotations) {
       for (Annotation annotation: annotations) {
         if (DataIn.class.equals(annotation.annotationType()))
-          inputs.add((DataIn) annotation);
+          inputs.put(((DataIn) annotation).name(), (DataIn) annotation);
       }
     }
 
     return inputs;
   }
 
-  public static List<DataOut> getOutputs(Class<? extends ScheduledJob> jobClass) {
+  public static Map<String,DataOut> getOutputs(Class<? extends ScheduledJob> jobClass) {
 
     Method runMethod = resolveRunMethod(jobClass);
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
 
-    List<DataOut> outputs = Lists.newArrayList();
+    Map<String,DataOut> outputs = Maps.newHashMap();
 
     for (Annotation[] annotations: paramAnnotations) {
       for (Annotation annotation: annotations) {
         if (DataOut.class.equals(annotation.annotationType()))
-          outputs.add((DataOut) annotation);
+          outputs.put(((DataOut) annotation).name(), (DataOut) annotation);
       }
     }
 

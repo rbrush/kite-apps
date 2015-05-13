@@ -23,12 +23,10 @@ public class DataGeneratorAppTest extends MiniAppTest {
 
     TestScheduler container = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
 
-    Dataset<ExampleEvent> ds = Datasets.load(DataGeneratorApp.EVENT_DS_URI, ExampleEvent.class);
-
-    container.runScheduledJobs(new Instant(),
-        Collections.<String,View>singletonMap("example.events", ds));
+    container.runScheduledJobs(new Instant());
 
     // Verify the expected data was written.
+    Dataset<ExampleEvent> ds = Datasets.load(DataGeneratorApp.EVENT_DS_URI, ExampleEvent.class);
 
     DatasetReader<ExampleEvent> reader = ds.newReader();
 

@@ -51,7 +51,7 @@ public class TriggeredApp extends AbstractApplication {
     Schedule schedule = new Schedule.Builder()
         .jobClass(TriggeredJob.class)
         .frequency("* * * * *")
-        .onReady("example.events", EVENT_URI_PATTERN, 1)
+        .withView("example.events", EVENT_URI_PATTERN, 1)
         .withView("odd.users", ODD_USER_URI_PATTERN, 1)
         .build();
 

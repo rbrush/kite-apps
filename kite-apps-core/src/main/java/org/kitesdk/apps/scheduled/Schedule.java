@@ -2,12 +2,13 @@ package org.kitesdk.apps.scheduled;
 
 import com.google.common.collect.Maps;
 import org.joda.time.Instant;
+import org.kitesdk.apps.spi.ScheduledJobUtil;
 
 import java.util.Collections;
 import java.util.Map;
 
 /**
- * A schedule for a KiteJob.
+ * A schedule for a job.
  */
 public class Schedule {
 
@@ -19,10 +20,10 @@ public class Schedule {
 
   private final Instant startTime;
 
-  private final Map<String,Input> views;
+  private final Map<String,ViewTemplate> views;
 
   Schedule(Class<? extends ScheduledJob> jobClass, String name, String frequency,
-           Instant startTime, Map<String,Input> views) {
+           Instant startTime, Map<String,ViewTemplate> views) {
     this.jobClass = jobClass;
     this.name = name;
     this.frequency = frequency;
@@ -42,17 +43,22 @@ public class Schedule {
 
   public Instant getStartTime() { return startTime; }
 
-  public Map<String,Input> getInputs() { return views; }
+  public Map<String,ViewTemplate> getViewTemplates() { return views; }
 
-  public static class Input {
+  /**
+   * A template for views used by the scheduled job.
+   */
+  public static class ViewTemplate {
 
     private final String name;
     private final String uriTemplate;
     private final int frequency;
+    private final Class inputType;
 
-    Input (String name, String uriTemplate, int frequency) {
+    ViewTemplate(String name, String uriTemplate, Class inputType, int frequency) {
       this.name = name;
       this.uriTemplate = uriTemplate;
+      this.inputType = inputType;
       this.frequency = frequency;
     }
 
@@ -64,10 +70,12 @@ public class Schedule {
       return uriTemplate;
     }
 
-    // TODO: Frequence for Oozie datasets is a time interval, not a cron schedule.
-    // This inconsistency is confusing.
     public int getFrequency() {
       return frequency;
+    }
+
+    public Class getInputType() {
+      return inputType;
     }
   }
 
@@ -81,7 +89,7 @@ public class Schedule {
 
     private Instant startTime = new Instant();
 
-    private Map<String,Input> views = Maps.newHashMap();
+    private Map<String,ViewTemplate> views = Maps.newHashMap();
 
     public Builder jobClass(Class jobClass) {
 
@@ -114,17 +122,20 @@ public class Schedule {
       return this;
     }
 
-    // TODO: remove this? don't think we need it in addition to withView.
-    public Builder onReady(String name, String uriPattern, int frequencyMinutes) {
+    public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
-      views.put(name, new Input(name, uriPattern, frequencyMinutes));
+      Map<String,DataIn> inputs = ScheduledJobUtil.getInputs(jobClass);
 
-      return this;
-    }
+      Map<String,DataOut> outputs = ScheduledJobUtil.getOutputs(jobClass);
 
-    public Builder withView(String name, String uriPattern, int frequencyMinutes) {
+      Class type = inputs.containsKey(name) ? inputs.get(name).type() :
+          outputs.containsKey(name) ? outputs.get(name).type() : null;
 
-      views.put(name, new Input(name, uriPattern, frequencyMinutes));
+      if (type == null)
+        throw new IllegalArgumentException("Named parameters " + name +
+            " not used in job " + jobClass.getName());
+
+      views.put(name, new ViewTemplate(name, uriTemplate, type, frequencyMinutes));
 
       return this;
     }

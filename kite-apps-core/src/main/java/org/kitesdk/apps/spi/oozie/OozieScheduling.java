@@ -22,6 +22,7 @@ import org.kitesdk.data.View;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -123,7 +124,7 @@ public class OozieScheduling {
     }
 
     // Include the dataset inputs to make them visible to the workflow.
-    for (String name: schedule.getInputs().keySet()) {
+    for (String name: schedule.getViewTemplates().keySet()) {
 
       property(writer, "wf_" + toIdentifier(name), "${coord_" + toIdentifier(name) + "}");
     }
@@ -160,7 +161,7 @@ public class OozieScheduling {
 
     writer.startElement("datasets");
 
-    for (Map.Entry<String,Schedule.Input> entry: schedule.getInputs().entrySet()) {
+    for (Map.Entry<String,Schedule.ViewTemplate> entry: schedule.getViewTemplates().entrySet()) {
 
       writer.startElement("dataset");
       writer.addAttribute("name", "ds_" + toIdentifier(entry.getKey()));
@@ -178,7 +179,7 @@ public class OozieScheduling {
 
     writer.endElement(); // datasets
 
-    List<DataIn> inputs = ScheduledJobUtil.getInputs(schedule.getJobClass());
+    Collection<DataIn> inputs = ScheduledJobUtil.getInputs(schedule.getJobClass()).values();
 
     if (!inputs.isEmpty()) {
       writer.startElement("input-events");
@@ -194,7 +195,7 @@ public class OozieScheduling {
       writer.endElement(); // input-events
     }
 
-    List<DataOut> outputs = ScheduledJobUtil.getOutputs(schedule.getJobClass());
+    Collection<DataOut> outputs = ScheduledJobUtil.getOutputs(schedule.getJobClass()).values();
 
     if (!outputs.isEmpty()) {
       writer.startElement("output-events");
@@ -242,13 +243,13 @@ public class OozieScheduling {
     property(writer, COORD_NOMINAL_TIME, "${coord:nominalTime()}");
 
     // Include the dataset inputs to make them visible to the workflow.
-    for (DataIn dataIn: ScheduledJobUtil.getInputs(schedule.getJobClass())) {
+    for (DataIn dataIn: ScheduledJobUtil.getInputs(schedule.getJobClass()).values()) {
 
       property(writer, "coord_" + toIdentifier(dataIn.name()),
           "${coord:dataIn('datain_" + toIdentifier(dataIn.name()) + "')}");
     }
 
-    for (DataOut dataOut: ScheduledJobUtil.getOutputs(schedule.getJobClass())) {
+    for (DataOut dataOut: ScheduledJobUtil.getOutputs(schedule.getJobClass()).values()) {
 
       property(writer, "coord_" + toIdentifier(dataOut.name()),
           "${coord:dataOut('dataout_" + toIdentifier(dataOut.name()) + "')}");
@@ -334,7 +335,7 @@ public class OozieScheduling {
 
     Map<String,View> views = Maps.newHashMap();
 
-    List<DataIn> inputs = ScheduledJobUtil.getInputs(jobClass);
+    Collection<DataIn> inputs = ScheduledJobUtil.getInputs(jobClass).values();
 
     for (DataIn input: inputs) {
 
@@ -346,7 +347,7 @@ public class OozieScheduling {
           Datasets.load(kiteURI, input.type()));
     }
 
-    List<DataOut> outputs = ScheduledJobUtil.getOutputs(jobClass);
+    Collection<DataOut> outputs = ScheduledJobUtil.getOutputs(jobClass).values();
 
     for (DataOut output: outputs) {
 
