@@ -1,8 +1,9 @@
 package org.kitesdk.apps.scheduled;
 
 import com.google.common.collect.Maps;
+import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
-import org.kitesdk.apps.spi.ScheduledJobUtil;
+import org.kitesdk.apps.spi.SchedulableJobManager;
 
 import java.util.Collections;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
  */
 public class Schedule {
 
-  private final Class<? extends ScheduledJob> jobClass;
+  private final Class<? extends SchedulableJob> jobClass;
 
   private final String frequency;
 
@@ -22,7 +23,7 @@ public class Schedule {
 
   private final Map<String,ViewTemplate> views;
 
-  Schedule(Class<? extends ScheduledJob> jobClass, String name, String frequency,
+  Schedule(Class<? extends SchedulableJob> jobClass, String name, String frequency,
            Instant startTime, Map<String,ViewTemplate> views) {
     this.jobClass = jobClass;
     this.name = name;
@@ -31,7 +32,7 @@ public class Schedule {
     this.views = Collections.unmodifiableMap(views);
   }
 
-  public Class<? extends ScheduledJob> getJobClass() {
+  public Class<? extends SchedulableJob> getJobClass() {
     return jobClass;
   }
 
@@ -83,6 +84,8 @@ public class Schedule {
 
     private Class jobClass = null;
 
+    private SchedulableJobManager manager;
+
     private String frequency = null;
 
     private String name;
@@ -95,11 +98,9 @@ public class Schedule {
 
       this.jobClass = jobClass;
 
-      // Use the job class for the schedule name unless otherwise
-      // specified.
-      if (name == null) {
-        name = jobClass.getName();
-      }
+      manager = SchedulableJobManager.create(jobClass, new Configuration());
+
+      name = manager.getName();
 
       return this;
     }
@@ -124,9 +125,9 @@ public class Schedule {
 
     public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
-      Map<String,DataIn> inputs = ScheduledJobUtil.getInputs(jobClass);
+      Map<String,DataIn> inputs = manager.getInputs();
 
-      Map<String,DataOut> outputs = ScheduledJobUtil.getOutputs(jobClass);
+      Map<String,DataOut> outputs = manager.getOutputs();
 
       Class type = inputs.containsKey(name) ? inputs.get(name).type() :
           outputs.containsKey(name) ? outputs.get(name).type() : null;

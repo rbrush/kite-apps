@@ -186,6 +186,8 @@ public class AppDeployer {
 
   private Path installCoordinator(Path appPath, Path workflowPath, Schedule schedule) {
 
+    SchedulableJobManager manager = SchedulableJobManager.create(schedule.getJobClass(), conf);
+
     Path coordDirectory = new Path (appPath, COORD_DIR + "/" + schedule.getName());
 
     Path coordPath = new Path(coordDirectory, "coordinator.xml");
@@ -198,7 +200,7 @@ public class AppDeployer {
 
       outputStream = fs.create(coordPath);
 
-      OozieScheduling.writeCoordinator(schedule, workflowPath, outputStream);
+      OozieScheduling.writeCoordinator(schedule, manager, workflowPath, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);

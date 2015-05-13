@@ -15,7 +15,7 @@ import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlStreamWriter;
-import org.kitesdk.apps.spi.ScheduledJobUtil;
+import org.kitesdk.apps.spi.SchedulableJobManager;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 
@@ -131,7 +131,7 @@ public class OozieScheduling {
 
     writer.endElement(); // configuration
 
-    element(writer, "main-class", ScheduledJobMain.class.getCanonicalName());
+    element(writer, "main-class", OozieScheduledJobMain.class.getCanonicalName());
     element(writer, "arg", jobClassName);
 
     writer.endElement(); // java
@@ -157,7 +157,9 @@ public class OozieScheduling {
     return name.replace(".", "_");
   }
 
-  private static final void writeDatasets(XMLWriter writer, Schedule schedule) {
+  private static final void writeCoordinatorDatasets(XMLWriter writer,
+                                                     Schedule schedule,
+                                                     SchedulableJobManager manager) {
 
     writer.startElement("datasets");
 
@@ -179,7 +181,7 @@ public class OozieScheduling {
 
     writer.endElement(); // datasets
 
-    Collection<DataIn> inputs = ScheduledJobUtil.getInputs(schedule.getJobClass()).values();
+    Collection<DataIn> inputs = manager.getInputs().values();
 
     if (!inputs.isEmpty()) {
       writer.startElement("input-events");
@@ -195,7 +197,7 @@ public class OozieScheduling {
       writer.endElement(); // input-events
     }
 
-    Collection<DataOut> outputs = ScheduledJobUtil.getOutputs(schedule.getJobClass()).values();
+    Collection<DataOut> outputs = manager.getOutputs().values();
 
     if (!outputs.isEmpty()) {
       writer.startElement("output-events");
@@ -213,6 +215,7 @@ public class OozieScheduling {
   }
 
   public static void writeCoordinator(Schedule schedule,
+                                      SchedulableJobManager manager,
                                       Path workflowPath,
                                       OutputStream output) throws IOException {
 
@@ -232,7 +235,7 @@ public class OozieScheduling {
 
     writer.addAttribute("timezone", "UTC");
 
-    writeDatasets(writer, schedule);
+    writeCoordinatorDatasets(writer, schedule, manager);
 
     writer.startElement("action");
 
@@ -243,13 +246,13 @@ public class OozieScheduling {
     property(writer, COORD_NOMINAL_TIME, "${coord:nominalTime()}");
 
     // Include the dataset inputs to make them visible to the workflow.
-    for (DataIn dataIn: ScheduledJobUtil.getInputs(schedule.getJobClass()).values()) {
+    for (DataIn dataIn: manager.getInputs().values()) {
 
       property(writer, "coord_" + toIdentifier(dataIn.name()),
           "${coord:dataIn('datain_" + toIdentifier(dataIn.name()) + "')}");
     }
 
-    for (DataOut dataOut: ScheduledJobUtil.getOutputs(schedule.getJobClass()).values()) {
+    for (DataOut dataOut: manager.getOutputs().values()) {
 
       property(writer, "coord_" + toIdentifier(dataOut.name()),
           "${coord:dataOut('dataout_" + toIdentifier(dataOut.name()) + "')}");
@@ -331,11 +334,11 @@ public class OozieScheduling {
     streamWriter.flush();
   }
 
-  public static Map<String,View> getViews(Class jobClass, Configuration conf) {
+  public static Map<String,View> getViews(SchedulableJobManager manager, Configuration conf) {
 
     Map<String,View> views = Maps.newHashMap();
 
-    Collection<DataIn> inputs = ScheduledJobUtil.getInputs(jobClass).values();
+    Collection<DataIn> inputs = manager.getInputs().values();
 
     for (DataIn input: inputs) {
 
@@ -347,7 +350,7 @@ public class OozieScheduling {
           Datasets.load(kiteURI, input.type()));
     }
 
-    Collection<DataOut> outputs = ScheduledJobUtil.getOutputs(jobClass).values();
+    Collection<DataOut> outputs = manager.getOutputs().values();
 
     for (DataOut output: outputs) {
 

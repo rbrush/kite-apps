@@ -1,11 +1,12 @@
 package org.kitesdk.apps.spi;
 
+import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
-import org.kitesdk.apps.scheduled.ScheduledJob;
+import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.data.View;
 
 import java.lang.annotation.Annotation;
@@ -15,27 +16,27 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Runs a scheduled job with the given nominal time.
+ * Manager class for working with schedulable jobs.
  */
-public class ScheduledJobRunner {
+public class SchedulableJobManager {
 
-  private final ScheduledJob job;
+  private final SchedulableJob job;
 
   private final Configuration conf;
 
   private final Method runMethod;
 
-  private ScheduledJobRunner(ScheduledJob job,
-                             Method runMethod, Configuration conf) {
+  private SchedulableJobManager(SchedulableJob job,
+                                Method runMethod, Configuration conf) {
     this.job = job;
     this.runMethod = runMethod;
     this.conf = conf;
   }
 
-  public static ScheduledJobRunner create(Class<? extends ScheduledJob> jobClass,
+  public static SchedulableJobManager create(Class<? extends SchedulableJob> jobClass,
                                           Configuration conf) {
 
-    ScheduledJob job;
+    SchedulableJob job;
 
     try {
       job = jobClass.newInstance();
@@ -47,12 +48,73 @@ public class ScheduledJobRunner {
 
     job.setConf(conf);
 
-    Method runMethod = ScheduledJobUtil.resolveRunMethod(jobClass);
+    Method runMethod = resolveRunMethod(job);
 
-
-    return new ScheduledJobRunner(job, runMethod, conf);
-
+    return new SchedulableJobManager(job, runMethod, conf);
   }
+
+  /**
+   * Returns the name of the scheduled job.
+   */
+  public String getName() {
+    return job.getName();
+  }
+
+  public Map<String, DataIn> getInputs() {
+
+    Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
+
+    Map<String,DataIn> inputs = Maps.newHashMap();
+
+    for (Annotation[] annotations: paramAnnotations) {
+      for (Annotation annotation: annotations) {
+        if (DataIn.class.equals(annotation.annotationType()))
+          inputs.put(((DataIn) annotation).name(), (DataIn) annotation);
+      }
+    }
+
+    return inputs;
+  }
+
+  public Map<String,DataOut> getOutputs() {
+
+    Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
+
+    Map<String,DataOut> outputs = Maps.newHashMap();
+
+    for (Annotation[] annotations: paramAnnotations) {
+      for (Annotation annotation: annotations) {
+        if (DataOut.class.equals(annotation.annotationType()))
+          outputs.put(((DataOut) annotation).name(), (DataOut) annotation);
+      }
+    }
+
+    return outputs;
+  }
+
+  private static Method resolveRunMethod(SchedulableJob job) {
+
+    Method runMethod = null;
+
+    for (Method method: job.getClass().getMethods()) {
+
+      if ("run".equals(method.getName())) {
+
+        if (runMethod != null)
+          throw new AppException("Multiple run methods found on scheduled job "
+              + job.getName());
+
+        runMethod = method;
+      }
+    }
+
+    if (runMethod == null)
+      throw new AppException("Could not find run method on job "  +
+          job.getName());
+
+    return runMethod;
+  }
+
 
   private Object[] getArgs(Map<String,View> views) {
 
@@ -89,11 +151,6 @@ public class ScheduledJobRunner {
     }
 
     return args;
-  }
-
-
-  public void run(Instant nominalTime) {
-    run(nominalTime, Collections.<String,View>emptyMap());
   }
 
   public void run(Instant nominalTime, Map<String,View> views) {

@@ -8,7 +8,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.spi.ScheduledJobRunner;
+import org.kitesdk.apps.spi.SchedulableJobManager;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
 
@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * Invoked by Oozie to run scheduled jobs.
  */
-public class ScheduledJobMain extends Configured implements Tool {
+public class OozieScheduledJobMain extends Configured implements Tool {
 
   public static void main(String [] args) throws Exception {
 
@@ -38,7 +38,7 @@ public class ScheduledJobMain extends Configured implements Tool {
 
     DefaultConfiguration.set(conf);
 
-    ToolRunner.run(conf, new ScheduledJobMain(), args);
+    ToolRunner.run(conf, new OozieScheduledJobMain(), args);
   }
 
   @Override
@@ -48,15 +48,16 @@ public class ScheduledJobMain extends Configured implements Tool {
 
     String jobClassName = args[0];
 
-    ClassLoader loader = ScheduledJobMain.class.getClassLoader();
+    ClassLoader loader = OozieScheduledJobMain.class.getClassLoader();
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    Map<String, View> views = OozieScheduling.getViews(jobClass, getConf());
+    SchedulableJobManager manager = SchedulableJobManager.create(jobClass, getConf());
 
-    ScheduledJobRunner runner = ScheduledJobRunner.create(jobClass, getConf());
+    // Get the views to be used from Oozie configuration.
+    Map<String, View> views = OozieScheduling.getViews(manager, getConf());
 
-    runner.run(nominalTime, views);
+    manager.run(nominalTime, views);
 
     return 0;
   }

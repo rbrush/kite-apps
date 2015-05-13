@@ -8,7 +8,7 @@ import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.scheduled.Schedule;
-import org.kitesdk.apps.spi.ScheduledJobRunner;
+import org.kitesdk.apps.spi.SchedulableJobManager;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 
@@ -106,7 +106,7 @@ public class TestScheduler {
 
     for (Schedule schedule: app.getSchedules()) {
 
-      ScheduledJobRunner runner = ScheduledJobRunner.create(schedule.getJobClass(), conf);
+      SchedulableJobManager runner = SchedulableJobManager.create(schedule.getJobClass(), conf);
 
       runner.run(nominalTime, views);
     }

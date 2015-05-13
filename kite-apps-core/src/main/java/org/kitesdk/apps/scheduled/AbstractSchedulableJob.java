@@ -4,13 +4,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
 
 /**
- * Abstract base class for scheduled jobs.
+ * Abstract base class for schedulable jobs.
  */
-public abstract class AbstractScheduledJob implements ScheduledJob {
+public abstract class AbstractSchedulableJob implements SchedulableJob {
 
   private Configuration configuration;
 
   private Instant nominalTime;
+
+  @Override
+  public String getName() {
+    return getClass().getName();
+  }
 
   @Override
   public void setConf(Configuration configuration) {
