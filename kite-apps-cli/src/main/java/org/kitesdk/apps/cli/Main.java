@@ -37,6 +37,7 @@ public class Main extends Configured implements Tool {
 
     Configuration conf = new Configuration();
 
+    conf.addResource("yarn-site.xml");
     conf.addResource("hive-site.xml");
 
     int rc = ToolRunner.run(conf, new Main(console), args);
