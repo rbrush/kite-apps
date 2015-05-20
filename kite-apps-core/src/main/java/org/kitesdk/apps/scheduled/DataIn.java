@@ -1,5 +1,7 @@
 package org.kitesdk.apps.scheduled;
 
+import org.apache.avro.generic.GenericData;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -14,5 +16,5 @@ public @interface DataIn  {
 
   String name();
 
-  Class type();
+  Class type() default GenericData.Record.class;
 }

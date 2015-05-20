@@ -6,7 +6,7 @@ import org.kitesdk.data.spi.DatasetRepositories;
 import org.kitesdk.data.spi.DatasetRepository;
 
 /**
- * Base class for testing Kite applications
+ * Base class for testing Kite applications over Hive.
  */
 public abstract class MiniAppTest extends MiniDFSTest {
 

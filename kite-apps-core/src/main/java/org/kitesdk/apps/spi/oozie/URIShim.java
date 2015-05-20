@@ -18,7 +18,7 @@ public class URIShim {
     Matcher matcher = DS_PATTERN.matcher(uri);
 
     if (!matcher.matches()) {
-      throw new IllegalArgumentException("Invalid dataset URI: " + uri);
+      return uri;
     }
 
     String namespace = matcher.group(1);
@@ -53,7 +53,7 @@ public class URIShim {
     Matcher matcher = HDFS_PATTERN.matcher(uri);
 
     if (!matcher.matches()) {
-      throw new IllegalArgumentException("Invalid dataset URI: " + uri);
+      return uri;
     }
 
     String namespace = matcher.group(1);

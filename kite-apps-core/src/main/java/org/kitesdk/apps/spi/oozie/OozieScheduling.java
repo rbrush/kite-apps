@@ -32,17 +32,17 @@ import java.util.Map;
  */
 public class OozieScheduling {
 
+  static final String OOZIE_COORD_NS = "uri:oozie:coordinator:0.4";
+
+  static final String OOZIE_WORKFLOW_NS = "uri:oozie:workflow:0.5";
+
+  static final String OOZIE_BUNDLE_NS = "uri:oozie:bundle:0.2";
+
   private static final String WORKFLOW_ELEMENT = "workflow-app";
 
   private static final String COORDINATOR_ELEMENT = "coordinator-app";
 
   private static final String BUNDLE_ELEMENT = "bundle-app";
-
-  private static final String OOZIE_COORD_NS = "uri:oozie:coordinator:0.4";
-
-  private static final String OOZIE_WORKFLOW_NS = "uri:oozie:workflow:0.5";
-
-  private static final String OOZIE_BUNDLE_NS = "uri:oozie:bundle:0.2";
 
   private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm'Z'")
       .withZone(DateTimeZone.UTC);
@@ -310,10 +310,12 @@ public class OozieScheduling {
 
       String jobTracker = conf.get("mapred.job.tracker");
 
-      resourceManager = jobTracker.replace("8021", "8032");
+      if (jobTracker != null)
+        resourceManager = jobTracker.replace("8021", "8032");
     }
 
-    property(writer, "jobTracker", resourceManager);
+    if (resourceManager != null)
+      property(writer, "jobTracker", resourceManager);
 
     if (appConfigPath != null)
       property(writer, "appConfigPath", appConfigPath.toString());
