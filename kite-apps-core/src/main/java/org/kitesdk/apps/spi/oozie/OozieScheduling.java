@@ -78,6 +78,13 @@ public class OozieScheduling {
     writer.endElement();
   }
 
+  /**
+   * Generates an Oozie workflow to execute the job in the given schedule.
+   *
+   * @param schedule the schedule to write
+   * @param conf the Hadoop configuration
+   * @param output an output stream to which the workflow is written
+   */
   public static void writeWorkFlow(Schedule schedule,
                                    Configuration conf,
                                    OutputStream output) throws IOException {
@@ -86,21 +93,14 @@ public class OozieScheduling {
 
     PrettyPrintXMLWriter writer = new PrettyPrintXMLWriter(streamWriter);
 
-    String jobClassName = schedule.getJobClass().getCanonicalName();
-
-    // Create a unique id for node names that is less than Oozie's 50
-    // character limit
-    String jobId = jobClassName.substring(jobClassName.lastIndexOf('.') + 1)
-        + "_"  + jobClassName.hashCode(); // TODO: use stronger hash to avoid possible collision.
-
     writer.startElement(WORKFLOW_ELEMENT);
-    writer.addAttribute("name", jobClassName.replace(".", "_"));
+    writer.addAttribute("name", schedule.getName());
     writer.addAttribute("xmlns", OOZIE_WORKFLOW_NS);
 
-    element(writer, "start", "to", jobId);
+    element(writer, "start", "to", schedule.getName());
 
     writer.startElement("action");
-    writer.addAttribute("name", jobId);
+    writer.addAttribute("name", schedule.getName());
 
     // Reduce retry attempts. TODO: make this configurable?
     writer.addAttribute("retry-max", "2");
@@ -132,7 +132,7 @@ public class OozieScheduling {
     writer.endElement(); // configuration
 
     element(writer, "main-class", OozieScheduledJobMain.class.getCanonicalName());
-    element(writer, "arg", jobClassName);
+    element(writer, "arg", schedule.getJobClass().getName());
 
     writer.endElement(); // java
     element(writer, "ok", "to", "end");
@@ -143,7 +143,7 @@ public class OozieScheduling {
 
     writer.startElement("kill");
     writer.addAttribute("name", "kill");
-    element(writer, "message", "Error in workflow for " + jobClassName);
+    element(writer, "message", "Error in workflow for " + schedule.getName());
     writer.endElement(); // kill
 
     element(writer, "end", "name", "end");
@@ -214,6 +214,14 @@ public class OozieScheduling {
     }
   }
 
+  /**
+   * Generates an Oozie coordinator XML for the given schedule.
+   *
+   * @param schedule the schedule for which a coordinator is to be written
+   * @param manager the manager instance fot the scheduled job
+   * @param workflowPath the path to the workflow
+   * @param output an output stream to which the generated schedule is written
+   */
   public static void writeCoordinator(Schedule schedule,
                                       SchedulableJobManager manager,
                                       Path workflowPath,
@@ -283,7 +291,7 @@ public class OozieScheduling {
                                  @Nullable
                                  Path appConfigPath,
                                  Path libPath,
-                                 List<Path> coordinatorPaths,
+                                 Map<String,Path> coordinatorPaths,
                                  OutputStream output) throws IOException {
 
     XmlStreamWriter streamWriter = WriterFactory.newXmlWriter(output);
@@ -324,11 +332,11 @@ public class OozieScheduling {
 
     int i = 0;
 
-    for (Path coordinatorPath: coordinatorPaths) {
+    for (Map.Entry<String,Path> coordinator: coordinatorPaths.entrySet()) {
       writer.startElement("coordinator");
-      writer.addAttribute("name", "coord" + i++); // TODO: meaningful coordinator names?
+      writer.addAttribute("name", coordinator.getKey());
 
-      element(writer, "app-path", coordinatorPath.toString());
+      element(writer, "app-path", coordinator.getValue().toString());
       writer.endElement(); // coordinator
     }
 
@@ -336,7 +344,12 @@ public class OozieScheduling {
     streamWriter.flush();
   }
 
-  public static Map<String,View> getViews(SchedulableJobManager manager, Configuration conf) {
+  /**
+   * Loads the Kite views to be passed to a job at runtime.
+   *
+   * @return A map of named inputs to the corresponding views
+   */
+  public static Map<String,View> loadViews(SchedulableJobManager manager, Configuration conf) {
 
     Map<String,View> views = Maps.newHashMap();
 

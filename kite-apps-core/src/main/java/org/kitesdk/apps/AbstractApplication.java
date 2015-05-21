@@ -11,7 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Base class to simplify common application patterns.
+ * Base class to simplify common application patterns. See {@link Application}
+ * for details on use.
  */
 public abstract class AbstractApplication implements Application {
 
@@ -54,6 +55,7 @@ public abstract class AbstractApplication implements Application {
     }
   }
 
+  @Override
   public List<Schedule> getSchedules() {
 
     return Collections.unmodifiableList(schedules);

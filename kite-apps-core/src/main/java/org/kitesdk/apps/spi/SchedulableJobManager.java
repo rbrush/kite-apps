@@ -54,12 +54,18 @@ public class SchedulableJobManager {
   }
 
   /**
-   * Returns the name of the scheduled job.
+   * Gets the name of the scheduled job.
+   *
+   * @return the name of the scheduled job
    */
   public String getName() {
     return job.getName();
   }
 
+  /**
+   * Gets a map of job input names to the {@link DataIn} annotations
+   * that declared them.
+   */
   public Map<String, DataIn> getInputs() {
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
@@ -76,6 +82,10 @@ public class SchedulableJobManager {
     return inputs;
   }
 
+  /**
+   * Gets a map of job output names to the {@link DataOut} annotations
+   * that declared them.
+   */
   public Map<String,DataOut> getOutputs() {
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
@@ -153,6 +163,13 @@ public class SchedulableJobManager {
     return args;
   }
 
+  /**
+   * Runs the job at the given nominal time with the given
+   * input and output views.
+   *
+   * @param nominalTime the nominal time provided to the job
+   * @param views a map of view parameter names to loaded instances for the job.
+   */
   public void run(Instant nominalTime, Map<String,View> views) {
 
     job.setNominalTime(nominalTime);

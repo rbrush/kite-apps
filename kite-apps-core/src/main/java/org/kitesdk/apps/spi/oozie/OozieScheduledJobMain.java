@@ -15,7 +15,7 @@ import org.kitesdk.data.spi.DefaultConfiguration;
 import java.util.Map;
 
 /**
- * Invoked by Oozie to run scheduled jobs.
+ * The main entry point invoked by Oozie as a Java action to launch jobs.
  */
 public class OozieScheduledJobMain extends Configured implements Tool {
 
@@ -55,7 +55,7 @@ public class OozieScheduledJobMain extends Configured implements Tool {
     SchedulableJobManager manager = SchedulableJobManager.create(jobClass, getConf());
 
     // Get the views to be used from Oozie configuration.
-    Map<String, View> views = OozieScheduling.getViews(manager, getConf());
+    Map<String, View> views = OozieScheduling.loadViews(manager, getConf());
 
     manager.run(nominalTime, views);
 

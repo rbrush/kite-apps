@@ -2,6 +2,7 @@ package org.kitesdk.apps.spi;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -81,7 +83,7 @@ public class AppDeployer {
 
     List<Schedule> schedules = app.getSchedules();
 
-    List<Path> coordinatorPaths = Lists.newArrayList();
+    Map<String,Path> coordinatorPaths = Maps.newHashMap();
 
     for (Schedule schedule: schedules) {
 
@@ -89,7 +91,7 @@ public class AppDeployer {
 
       Path coordinatorPath = installCoordinator(appPath, workflowPath, schedule);
 
-      coordinatorPaths.add(coordinatorPath);
+      coordinatorPaths.put(schedule.getName(), coordinatorPath);
     }
 
     Path libPath = new Path(appPath, "lib");
@@ -214,7 +216,7 @@ public class AppDeployer {
   }
 
   private Path installBundle(Class appClass, Path appPath, Path appConfigPath,
-                             Path libPath, List<Path> coordinatorPaths) {
+                             Path libPath, Map<String,Path> coordinatorPaths) {
 
     Path bundlePath = new Path(appPath, "oozie/bundle.xml");
 

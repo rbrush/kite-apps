@@ -9,7 +9,8 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * A schedule for a job.
+ * A schedule for a job. See the {@link Schedule.Builder}
+ * for details on building the schedules.
  */
 public class Schedule {
 
@@ -32,18 +33,49 @@ public class Schedule {
     this.views = Collections.unmodifiableMap(views);
   }
 
+  /**
+   * Gets the class of the {@link SchedulableJob}
+   * being scheduled.
+   *
+   * @return the job class
+   */
   public Class<? extends SchedulableJob> getJobClass() {
     return jobClass;
   }
 
+  /**
+   * Gets the frequency of the job in CRON form.
+   *
+   * @return the job frequency
+   */
   public String getFrequency() {
     return frequency;
   }
 
-  public String getName() {return name; }
+  /**
+   * Gets the name of the schedule, which may be visible in Oozie
+   * or other tooling on the running system.
+   *
+   * @return the schedule name
+   */
+  public String getName() { return name; }
 
+  /**
+   * Gets the time at which first instance of a scheduled job
+   * can start running.
+   *
+   * @return the job start time
+   */
   public Instant getStartTime() { return startTime; }
 
+  /**
+   * Returns a map where the keys are the names of {@link org.kitesdk.apps.scheduled.DataIn} or
+   * {@link org.kitesdk.apps.scheduled.DataOut} parameters in a job. The map
+   * values are {@link org.kitesdk.apps.scheduled.Schedule.ViewTemplate}
+   * objects that define the input pattern and type.
+   *
+   * @return a map of input and output names to templates.
+   */
   public Map<String,ViewTemplate> getViewTemplates() { return views; }
 
   /**
@@ -63,23 +95,49 @@ public class Schedule {
       this.frequency = frequency;
     }
 
+    /**
+     * Gets the name, which matches the associated {@link org.kitesdk.apps.scheduled.DataIn}
+     * or {@link org.kitesdk.apps.scheduled.DataOut} annotation.
+     *
+     * @return the name of the template
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Gets the Oozie-compatible URI template used to define the schedule.
+     *
+     * @return the URI template
+     */
     public String getUriTemplate() {
       return uriTemplate;
     }
 
+    /**
+     * Gets the frequency in minutes for which a view is expected to
+     * arrive.
+     *
+     * @return the job frequency
+     */
     public int getFrequency() {
       return frequency;
     }
 
+    /**
+     * Gets the type of the object used by the view, typically
+     * an Avro generic record or specific record implementation.
+     *
+     * @return the type
+     */
     public Class getInputType() {
       return inputType;
     }
   }
 
+  /**
+   * A fluent builder to create {@link Schedule} instances.
+   */
   public static class Builder {
 
     private Class jobClass = null;
@@ -94,6 +152,12 @@ public class Schedule {
 
     private Map<String,ViewTemplate> views = Maps.newHashMap();
 
+    /**
+     * Sets the class of the {@link org.kitesdk.apps.scheduled.SchedulableJob}
+     * being scheduled.
+     *
+     * @return An instance of the builder for method chaining.
+     */
     public Builder jobClass(Class jobClass) {
 
       this.jobClass = jobClass;
@@ -105,17 +169,37 @@ public class Schedule {
       return this;
     }
 
+    /**
+     * Sets the name of the schedule. This name may be visible in operational
+     * tooling.
+     *
+     * @return An instance of the builder for method chaining.
+     */
     public Builder name(String name) {
 
       this.name = name;
       return this;
     }
 
+    /**
+     * Sets an hourly frequency on the schedule, equivalent to calling
+     * <code>builder.frequency("0 * * * *");(</code>
+     *
+     * @return An instance of the builder for method chaining.
+     */
     public Builder hourly() {
 
       return frequency("0 * * * *");
     }
 
+    /**
+     * Sets a cron-style frequency on the schedule. This frequency uses the
+     * structure "minute hour day-of-month month day-of-week", which may be
+     * values or wild cards. For instance, "0 * * * *" runs at minute zero
+     * of every hour.
+     *
+     * @return An instance of the builder for method chaining.
+     */
     public Builder frequency(String cronFrequency) {
 
       frequency = cronFrequency;
@@ -123,6 +207,17 @@ public class Schedule {
       return this;
     }
 
+    /**
+     * Configures a view defined by a name and URI template to be used
+     * by the scheduled job.
+     *
+     * @param name the name of the data parameter for the job.
+     * @param uriTemplate the Oozie-style URI template identifying the input
+     * @param frequencyMinutes the frequency in minutes with which instances of
+     *                         the view are expected to be created.
+     *
+     * @return An instance of the builder for method chaining.
+     */
     public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
       Map<String,DataIn> inputs = manager.getInputs();
@@ -141,6 +236,12 @@ public class Schedule {
       return this;
     }
 
+    /**
+     * Builds the schedule, returning an immutable {@link Schedule} instance
+     * that can be used to schedule jobs.
+     *
+     * @return a Schedule.
+     */
     public Schedule build() {
 
       return new Schedule(jobClass, name, frequency, startTime, views);

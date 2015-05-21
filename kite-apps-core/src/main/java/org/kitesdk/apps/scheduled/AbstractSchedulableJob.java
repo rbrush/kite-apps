@@ -14,7 +14,9 @@ public abstract class AbstractSchedulableJob implements SchedulableJob {
 
   @Override
   public String getName() {
-    return getClass().getName();
+
+    // Use the simple class name to identify the job.
+    return getClass().getSimpleName();
   }
 
   @Override

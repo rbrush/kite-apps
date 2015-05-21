@@ -1,6 +1,7 @@
 package org.kitesdk.apps.spi.oozie;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -26,7 +27,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;;
+import java.util.List;
+import java.util.Map;;
 
 import static org.junit.Assert.assertEquals;
 
@@ -136,6 +138,9 @@ public class OozieSchedulingTest  {
     XPath xpath = XPathFactory.newInstance().newXPath();
     xpath.setNamespaceContext(CONTEXT);
 
+    assertEquals(testSchedule.getName(),
+        xpath.evaluate("wf:workflow-app/@name", workflow));
+
     // The oozie main should be invoked with the argument specifying the job.
     assertEquals(OozieScheduledJobMain.class.getName(),
         xpath.evaluate("wf:workflow-app/wf:action/wf:java/wf:main-class", workflow));
@@ -207,10 +212,10 @@ public class OozieSchedulingTest  {
     String coordPath1 = "/some/coord/path/1";
     String coordPath2 = "/some/coord/path/2";
 
-    List<Path> coordinatorPaths = Lists.newArrayList();
+    Map<String,Path> coordinatorPaths = Maps.newHashMap();
 
-    coordinatorPaths.add(new Path(coordPath1));
-    coordinatorPaths.add(new Path(coordPath2));
+    coordinatorPaths.put("coord1", new Path(coordPath1));
+    coordinatorPaths.put("coord2", new Path(coordPath2));
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
@@ -221,6 +226,13 @@ public class OozieSchedulingTest  {
 
     XPath xpath = XPathFactory.newInstance().newXPath();
     xpath.setNamespaceContext(CONTEXT);
+
+    // Check expected coordinator names.
+    assertEquals("coord1",
+        xpath.evaluate("bn:bundle-app/bn:coordinator[1]/@name", bundle));
+
+    assertEquals("coord2",
+        xpath.evaluate("bn:bundle-app/bn:coordinator[2]/@name", bundle));
 
     // Entries for the coordinator paths should exist.
     assertEquals(coordPath1,
