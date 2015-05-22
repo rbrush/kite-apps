@@ -16,6 +16,11 @@ import org.kitesdk.data.View;
  */
 public class ScheduledInputOutputJob extends AbstractSchedulableJob {
 
+  @Override
+  public String getName() {
+    return "scheduled-input-output";
+  }
+
   public void run(@DataIn(name="source.users") View<GenericRecord> input,
                   @DataOut(name="target.users") View<GenericRecord> output) {
 

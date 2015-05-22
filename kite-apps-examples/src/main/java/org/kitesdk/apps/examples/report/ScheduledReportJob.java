@@ -42,6 +42,11 @@ public class ScheduledReportJob extends AbstractCrunchJob {
     }
   };
 
+  @Override
+  public String getName() {
+    return "example-scheduled-report";
+  }
+
   public void run() {
 
     // TODO: Switch to parameterized views.

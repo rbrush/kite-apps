@@ -3,10 +3,12 @@ package org.kitesdk.apps.scheduled;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.SchedulableJobManager;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * A schedule for a job. See the {@link Schedule.Builder}
@@ -23,6 +25,11 @@ public class Schedule {
   private final Instant startTime;
 
   private final Map<String,ViewTemplate> views;
+
+  /**
+   * Job names should be within Oozie constraints.
+   */
+  private static final Pattern NAME_PATTERN = Pattern.compile("([a-zA-Z]([\\-_a-zA-Z0-9])*){1,39}");
 
   Schedule(Class<? extends SchedulableJob> jobClass, String name, String frequency,
            Instant startTime, Map<String,ViewTemplate> views) {
@@ -164,20 +171,13 @@ public class Schedule {
 
       manager = SchedulableJobManager.create(jobClass, new Configuration());
 
-      name = manager.getName();
+      String name = manager.getName();
 
-      return this;
-    }
-
-    /**
-     * Sets the name of the schedule. This name may be visible in operational
-     * tooling.
-     *
-     * @return An instance of the builder for method chaining.
-     */
-    public Builder name(String name) {
+      if (!NAME_PATTERN.matcher(name).matches())
+        throw new AppException("App name " + name + " must match pattern " + NAME_PATTERN + ".");
 
       this.name = name;
+
       return this;
     }
 
@@ -243,6 +243,16 @@ public class Schedule {
      * @return a Schedule.
      */
     public Schedule build() {
+
+      for (String viewName: manager.getInputs().keySet()) {
+        if (!views.containsKey(viewName))
+          throw new IllegalArgumentException("Named input " + viewName + " not provided in schedule");
+      }
+
+      for (String viewName: manager.getOutputs().keySet()) {
+        if (!views.containsKey(viewName))
+          throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
+      }
 
       return new Schedule(jobClass, name, frequency, startTime, views);
     }

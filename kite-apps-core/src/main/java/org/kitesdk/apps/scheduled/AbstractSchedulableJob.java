@@ -13,13 +13,6 @@ public abstract class AbstractSchedulableJob implements SchedulableJob {
   private Instant nominalTime;
 
   @Override
-  public String getName() {
-
-    // Use the simple class name to identify the job.
-    return getClass().getSimpleName();
-  }
-
-  @Override
   public void setConf(Configuration configuration) {
     this.configuration = configuration;
   }

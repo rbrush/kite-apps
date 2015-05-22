@@ -12,6 +12,11 @@ import org.kitesdk.data.Signalable;
  */
 public class DataGeneratorJob extends AbstractSchedulableJob {
 
+  @Override
+  public String getName() {
+    return "example-data-generator";
+  }
+
   public void run(@DataOut(name="example.events", type=ExampleEvent.class) Signalable<ExampleEvent> view) {
 
     // Write some test data to the view.

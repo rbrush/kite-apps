@@ -22,7 +22,7 @@ import org.kitesdk.data.spi.filesystem.DatasetTestUtilities;
 import java.net.URI;
 import java.util.List;
 
-public class TestSchedulableJob extends MiniDFSTest {
+public class SchedulableJobTest extends MiniDFSTest {
 
   @Before
   public void setDefaultConfig() {
