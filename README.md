@@ -12,8 +12,10 @@ Here is an example of a job:
 ```java
 public class ExampleJob extends AbstractJob {
 
-  public void run(@DataIn(name="example.events", type=ExampleEvent.class) View<ExampleEvent> input,
-                  @DataOut(name="example.output", type=ExampleOutput.class) View<ExampleOutput> output) {
+  public void run(@DataIn(name="example.events", type=ExampleEvent.class)
+                  View<ExampleEvent> input,
+                  @DataOut(name="example.output", type=ExampleOutput.class)
+                  View<ExampleOutput> output) {
 
      // Do work here.
   }
@@ -36,9 +38,9 @@ public class ExampleApp extends AbstractApplication {
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
         .jobClass(ExampleJob.class)
-        .frequency("* * * * *")
-        .onReady("example.events", EVENT_URI_PATTERN)
-        .withView("example.output", OUTPUT_URI_PATTERN)
+        .frequency("0 * * * *")
+        .withView("example.events", EVENT_URI_PATTERN, 60)
+        .withView("example.output", OUTPUT_URI_PATTERN, 60)
         .build();
 
     schedule(schedule);
@@ -90,12 +92,12 @@ org.kitesdk.apps.examples.triggered.TriggeredApp \
 Kite Applications are installed to a target directory, which contains the following structure:
 
 ```
-<app-root>/lib -- The set of JARs 
+<app-root>/lib -- The set of JARs
 <app-root>/oozie -- All Oozie artifacts for the application are in here.
 <app-root>/oozie/bundle.xml -- the Oozie bundle for the entire application
-<app-root>/oozie/workflows -- Each ScheduledJob has a workflow directory that is 
+<app-root>/oozie/workflows -- Each ScheduledJob has a workflow directory that is
                               the fully-qualified class name of the job.
-<app-root>/oozie/coordinators -- Each ScheduledJob has a coordinator directory that is 
+<app-root>/oozie/coordinators -- Each ScheduledJob has a coordinator directory that is
                                  the fully-qualified class name of the job.
 ```
 
@@ -107,4 +109,3 @@ This will be expanded in the future, with separate directories to contain user-e
 * Add a way for job configuration to be externally defined, possibly providing a job-settings.xml for each Kite job.
 * Add support for a StreamingJob, based on Spark Streaming and Kafka, to complement the existing ScheduledJob.
 * Move Kite Apps and underlying libraries to a shared library to avoid duplicating them in every application
-
