@@ -1,8 +1,11 @@
-package org.kitesdk.apps.examples.triggered;
+package org.kitesdk.apps.examples.spark;
 
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,13 +18,28 @@ import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
+import org.kitsdk.apps.spark.spi.DefaultSparkContext;
 
 
-public class TriggeredAppTest extends MiniAppTest {
+public class SparkAppTest extends MiniAppTest {
+
 
   @Before
-  public void setupConfig() {
+  public void startSparkContext() {
     DefaultConfiguration.set(getConfiguration());
+
+    SparkConf conf = new SparkConf()
+        .setMaster("local[3]")
+        .setAppName("spark-test");
+
+    DefaultSparkContext.setContext(new JavaSparkContext(conf));
+  }
+
+  @After
+  public void stopSparkContext() {
+
+    DefaultSparkContext.getContext().stop();
+    DefaultSparkContext.setContext(null);
   }
 
   @Test
@@ -29,7 +47,7 @@ public class TriggeredAppTest extends MiniAppTest {
 
     TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
 
-    TestScheduler triggeredRunner = TestScheduler.load(TriggeredApp.class, getConfiguration());
+    TestScheduler triggeredRunner = TestScheduler.load(SparkApp.class, getConfiguration());
 
     DateTime firstNominalTime = new DateTime(2015, 5, 7, 12, 0, 0);
 
@@ -44,7 +62,7 @@ public class TriggeredAppTest extends MiniAppTest {
       triggeredRunner.runScheduledJobs(nominalTime);
 
       // Get the output at the expected time and read its contents.
-      Dataset<ExampleEvent> oddUserDataset = Datasets.load(TriggeredApp.ODD_USER_DS_URI, ExampleEvent.class);
+      Dataset<ExampleEvent> oddUserDataset = Datasets.load(SparkApp.ODD_USER_DS_URI, ExampleEvent.class);
 
       View<ExampleEvent> output =  oddUserDataset.with("year", dateTime.getYear())
           .with("month", dateTime.getMonthOfYear())

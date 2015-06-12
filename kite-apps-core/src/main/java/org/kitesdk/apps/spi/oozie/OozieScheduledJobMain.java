@@ -8,9 +8,12 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.spi.SchedulableJobManager;
+import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -19,26 +22,38 @@ import java.util.Map;
  */
 public class OozieScheduledJobMain extends Configured implements Tool {
 
+  private static final Logger LOG = LoggerFactory.getLogger(OozieScheduledJobMain.class);
+
   public static void main(String [] args) throws Exception {
 
-    GenericOptionsParser options = new GenericOptionsParser(args);
+    try {
+      GenericOptionsParser options = new GenericOptionsParser(args);
 
-    // Include Oozie-provided configuration if it is specified.
-    String configurationLocation = System.getProperty("oozie.action.conf.xml");
+      // Include Oozie-provided configuration if it is specified.
+      String configurationLocation = System.getProperty("oozie.action.conf.xml");
 
-    if (configurationLocation == null) {
-      throw new AppException("No oozie.action.conf.xml set; cannot resolve configuration.");
+      if (configurationLocation == null) {
+        throw new AppException("No oozie.action.conf.xml set; cannot resolve configuration.");
+      }
+
+      Configuration conf = options.getConfiguration();
+
+      // The configuration location appears to be a location on the filesystem,
+      // hence the necessary prefix.
+      conf.addResource(new Path("file://" + configurationLocation));
+
+      DefaultConfiguration.set(conf);
+
+      ToolRunner.run(conf, new OozieScheduledJobMain(), args);
+
+    } catch (Exception e) {
+
+      // Spark actions do a poor job of reporting errors, so
+      // we have this here to at least have a log of the root cause.
+      LOG.error("Unhandled exception in application.", e);
+
+      throw e;
     }
-
-    Configuration conf = options.getConfiguration();
-
-    // The configuration location appears to be a location on the filesystem,
-    // hence the necessary prefix.
-    conf.addResource(new Path("file://" + configurationLocation));
-
-    DefaultConfiguration.set(conf);
-
-    ToolRunner.run(conf, new OozieScheduledJobMain(), args);
   }
 
   @Override
@@ -52,7 +67,7 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = SchedulableJobManager.create(jobClass, getConf());
+    SchedulableJobManager manager = JobManagers.create(jobClass, getConf());
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, getConf());

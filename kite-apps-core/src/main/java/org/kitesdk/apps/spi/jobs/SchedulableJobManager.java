@@ -1,12 +1,14 @@
-package org.kitesdk.apps.spi;
+package org.kitesdk.apps.spi.jobs;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.codehaus.plexus.util.xml.XMLWriter;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.scheduled.SchedulableJob;
+import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.View;
 
 import java.lang.annotation.Annotation;
@@ -18,39 +20,20 @@ import java.util.Map;
 /**
  * Manager class for working with schedulable jobs.
  */
-public class SchedulableJobManager {
+public abstract class SchedulableJobManager {
 
-  private final SchedulableJob job;
+  protected final SchedulableJob job;
 
-  private final Configuration conf;
+  protected final Configuration conf;
 
-  private final Method runMethod;
+  protected final Method runMethod;
 
-  private SchedulableJobManager(SchedulableJob job,
-                                Method runMethod, Configuration conf) {
+  protected SchedulableJobManager(SchedulableJob job,
+                                  Method runMethod,
+                                  Configuration conf) {
     this.job = job;
     this.runMethod = runMethod;
     this.conf = conf;
-  }
-
-  public static SchedulableJobManager create(Class<? extends SchedulableJob> jobClass,
-                                          Configuration conf) {
-
-    SchedulableJob job;
-
-    try {
-      job = jobClass.newInstance();
-    } catch (InstantiationException e) {
-      throw new AppException(e);
-    } catch (IllegalAccessException e) {
-      throw new AppException(e);
-    }
-
-    job.setConf(conf);
-
-    Method runMethod = resolveRunMethod(job);
-
-    return new SchedulableJobManager(job, runMethod, conf);
   }
 
   /**
@@ -83,6 +66,13 @@ public class SchedulableJobManager {
   }
 
   /**
+   * Gets the configuration used for the job.
+   */
+  public Configuration getConf() {
+    return conf;
+  }
+
+  /**
    * Gets a map of job output names to the {@link DataOut} annotations
    * that declared them.
    */
@@ -102,7 +92,7 @@ public class SchedulableJobManager {
     return outputs;
   }
 
-  private static Method resolveRunMethod(SchedulableJob job) {
+  protected static Method resolveRunMethod(SchedulableJob job) {
 
     Method runMethod = null;
 
@@ -125,8 +115,10 @@ public class SchedulableJobManager {
     return runMethod;
   }
 
-
-  private Object[] getArgs(Map<String,View> views) {
+  /**
+   * Returns the arguments to be passed to a job's run method.
+   */
+  protected Object[] getArgs(Map<String,View> views) {
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
     Object[] args = new Object[paramAnnotations.length];
@@ -170,18 +162,12 @@ public class SchedulableJobManager {
    * @param nominalTime the nominal time provided to the job
    * @param views a map of view parameter names to loaded instances for the job.
    */
-  public void run(Instant nominalTime, Map<String,View> views) {
+  public abstract void run(Instant nominalTime, Map<String,View> views);
 
-    job.setNominalTime(nominalTime);
-
-    Object[] args = getArgs(views);
-
-    try {
-      runMethod.invoke(job, args);
-    } catch (IllegalAccessException e) {
-      throw new AppException(e);
-    } catch (InvocationTargetException e) {
-      throw new AppException(e);
-    }
-  }
+  /**
+   * Writes the Oozie action block to launch the job. This allows for
+   * different types of jobs to use specialized action blocks. For instance,
+   * Crunch jobs may use a Java action and Spark jobs could use a Spark action.
+   */
+  public abstract void writeOozieActionBlock(XMLWriter writer, Schedule schedule);
 }

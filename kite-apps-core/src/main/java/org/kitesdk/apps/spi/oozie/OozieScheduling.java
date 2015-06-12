@@ -15,15 +15,16 @@ import org.codehaus.plexus.util.WriterFactory;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlStreamWriter;
-import org.kitesdk.apps.spi.SchedulableJobManager;
+import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 
@@ -37,6 +38,8 @@ public class OozieScheduling {
   static final String OOZIE_WORKFLOW_NS = "uri:oozie:workflow:0.5";
 
   static final String OOZIE_BUNDLE_NS = "uri:oozie:bundle:0.2";
+
+  static final String OOZIE_SPARK_NS = "uri:oozie:spark-action:0.1";
 
   private static final String WORKFLOW_ELEMENT = "workflow-app";
 
@@ -63,7 +66,7 @@ public class OozieScheduling {
     return new Instant(formatter.parseMillis(timeString));
   }
 
-  private static void element(XMLWriter writer, String name, String attributeName,
+  public static void element(XMLWriter writer, String name, String attributeName,
                               String attributeValue) {
 
     writer.startElement(name);
@@ -71,7 +74,7 @@ public class OozieScheduling {
     writer.endElement();
   }
 
-  private static void element(XMLWriter writer, String name, String text) {
+  public static void element(XMLWriter writer, String name, String text) {
 
     writer.startElement(name);
     writer.writeText(text);
@@ -106,35 +109,10 @@ public class OozieScheduling {
     writer.addAttribute("retry-max", "2");
     writer.addAttribute("retry-interval", "1");
 
-    writer.startElement("java");
-    element(writer, "job-tracker", "${jobTracker}");
-    element(writer, "name-node", "${nameNode}");
+    // Write the appropriate action to be used in the job.
+    SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
+    manager.writeOozieActionBlock(writer, schedule);
 
-    // TODO: the job-xml should probably be job-specific configuration.
-    // element(writer, "job-xml", "${appConfigPath}");
-
-    // Make the nominal time visible to the workflow action.
-    writer.startElement("configuration");
-    property(writer, WORKFLOW_NOMINAL_TIME, "${" + COORD_NOMINAL_TIME + "}");
-
-    // Write the Hive metastore URI, if available. It may be null
-    // in local or testing environments.
-    if (conf.get(HIVE_METASTORE_URIS) != null) {
-      property(writer, HIVE_METASTORE_URIS, conf.get(HIVE_METASTORE_URIS));
-    }
-
-    // Include the dataset inputs to make them visible to the workflow.
-    for (String name: schedule.getViewTemplates().keySet()) {
-
-      property(writer, "wf_" + toIdentifier(name), "${coord_" + toIdentifier(name) + "}");
-    }
-
-    writer.endElement(); // configuration
-
-    element(writer, "main-class", OozieScheduledJobMain.class.getCanonicalName());
-    element(writer, "arg", schedule.getJobClass().getName());
-
-    writer.endElement(); // java
     element(writer, "ok", "to", "end");
 
     element(writer, "error", "to", "kill");
@@ -251,6 +229,9 @@ public class OozieScheduling {
     element(writer, "app-path", workflowPath.toString());
 
     writer.startElement("configuration");
+
+    property(writer, "kiteAppRoot", "${kiteAppRoot}");
+
     property(writer, COORD_NOMINAL_TIME, "${coord:nominalTime()}");
 
     // Include the dataset inputs to make them visible to the workflow.
@@ -277,7 +258,7 @@ public class OozieScheduling {
   /**
    * Writes a Hadoop-style configuration property.
    */
-  private static void property(XMLWriter writer, String name, String value) {
+  public static void property(XMLWriter writer, String name, String value) {
     writer.startElement("property");
 
     element(writer, "name", name);
@@ -286,11 +267,17 @@ public class OozieScheduling {
     writer.endElement();
   }
 
+  /**
+   * Returns the path to write libraries to based on the
+   * underlying root path.
+   */
+  public static final Path libPath(Path appRootPath) {
+    return new Path(appRootPath, "lib");
+  }
+
   public static void writeBundle(Class appClass,
                                  Configuration conf,
-                                 @Nullable
-                                 Path appConfigPath,
-                                 Path libPath,
+                                 Path appPath,
                                  Map<String,Path> coordinatorPaths,
                                  OutputStream output) throws IOException {
 
@@ -304,7 +291,7 @@ public class OozieScheduling {
 
     writer.startElement("parameters");
 
-    property(writer, "oozie.libpath", libPath.toString());
+    property(writer, "oozie.libpath", libPath(appPath).toString());
     property(writer, "nameNode", conf.get("fs.default.name"));
 
     String resourceManager = conf.get("yarn.resourcemanager.address");
@@ -325,8 +312,17 @@ public class OozieScheduling {
     if (resourceManager != null)
       property(writer, "jobTracker", resourceManager);
 
-    if (appConfigPath != null)
-      property(writer, "appConfigPath", appConfigPath.toString());
+    // TODO: handle application configuration.
+//    if (appConfigPath != null)
+//     property(writer, "appConfigPath", appConfigPath.toString());
+
+
+    // Default to the HDFS scheme for the root path if none is provided.
+    Path qualifiedPath = appPath.toUri().getScheme() == null ?
+        appPath.makeQualified(URI.create("hdfs:/"), appPath) :
+        appPath;
+
+    property(writer, "kiteAppRoot", qualifiedPath.toString());
 
     writer.endElement(); // parameters
 
@@ -380,4 +376,44 @@ public class OozieScheduling {
     return views;
   }
 
+  /**
+   * Returns the settings to be passed to a job runner.
+   */
+  public static Map<String,String> getJobSettings(Schedule schedule, Configuration conf) {
+
+    Map<String,String> settings = Maps.newHashMap();
+
+    settings.put(WORKFLOW_NOMINAL_TIME, "${" + COORD_NOMINAL_TIME + "}");
+
+    // Write the Hive metastore URI, if available. It may be null
+    // in local or testing environments.
+    if (conf.get(HIVE_METASTORE_URIS) != null) {
+      settings.put(HIVE_METASTORE_URIS, conf.get(HIVE_METASTORE_URIS));
+    }
+
+    // Include the dataset inputs to make them visible to the workflow.
+    for (String name: schedule.getViewTemplates().keySet()) {
+
+      settings.put("wf_" + toIdentifier(name), "${coord_" + toIdentifier(name) + "}");
+    }
+
+    return settings;
+  }
+
+  public static void writeJobConfiguration(XMLWriter writer, Schedule schedule, Configuration conf) {
+
+    property(writer, WORKFLOW_NOMINAL_TIME, "${" + COORD_NOMINAL_TIME + "}");
+
+    // Write the Hive metastore URI, if available. It may be null
+    // in local or testing environments.
+    if (conf.get(HIVE_METASTORE_URIS) != null) {
+      property(writer, HIVE_METASTORE_URIS, conf.get(HIVE_METASTORE_URIS));
+    }
+
+    // Include the dataset inputs to make them visible to the workflow.
+    for (String name: schedule.getViewTemplates().keySet()) {
+
+      property(writer, "wf_" + toIdentifier(name), "${coord_" + toIdentifier(name) + "}");
+    }
+  }
 }

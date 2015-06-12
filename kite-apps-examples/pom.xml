@@ -32,6 +32,20 @@
       <plugin>
         <groupId>org.apache.avro</groupId>
         <artifactId>avro-maven-plugin</artifactId>
+        <version>${vers.avro}</version>
+        <configuration>
+          <stringType>String</stringType>
+          <createSetters>false</createSetters>
+          <fieldVisibility>private</fieldVisibility>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>schema</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -111,6 +125,7 @@
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>${artifact.hadoop-deps}</artifactId>
+      <version>${kite.version}</version>
       <type>pom</type>
       <scope>provided</scope>
     </dependency>
@@ -120,12 +135,45 @@
     </dependency>
 
     <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-exec</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-serde</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-metastore</artifactId>
+      <version>${vers.hive}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-apps-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-apps-crunch</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-data-crunch</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-apps-spark</artifactId>
+    </dependency>
+
+    <!-- Crunch -->
+    <dependency>
+      <groupId>org.apache.crunch</groupId>
+      <artifactId>crunch-core</artifactId>
     </dependency>
 
     <!-- Misc -->

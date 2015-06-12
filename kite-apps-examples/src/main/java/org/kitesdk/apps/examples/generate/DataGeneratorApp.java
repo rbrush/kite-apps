@@ -1,6 +1,7 @@
 package org.kitesdk.apps.examples.generate;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.scheduled.Schedule;

@@ -3,7 +3,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>kite-apps-core</artifactId>
+  <artifactId>kite-apps-spark</artifactId>
 
   <parent>
     <groupId>org.kitesdk</groupId>
@@ -11,10 +11,9 @@
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <name>Kite Apps Core Module</name>
+  <name>Kite Apps Spark Module</name>
   <description>
-    The Kite Apps Core module offers core libraries for building
-    Kite-based applications.
+    Spark support for Kite applications
   </description>
 
   <build>
@@ -31,13 +30,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal> <!-- publish test-jar for other modules -->
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -90,16 +82,6 @@
   </reporting>
 
   <dependencies>
-    <!-- Kite -->
-    <dependency>
-      <groupId>org.kitesdk</groupId>
-      <artifactId>kite-data-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.kitesdk</groupId>
-      <artifactId>kite-data-hive</artifactId>
-    </dependency>
-
     <!-- Hadoop -->
     <dependency>
       <groupId>org.kitesdk</groupId>
@@ -114,32 +96,33 @@
     </dependency>
 
     <dependency>
-      <groupId>org.apache.oozie</groupId>
-      <artifactId>oozie-client</artifactId>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-core</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-common</artifactId>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-data-spark</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.oozie</groupId>
-      <artifactId>oozie-core</artifactId>
-      <scope>test</scope>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_2.10</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>org.apache.oozie</groupId>
-      <artifactId>oozie-core</artifactId>
-      <classifier>tests</classifier>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- XML Writing -->
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-apps-core</artifactId>
     </dependency>
 
     <!-- Misc -->
@@ -150,15 +133,11 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>joda-time</groupId>
-      <artifactId>joda-time</artifactId>
+      <!-- Version needed by Spark 1.0.0 -->
+      <version>14.0.1</version>
     </dependency>
 
     <!-- Test Dependencies -->
-
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-data-core</artifactId>
@@ -167,6 +146,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-apps-core</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>
@@ -179,14 +165,6 @@
       <type>pom</type>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>org.kitesdk</groupId>
-      <artifactId>kite-data-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>

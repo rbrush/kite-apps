@@ -1,6 +1,5 @@
 package org.kitesdk.apps.spi.oozie;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
@@ -8,7 +7,8 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.scheduled.Schedule;
-import org.kitesdk.apps.spi.SchedulableJobManager;
+import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
@@ -27,7 +27,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;;
 
 import static org.junit.Assert.assertEquals;
@@ -46,85 +45,6 @@ public class OozieSchedulingTest  {
         .build();
   }
 
-  private Document toDom(ByteArrayOutputStream output) throws Exception {
-
-    // TODO: validate as part of document builder.
-    InputStream input = new ByteArrayInputStream(output.toByteArray());
-
-    try {
-      // Get Oozie schemas from the oozie-client JAR.
-      StreamSource[] sources = new StreamSource[] {
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-workflow-0.5.xsd")),
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-coordinator-0.4.xsd")),
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-bundle-0.2.xsd"))};
-
-      SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-      Schema schema = factory.newSchema(sources);
-      Validator validator = schema.newValidator();
-
-      try {
-        validator.validate(new StreamSource(input));
-      } finally {
-
-        input.close();
-      }
-
-    } catch (Exception e) {
-      Assert.fail(e.getMessage());
-    }
-
-    DocumentBuilderFactory docBuilderFactory
-        = DocumentBuilderFactory.newInstance();
-    //ignore all comments inside the xml file
-    docBuilderFactory.setIgnoringComments(true);
-
-    //allow includes in the xml file
-    docBuilderFactory.setNamespaceAware(true);
-    try {
-      docBuilderFactory.setXIncludeAware(true);
-    } catch (UnsupportedOperationException e) {
-
-    }
-
-    DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
-
-    return builder.parse(new ByteArrayInputStream(output.toByteArray()));
-  }
-
-  private static final NamespaceContext CONTEXT = new NamespaceContext() {
-
-    public String getNamespaceURI(String prefix) {
-
-      if ("wf".equals(prefix))
-        return OozieScheduling.OOZIE_WORKFLOW_NS;
-
-      if ("coord".equals(prefix))
-        return OozieScheduling.OOZIE_COORD_NS;
-
-      if ("bn".equals(prefix))
-        return OozieScheduling.OOZIE_BUNDLE_NS;
-
-      throw new IllegalArgumentException("Unknown prefix:" + prefix);
-    }
-
-    public Iterator getPrefixes(String val) {
-      return null;
-    }
-
-    public String getPrefix(String uri) {
-
-      if (OozieScheduling.OOZIE_WORKFLOW_NS.equals(uri))
-        return "wf";
-
-      if (OozieScheduling.OOZIE_COORD_NS.equals(uri))
-        return "coord";
-
-      if (OozieScheduling.OOZIE_BUNDLE_NS.equals(uri))
-        return "bn";
-
-      throw new IllegalArgumentException("Unknown uri:" + uri);
-    }
-  };
 
   @Test
   public void testWriteWorkflow() throws Exception {
@@ -133,10 +53,9 @@ public class OozieSchedulingTest  {
 
     OozieScheduling.writeWorkFlow(testSchedule, new Configuration(), output);
 
-    Document workflow = toDom(output);
+    Document workflow = XMLUtil.toDom(output);
 
-    XPath xpath = XPathFactory.newInstance().newXPath();
-    xpath.setNamespaceContext(CONTEXT);
+    XPath xpath = XMLUtil.getXPath();
 
     assertEquals(testSchedule.getName(),
         xpath.evaluate("wf:workflow-app/@name", workflow));
@@ -169,15 +88,14 @@ public class OozieSchedulingTest  {
 
     String workFlowPath = "/test/workflow/path";
 
-    SchedulableJobManager manager = SchedulableJobManager.create(ScheduledInputOutputJob.class,
+    SchedulableJobManager manager = JobManagers.create(ScheduledInputOutputJob.class,
         new Configuration());
 
     OozieScheduling.writeCoordinator(testSchedule, manager, new Path(workFlowPath), output);
 
-    Document coord = toDom(output);
+    Document coord = XMLUtil.toDom(output);
 
-    XPath xpath = XPathFactory.newInstance().newXPath();
-    xpath.setNamespaceContext(CONTEXT);
+    XPath xpath = XMLUtil.getXPath();
 
     assertEquals(testSchedule.getFrequency(),
         xpath.evaluate("coord:coordinator-app/@frequency", coord));
@@ -219,13 +137,12 @@ public class OozieSchedulingTest  {
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    OozieScheduling.writeBundle(ScheduledInputOutputApp.class, new Configuration(), new Path(appPath),
-        new Path(libPath), coordinatorPaths, output);
+    OozieScheduling.writeBundle(ScheduledInputOutputApp.class, new Configuration(),
+        new Path(appPath), coordinatorPaths, output);
 
-    Document bundle = toDom(output);
+    Document bundle = XMLUtil.toDom(output);
 
-    XPath xpath = XPathFactory.newInstance().newXPath();
-    xpath.setNamespaceContext(CONTEXT);
+    XPath xpath = XMLUtil.getXPath();
 
     // Check expected coordinator names.
     assertEquals("coord1",

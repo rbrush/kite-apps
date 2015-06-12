@@ -11,16 +11,11 @@
   <modules>
     <module>kite-apps-core</module>
     <module>kite-apps-crunch</module>
+    <module>kite-apps-spark</module>
+    <module>kite-apps-examples</module>
     <module>kite-apps-cli</module>
     <module>kite-apps-tools-cdh5</module>
-    <module>kite-apps-examples</module>
   </modules>
-
-  <parent>
-    <groupId>org.kitesdk</groupId>
-    <artifactId>kite-app-parent-cdh5</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
-  </parent>
 
   <name>Kite Apps Module</name>
   <description>
@@ -41,21 +36,30 @@
     <!-- used by jdiff, semver rule -->
     <previous.project.version>0.1.0-SNAPSHOT</previous.project.version>
 
-    <cdh4.version>4.4.0</cdh4.version>
-    <cdh5.version>5.0.0</cdh5.version>
+    <cdh5.version>5.4.2</cdh5.version>
     <cdh.version>${cdh5.version}</cdh.version>
 
-    <!-- artifacts that depend on profiles -->
-    <artifact.hadoop-deps>kite-hadoop-dependencies</artifact.hadoop-deps>
-    <artifact.hadoop-test-deps>kite-hadoop-test-dependencies</artifact.hadoop-test-deps>
-    <artifact.hbase-deps>kite-hbase-dependencies</artifact.hbase-deps>
-    <artifact.hbase-test-deps>kite-hbase-test-dependencies</artifact.hbase-test-deps>
+    <!-- Currently only CDH 5 is supported. -->
+    <artifact.hadoop-deps>kite-hadoop-cdh5-dependencies</artifact.hadoop-deps>
+    <artifact.hadoop-test-deps>kite-hadoop-cdh5-test-dependencies</artifact.hadoop-test-deps>
+    <artifact.hbase-deps>kite-hbase-cdh5-dependencies</artifact.hbase-deps>
+    <artifact.hbase-test-deps>kite-hbase-cdh5-test-dependencies</artifact.hbase-test-deps>
+
     <vers.junit>4.10</vers.junit>
     <vers.maven-surefire-plugin>2.14.1</vers.maven-surefire-plugin>
     <vers.jodatime>2.3</vers.jodatime>
     <vers.plexus-utils>3.0</vers.plexus-utils>
     <vers.jcommander>1.35</vers.jcommander>
-    <vers.oozie>4.0.0-cdh${cdh5.version}</vers.oozie>
+    <vers.oozie>4.1.0-cdh${cdh5.version}</vers.oozie>
+    <vers.hive>1.1.0-cdh${cdh5.version}</vers.hive>
+    <vers.spark>1.3.1</vers.spark>
+    <vers.guava>11.0.2</vers.guava>
+    <vers.jackson>2.3.1</vers.jackson>
+    <vers.hadoop>2.6.0-cdh${cdh5.version}</vers.hadoop>
+    <vers.slf4j>1.6.1</vers.slf4j>
+    <vers.log4j>1.2.16</vers.log4j>
+    <vers.crunch>0.11.0-cdh${cdh5.version}</vers.crunch>
+    <vers.avro>1.7.6-cdh${cdh5.version}</vers.avro>
   </properties>
 
   <dependencyManagement>
@@ -69,6 +73,11 @@
        <dependency>
          <groupId>org.kitesdk</groupId>
          <artifactId>kite-apps-crunch</artifactId>
+         <version>${project.version}</version>
+       </dependency>
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-apps-spark</artifactId>
          <version>${project.version}</version>
        </dependency>
 
@@ -93,7 +102,6 @@
          <scope>test</scope>
        </dependency>
 
-       <!-- Hadoop dependencies -->
        <dependency>
          <groupId>org.kitesdk</groupId>
          <artifactId>${artifact.hadoop-deps}</artifactId>
@@ -106,11 +114,92 @@
          <version>${kite.version}</version>
          <type>pom</type>
          <scope>test</scope>
+         <exclusions>
+           <exclusion>
+             <groupId>javax.servlet</groupId>
+             <artifactId>*</artifactId>
+           </exclusion>
+         </exclusions>
        </dependency>
        <dependency>
          <groupId>org.kitesdk</groupId>
          <artifactId>kite-hadoop-compatibility</artifactId>
          <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.spark</groupId>
+         <artifactId>spark-core_2.10</artifactId>
+         <version>${vers.spark}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.spark</groupId>
+         <artifactId>spark-streaming_2.10</artifactId>
+         <version>${vers.spark}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.hadoop</groupId>
+         <artifactId>hadoop-common</artifactId>
+         <version>${vers.hadoop}</version>
+         <!-- Excluded due to version conflict in tests. -->
+         <exclusions>
+           <exclusion>
+             <groupId>javax.servlet</groupId>
+             <artifactId>*</artifactId>
+           </exclusion>
+         </exclusions>
+       </dependency>
+
+       <!-- Kite data dependencies. -->
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-core</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-hive</artifactId>
+         <version>${kite.version}</version>
+         <exclusions>
+           <!-- cdh bundles parquet in Hive -->
+           <exclusion>
+             <artifactId>parquet-hive-bundle</artifactId>
+             <groupId>com.twitter</groupId>
+           </exclusion>
+         </exclusions>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-hbase</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-mapreduce</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-crunch</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.kitesdk</groupId>
+         <artifactId>kite-data-spark</artifactId>
+         <version>${kite.version}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.crunch</groupId>
+         <artifactId>crunch-core</artifactId>
+         <version>${vers.crunch}</version>
        </dependency>
 
        <!-- Oozie -->
@@ -142,11 +231,129 @@
          <version>${vers.oozie}</version>
        </dependency>
 
+       <!-- Hive -->
+       <dependency>
+         <groupId>org.apache.hive</groupId>
+         <artifactId>hive-exec</artifactId>
+         <version>${vers.hive}</version>
+         <scope>provided</scope>
+         <exclusions>
+           <exclusion>
+             <artifactId>hive-ant</artifactId>
+             <groupId>org.apache.hive</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>hive-metastore</artifactId>
+             <groupId>org.apache.hive</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>hive-shims</artifactId>
+             <groupId>org.apache.hive</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>commons-httpclient</artifactId>
+             <groupId>commons-httpclient</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>commons-io</artifactId>
+             <groupId>commons-io</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>commons-lang3</artifactId>
+             <groupId>org.apache.commons</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>log4j</artifactId>
+             <groupId>log4j</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>antlr-runtime</artifactId>
+             <groupId>org.antlr</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>ST4</artifactId>
+             <groupId>org.antlr</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>ant</artifactId>
+             <groupId>org.apache.ant</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>libfb303</artifactId>
+             <groupId>org.apache.thrift</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>zookeeper</artifactId>
+             <groupId>org.apache.zookeeper</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>groovy-all</artifactId>
+             <groupId>org.codehaus.groovy</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>datanucleus-core</artifactId>
+             <groupId>org.datanucleus</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>stax-api</artifactId>
+             <groupId>stax</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>slf4j-log4j12</artifactId>
+             <groupId>org.slf4j</groupId>
+           </exclusion>
+         </exclusions>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.hive</groupId>
+         <artifactId>hive-serde</artifactId>
+         <version>${vers.hive}</version>
+         <scope>provided</scope>
+         <exclusions>
+           <exclusion>
+             <artifactId>avro-mapred</artifactId>
+             <groupId>org.apache.avro</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>avro</artifactId>
+             <groupId>org.apache.avro</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>hive-common</artifactId>
+             <groupId>org.apache.hive</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>commons-lang</artifactId>
+             <groupId>commons-lang</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>libthrift</artifactId>
+             <groupId>org.apache.thrift</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>hive-shims</artifactId>
+             <groupId>org.apache.hive</groupId>
+           </exclusion>
+           <exclusion>
+             <artifactId>slf4j-log4j12</artifactId>
+             <groupId>org.slf4j</groupId>
+           </exclusion>
+         </exclusions>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.hive</groupId>
+         <artifactId>hive-metastore</artifactId>
+         <version>${vers.hive}</version>
+         <scope>provided</scope>
+       </dependency>
+
        <!-- Misc -->
        <dependency>
          <groupId>com.google.guava</groupId>
          <artifactId>guava</artifactId>
-         <version>${hadoop.guava.version}</version>
+         <version>${vers.guava}</version>
        </dependency>
        <dependency>
          <groupId>joda-time</groupId>
@@ -164,17 +371,33 @@
        <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-api</artifactId>
-         <version>${hadoop.slf4j.version}</version>
+         <version>${vers.slf4j}</version>
        </dependency>
        <dependency>
          <groupId>org.slf4j</groupId>
          <artifactId>slf4j-log4j12</artifactId>
-         <version>${hadoop.slf4j.version}</version>
+         <version>${vers.slf4j}</version>
        </dependency>
        <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>${hadoop.log4j.version}</version>
+         <version>${vers.log4j}</version>
+       </dependency>
+
+       <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
+         <version>${vers.jackson}</version>
+       </dependency>
+       <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-annotations</artifactId>
+         <version>${vers.jackson}</version>
+       </dependency>
+       <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-core</artifactId>
+         <version>${vers.jackson}</version>
        </dependency>
 
        <!-- Testing -->
@@ -227,6 +450,39 @@
       </plugins>
     </pluginManagement>
   </build>
+
+  <repositories>
+    <repository>
+      <id>com.cloudera.releases</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+      <name>Cloudera Repositories</name>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>maven-twttr</id>
+      <name>Twitter Public Maven Repo</name>
+      <url>http://maven.twttr.com</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>com.cloudera.plugin.releases</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos</url>
+      <name>Cloudera Repositories</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 
   <reporting>
     <plugins>

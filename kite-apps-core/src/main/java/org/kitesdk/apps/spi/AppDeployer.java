@@ -1,7 +1,6 @@
 package org.kitesdk.apps.spi;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
@@ -12,6 +11,8 @@ import org.apache.oozie.client.OozieClientException;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
 
 import java.io.File;
@@ -94,11 +95,9 @@ public class AppDeployer {
       coordinatorPaths.put(schedule.getName(), coordinatorPath);
     }
 
-    Path libPath = new Path(appPath, "lib");
+    installBundle(applicationClass, appPath, coordinatorPaths);
 
-    installBundle(applicationClass, appPath, null, libPath, coordinatorPaths);
-
-    installJars(libPath, jars);
+    installJars(OozieScheduling.libPath(appPath), jars);
   }
 
 
@@ -146,6 +145,7 @@ public class AppDeployer {
     Path bundlePath = new Path(appPath, "oozie/bundle.xml");
 
     props.setProperty(OozieClient.BUNDLE_APP_PATH, bundlePath.toString());
+    props.setProperty(OozieClient.USE_SYSTEM_LIBPATH, "true");
 
     try {
       return oozieClient.run(props);
@@ -188,7 +188,7 @@ public class AppDeployer {
 
   private Path installCoordinator(Path appPath, Path workflowPath, Schedule schedule) {
 
-    SchedulableJobManager manager = SchedulableJobManager.create(schedule.getJobClass(), conf);
+    SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
 
     Path coordDirectory = new Path (appPath, COORD_DIR + "/" + schedule.getName());
 
@@ -215,8 +215,7 @@ public class AppDeployer {
     return coordPath;
   }
 
-  private Path installBundle(Class appClass, Path appPath, Path appConfigPath,
-                             Path libPath, Map<String,Path> coordinatorPaths) {
+  private Path installBundle(Class appClass, Path appPath, Map<String,Path> coordinatorPaths) {
 
     Path bundlePath = new Path(appPath, "oozie/bundle.xml");
 
@@ -226,7 +225,7 @@ public class AppDeployer {
 
       outputStream = fs.create(bundlePath);
 
-      OozieScheduling.writeBundle(appClass, conf, appConfigPath, libPath, coordinatorPaths, outputStream);
+      OozieScheduling.writeBundle(appClass, conf, appPath, coordinatorPaths, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);

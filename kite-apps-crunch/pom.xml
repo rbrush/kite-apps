@@ -86,6 +86,7 @@
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>${artifact.hadoop-deps}</artifactId>
+      <version>${kite.version}</version>
       <type>pom</type>
       <scope>provided</scope>
     </dependency>
@@ -97,6 +98,18 @@
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-apps-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-data-hive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-data-crunch</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.crunch</groupId>
+      <artifactId>crunch-core</artifactId>
     </dependency>
 
     <!-- Misc -->
