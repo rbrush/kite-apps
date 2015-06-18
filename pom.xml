@@ -31,12 +31,12 @@
     <targetJavaVersion>1.6</targetJavaVersion>
     <Xdoclint /> <!-- set by the java8 profile to turn off doclint -->
 
-    <kite.version>1.0.1-SNAPSHOT</kite.version>
+    <kite.version>1.1.0</kite.version>
 
     <!-- used by jdiff, semver rule -->
     <previous.project.version>0.1.0-SNAPSHOT</previous.project.version>
 
-    <cdh5.version>5.4.2</cdh5.version>
+    <cdh5.version>5.4.3</cdh5.version>
     <cdh.version>${cdh5.version}</cdh.version>
 
     <!-- Currently only CDH 5 is supported. -->
