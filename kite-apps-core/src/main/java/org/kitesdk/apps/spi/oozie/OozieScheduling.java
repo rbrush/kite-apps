@@ -143,10 +143,20 @@ public class OozieScheduling {
 
     for (Map.Entry<String,Schedule.ViewTemplate> entry: schedule.getViewTemplates().entrySet()) {
 
+
+      Schedule.ViewTemplate template = entry.getValue();
+
       writer.startElement("dataset");
       writer.addAttribute("name", "ds_" + toIdentifier(entry.getKey()));
-      writer.addAttribute("frequency", Integer.toString(entry.getValue().getFrequency()));
-      writer.addAttribute("initial-instance", formatter.print(new Instant()));
+
+      // Write the frequency in Oozie's pre-cron format. This should be removed
+      // when See https://issues.apache.org/jira/browse/OOZIE-1431 is available.
+      writer.addAttribute("frequency", CronConverter.toFrequency(template.getFrequency()));
+
+      Instant initialTime = CronConverter.nextInstant(template.getFrequency(), new Instant());
+
+      writer.addAttribute("initial-instance", formatter.print(initialTime));
+
       writer.addAttribute("timezone", "UTC");
 
       element(writer, "uri-template", URIShim.kiteToHDFS(entry.getValue().getUriTemplate()));

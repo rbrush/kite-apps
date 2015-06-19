@@ -6,6 +6,7 @@ import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
+import org.kitesdk.apps.spi.oozie.CronConverter;
 
 import java.util.Collections;
 import java.util.Map;
@@ -93,10 +94,10 @@ public class Schedule {
 
     private final String name;
     private final String uriTemplate;
-    private final int frequency;
+    private final String frequency;
     private final Class inputType;
 
-    ViewTemplate(String name, String uriTemplate, Class inputType, int frequency) {
+    ViewTemplate(String name, String uriTemplate, Class inputType, String frequency) {
       this.name = name;
       this.uriTemplate = uriTemplate;
       this.inputType = inputType;
@@ -123,12 +124,12 @@ public class Schedule {
     }
 
     /**
-     * Gets the frequency in minutes for which a view is expected to
+     * Gets the cron-style frequency for which a view is expected to
      * arrive.
      *
-     * @return the job frequency
+     * @return the data arrival frequency for the view.
      */
-    public int getFrequency() {
+    public String getFrequency() {
       return frequency;
     }
 
@@ -183,6 +184,25 @@ public class Schedule {
     }
 
     /**
+     * Instructs the job to start after the given start time. The actual start
+     * time of the job will be the earliest instant at or after the given
+     * start time that aligns with the job's schedule. For instance,
+     * of the job schedule is "0 * * * *", indicating running at the
+     * start of each hour, the effective time will be at the start
+     * of the first our after the given time.
+     *
+     * @param startTime the time at which the job may start
+     *
+     * @return An instance of the builder for method chaining.
+     */
+    public Builder startAt(Instant startTime) {
+
+      this.startTime = startTime;
+
+      return this;
+    }
+
+    /**
      * Sets an hourly frequency on the schedule, equivalent to calling
      * <code>builder.frequency("0 * * * *");(</code>
      *
@@ -209,7 +229,7 @@ public class Schedule {
     }
 
     /**
-     * Configures a view defined by a name and URI template to be used
+     * Deprecated. Configures a view defined by a name and URI template to be used
      * by the scheduled job.
      *
      * @param name the name of the data parameter for the job.
@@ -219,6 +239,7 @@ public class Schedule {
      *
      * @return An instance of the builder for method chaining.
      */
+    @Deprecated
     public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
       Map<String,DataIn> inputs = manager.getInputs();
@@ -232,7 +253,57 @@ public class Schedule {
         throw new IllegalArgumentException("Named parameters " + name +
             " not used in job " + jobClass.getName());
 
-      views.put(name, new ViewTemplate(name, uriTemplate, type, frequencyMinutes));
+      String cronFrequency = Integer.toString(frequencyMinutes) + " * * * *";
+
+      views.put(name, new ViewTemplate(name, uriTemplate, type, cronFrequency));
+
+      return this;
+    }
+
+    /**
+     * Configures a view defined by a name and URI template to be used
+     * as an input for the scheduled job. The caller must also specify
+     * a cron-style frequency for when data for that input arrives.
+     *
+     * @param name the name of the data parameter for the job.
+     * @param uriTemplate the Oozie-style URI template identifying the input
+     * @param cronFrequency the frequency in minutes with which instances of
+     *                         the view are expected to be created.
+     *
+     * @return An instance of the builder for method chaining.
+     */
+    public Builder withInput(String name, String uriTemplate, String cronFrequency) {
+
+      DataIn input = manager.getInputs().get(name);
+
+      if (input == null)
+        throw new IllegalArgumentException("Named input parameter " + name +
+            " not used in job " + jobClass.getName());
+
+      views.put(name, new ViewTemplate(name, uriTemplate, input.type(), cronFrequency));
+
+      return this;
+    }
+
+    /**
+     * Configures a view defined by a name and URI template to be used as
+     * an output the scheduled job. The frequency for the output is the
+     * same for the job itself.
+     *
+     * @param name the name of the data parameter for the job.
+     * @param uriTemplate the Oozie-style URI template identifying the input
+     *
+     * @return An instance of the builder for method chaining.
+     */
+    public Builder withOutput(String name, String uriTemplate) {
+
+      DataOut output = manager.getOutputs().get(name);
+
+      if (output == null)
+        throw new IllegalArgumentException("Named output parameter " + name +
+            " not used in job " + jobClass.getName());
+
+      views.put(name, new ViewTemplate(name, uriTemplate, output.type(), frequency));
 
       return this;
     }
@@ -255,7 +326,10 @@ public class Schedule {
           throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
       }
 
-      return new Schedule(jobClass, name, frequency, startTime, views);
+      // Use the next start time that aligns with the cron schedule.
+      Instant effectiveStartTime = CronConverter.nextInstant(frequency, startTime);
+
+      return new Schedule(jobClass, name, frequency, effectiveStartTime, views);
     }
   }
 }

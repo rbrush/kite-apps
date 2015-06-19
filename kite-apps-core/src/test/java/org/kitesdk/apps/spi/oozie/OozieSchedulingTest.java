@@ -40,8 +40,8 @@ public class OozieSchedulingTest  {
 
     testSchedule = new Schedule.Builder().jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withView("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, 1)
-        .withView("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN, 1)
+        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
   }
 
@@ -119,6 +119,20 @@ public class OozieSchedulingTest  {
 
     assertEquals(workFlowPath,
         xpath.evaluate("coord:coordinator-app/coord:action/coord:workflow/coord:app-path", coord));
+
+    // Check the nominal time is set for the workflow.
+    assertEquals("${coord:nominalTime()}",
+        xpath.evaluate("coord:coordinator-app/coord:action/coord:workflow/coord:configuration/" +
+            "coord:property/coord:value[../coord:name/text() = \"coordNominalTime\"]", coord));
+
+    // Check data input and output properties are set for the workflow.
+    assertEquals("${coord:dataIn('datain_source_users')}",
+        xpath.evaluate("coord:coordinator-app/coord:action/coord:workflow/coord:configuration/" +
+            "coord:property/coord:value[../coord:name/text() = \"coord_source_users\"]", coord));
+
+    assertEquals("${coord:dataOut('dataout_target_users')}",
+        xpath.evaluate("coord:coordinator-app/coord:action/coord:workflow/coord:configuration/" +
+            "coord:property/coord:value[../coord:name/text() = \"coord_target_users\"]", coord));
   }
 
   @Test

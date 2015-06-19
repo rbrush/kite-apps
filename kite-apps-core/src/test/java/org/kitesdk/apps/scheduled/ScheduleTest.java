@@ -1,11 +1,14 @@
 package org.kitesdk.apps.scheduled;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.Test;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.test.apps.BadNameJob;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
+import org.joda.time.Instant;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -18,8 +21,8 @@ public class ScheduleTest {
     Schedule schedule = new Schedule.Builder()
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withView("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, 60)
-        .withView("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN, 60)
+        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     assertEquals(ScheduledInputOutputJob.class,
@@ -44,6 +47,24 @@ public class ScheduleTest {
     assertEquals("target.users", targetTemplate.getName());
     assertEquals(ScheduledInputOutputApp.OUTPUT_URI_PATTERN, targetTemplate.getUriTemplate());
   }
+
+  @Test
+  public void testStartNextHour() {
+
+    Instant startTime = Instant.parse("2015-06-10T02:42:37.52Z");
+    Instant effectiveStart = Instant.parse("2015-06-10T03:00:00.00Z");
+
+    Schedule schedule = new Schedule.Builder()
+        .jobClass(ScheduledInputOutputJob.class)
+        .frequency("0 * * * *")
+        .startAt(startTime)
+        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .build();
+
+    assertEquals(effectiveStart, schedule.getStartTime());
+  }
+
 
   @Test(expected = AppException.class)
   public void testBadJobName() {
