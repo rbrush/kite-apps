@@ -2,6 +2,9 @@ package org.kitesdk.apps.spi.oozie;
 
 import junit.framework.Assert;
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilder;
@@ -67,48 +70,52 @@ public class XMLUtil {
 
   public static Document toDom(ByteArrayOutputStream output) throws Exception {
 
-    // TODO: validate as part of document builder.
     InputStream input = new ByteArrayInputStream(output.toByteArray());
 
-    try {
-      // Get Oozie schemas from the oozie-client JAR.
-      StreamSource[] sources = new StreamSource[] {
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-workflow-0.5.xsd")),
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-coordinator-0.4.xsd")),
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-bundle-0.2.xsd")),
-          new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("spark-action-0.1.xsd"))};
+    return toDom(input);
+  }
 
-      SchemaFactory factory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
-      Schema schema = factory.newSchema(sources);
-      Validator validator = schema.newValidator();
+  public static Document toDom(InputStream input) throws Exception {
 
-      try {
-        validator.validate(new StreamSource(input));
-      } finally {
+    StreamSource[] sources = new StreamSource[] {
+        new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-workflow-0.5.xsd")),
+        new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-coordinator-0.4.xsd")),
+        new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("oozie-bundle-0.2.xsd")),
+        new StreamSource(Thread.currentThread().getContextClassLoader().getResourceAsStream("spark-action-0.1.xsd"))};
 
-        input.close();
+    SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
+    Schema schema = schemaFactory.newSchema(sources);
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+    factory.setIgnoringComments(true);
+    factory.setNamespaceAware(true);
+    factory.setSchema(schema);
+
+    factory.setXIncludeAware(true);
+
+    DocumentBuilder builder = factory.newDocumentBuilder();
+
+    // To prevent the DOM API from complaining...
+    builder.setErrorHandler(new ErrorHandler() {
+      @Override
+      public void warning(SAXParseException exception) throws SAXException {
+
+        throw exception;
       }
 
-    } catch (Exception e) {
-      Assert.fail(e.getMessage());
-    }
+      @Override
+      public void error(SAXParseException exception) throws SAXException {
+        throw exception;
+      }
 
-    DocumentBuilderFactory docBuilderFactory
-        = DocumentBuilderFactory.newInstance();
-    //ignore all comments inside the xml file
-    docBuilderFactory.setIgnoringComments(true);
+      @Override
+      public void fatalError(SAXParseException exception) throws SAXException {
+        throw exception;
+      }
+    });
 
-    //allow includes in the xml file
-    docBuilderFactory.setNamespaceAware(true);
-    try {
-      docBuilderFactory.setXIncludeAware(true);
-    } catch (UnsupportedOperationException e) {
-
-    }
-
-    DocumentBuilder builder = docBuilderFactory.newDocumentBuilder();
-
-    return builder.parse(new ByteArrayInputStream(output.toByteArray()));
+    return builder.parse(input);
   }
 
   public static XPath getXPath() {

@@ -1,5 +1,6 @@
 package org.kitesdk.apps.spi.oozie;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
@@ -9,6 +10,7 @@ import org.junit.Test;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
+import org.kitesdk.apps.test.apps.AltScheduledInputOutputJob;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
@@ -26,7 +28,9 @@ import javax.xml.xpath.XPathFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;;
 
 import static org.junit.Assert.assertEquals;
@@ -86,12 +90,10 @@ public class OozieSchedulingTest  {
   public void testWriteCoordinator() throws Exception {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    String workFlowPath = "/test/workflow/path";
-
     SchedulableJobManager manager = JobManagers.create(ScheduledInputOutputJob.class,
         new Configuration());
 
-    OozieScheduling.writeCoordinator(testSchedule, manager, new Path(workFlowPath), output);
+    OozieScheduling.writeCoordinator(testSchedule, manager, output);
 
     Document coord = XMLUtil.toDom(output);
 
@@ -117,7 +119,7 @@ public class OozieSchedulingTest  {
         xpath.evaluate("coord:coordinator-app/coord:output-events/coord:data-out/coord:instance",
             coord));
 
-    assertEquals(workFlowPath,
+    assertEquals("${kiteAppRoot}/oozie/workflows/scheduled-input-output",
         xpath.evaluate("coord:coordinator-app/coord:action/coord:workflow/coord:app-path", coord));
 
     // Check the nominal time is set for the workflow.
@@ -141,35 +143,44 @@ public class OozieSchedulingTest  {
     String appPath = "/test/app/path";
     String libPath = "/test/lib/path";
 
-    String coordPath1 = "/some/coord/path/1";
-    String coordPath2 = "/some/coord/path/2";
 
-    Map<String,Path> coordinatorPaths = Maps.newHashMap();
+    Schedule schedule1 = new Schedule.Builder()
+        .jobClass(ScheduledInputOutputJob.class)
+        .frequency("0 * * * *")
+        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .build();
 
-    coordinatorPaths.put("coord1", new Path(coordPath1));
-    coordinatorPaths.put("coord2", new Path(coordPath2));
+    Schedule schedule2 = new Schedule.Builder()
+        .jobClass(AltScheduledInputOutputJob.class)
+        .frequency("0 * * * *")
+        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .build();
+
+    List<Schedule> schedules = Arrays.asList(schedule1, schedule2);
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     OozieScheduling.writeBundle(ScheduledInputOutputApp.class, new Configuration(),
-        new Path(appPath), coordinatorPaths, output);
+        new Path(appPath), schedules, output);
 
     Document bundle = XMLUtil.toDom(output);
 
     XPath xpath = XMLUtil.getXPath();
 
     // Check expected coordinator names.
-    assertEquals("coord1",
+    assertEquals(new ScheduledInputOutputJob().getName(),
         xpath.evaluate("bn:bundle-app/bn:coordinator[1]/@name", bundle));
 
-    assertEquals("coord2",
+    assertEquals(new AltScheduledInputOutputJob().getName(),
         xpath.evaluate("bn:bundle-app/bn:coordinator[2]/@name", bundle));
 
     // Entries for the coordinator paths should exist.
-    assertEquals(coordPath1,
+    assertEquals("${kiteAppRoot}/" + OozieScheduling.coordPath(schedule1),
         xpath.evaluate("bn:bundle-app/bn:coordinator[1]/bn:app-path", bundle));
 
-    assertEquals(coordPath2,
+    assertEquals("${kiteAppRoot}/" + OozieScheduling.coordPath(schedule2),
         xpath.evaluate("bn:bundle-app/bn:coordinator[2]/bn:app-path", bundle));
   }
 }

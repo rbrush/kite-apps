@@ -19,6 +19,7 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 @Parameters(commandDescription="Installs a Kite application.")
 public class InstallCommand extends BaseCommand {
@@ -42,6 +43,14 @@ public class InstallCommand extends BaseCommand {
     String appClassName = args.get(1);
     Path destination = new Path(args.get(2));
 
+    FileSystem fs = FileSystem.get(getConf());
+
+    if (fs.exists(destination)) {
+
+      console.error("Cannot install to {} because that destination already exists.", destination);
+      return 1;
+    }
+
     if (!appJarFile.exists() || appJarFile.isDirectory()) {
       console.error("File {} is not a valid JAR file.", appJarFile.getAbsolutePath());
       return 1;
@@ -61,13 +70,10 @@ public class InstallCommand extends BaseCommand {
       return 1;
     }
 
-    FileSystem fs = FileSystem.get(getConf());
-
     AppDeployer deployer = new AppDeployer(fs, getConf());
 
     // Load the needed libraries and the application jar
     // so they are deployed to the coordinator.
-    // TODO: Should we move the Kite and its dependencies to a shared library?
     List<File> libraryJars = getLibraryJars();
     List<File> allJars = Lists.newArrayList(libraryJars);
 

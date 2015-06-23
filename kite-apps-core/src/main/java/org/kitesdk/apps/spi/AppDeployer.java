@@ -21,15 +21,12 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 
 /**
  * Deploys the Kite application to a Hadoop cluster.
  */
 public class AppDeployer {
-
-  public static final String WORKFLOW_DIR = "oozie/workflows";
-
-  public static final String COORD_DIR = "oozie/coordinators";
 
   private final FileSystem fs;
 
@@ -62,6 +59,11 @@ public class AppDeployer {
   @VisibleForTesting
   void install(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
 
+    // Install to a temporary destination and rename it to avoid
+    // potential races against other installers.
+    String tempBase = conf.get("hadoop.tmp.dir", "/tmp");
+    Path tempDestination =  new Path(tempBase, "kite-" + (new Random().nextInt() & Integer.MAX_VALUE));
+
     Application app;
 
     try {
@@ -76,7 +78,7 @@ public class AppDeployer {
 
     try {
 
-      fs.mkdirs(appPath);
+      fs.mkdirs(tempDestination);
 
     } catch (IOException e) {
       throw new AppException(e);
@@ -84,22 +86,28 @@ public class AppDeployer {
 
     List<Schedule> schedules = app.getSchedules();
 
-    Map<String,Path> coordinatorPaths = Maps.newHashMap();
-
     for (Schedule schedule: schedules) {
 
-      Path workflowPath = installWorkflow(appPath, schedule);
+      installWorkflow(tempDestination, schedule);
 
-      Path coordinatorPath = installCoordinator(appPath, workflowPath, schedule);
-
-      coordinatorPaths.put(schedule.getName(), coordinatorPath);
+      installCoordinator(tempDestination, schedule);
     }
 
-    installBundle(applicationClass, appPath, coordinatorPaths);
+    installBundle(applicationClass, tempDestination, appPath, schedules);
 
-    installJars(OozieScheduling.libPath(appPath), jars);
+    installJars(new Path(tempDestination, "lib"), jars);
+
+    try {
+      if (!fs.rename(tempDestination, appPath)) {
+
+        throw new AppException("Unable to rename " +
+            tempDestination + " to " + appPath + ".");
+      }
+
+    } catch (IOException e) {
+      throw new AppException(e);
+    }
   }
-
 
   private Configuration filterConfig(Configuration conf) {
 
@@ -160,9 +168,9 @@ public class AppDeployer {
    * Installs a workflow for the given schedule under the application path
    * and return the location of the installed workflow.
    */
-  private Path installWorkflow(Path appPath, Schedule schedule) {
+  private void installWorkflow(Path appPath, Schedule schedule) {
 
-    Path workflowPath = new Path (appPath, WORKFLOW_DIR + "/" + schedule.getName());
+    Path workflowPath = new Path (appPath, OozieScheduling.workflowPath(schedule));
 
     Path workflowXMLPath = new Path(workflowPath, "workflow.xml");
 
@@ -181,16 +189,14 @@ public class AppDeployer {
       if (outputStream != null)
         Closeables.closeQuietly(outputStream);
     }
-
-    return workflowPath;
   }
 
 
-  private Path installCoordinator(Path appPath, Path workflowPath, Schedule schedule) {
+  private void installCoordinator(Path appPath, Schedule schedule) {
 
     SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
 
-    Path coordDirectory = new Path (appPath, COORD_DIR + "/" + schedule.getName());
+    Path coordDirectory = new Path (appPath, OozieScheduling.coordPath(schedule));
 
     Path coordPath = new Path(coordDirectory, "coordinator.xml");
 
@@ -202,7 +208,7 @@ public class AppDeployer {
 
       outputStream = fs.create(coordPath);
 
-      OozieScheduling.writeCoordinator(schedule, manager, workflowPath, outputStream);
+      OozieScheduling.writeCoordinator(schedule, manager, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);
@@ -211,13 +217,11 @@ public class AppDeployer {
       if (outputStream != null)
         Closeables.closeQuietly(outputStream);
     }
-
-    return coordPath;
   }
 
-  private Path installBundle(Class appClass, Path appPath, Map<String,Path> coordinatorPaths) {
+  private Path installBundle(Class appClass, Path tempDestination, Path appPath, List<Schedule> schedules) {
 
-    Path bundlePath = new Path(appPath, "oozie/bundle.xml");
+    Path bundlePath = new Path(tempDestination, "oozie/bundle.xml");
 
     OutputStream outputStream = null;
 
@@ -225,7 +229,7 @@ public class AppDeployer {
 
       outputStream = fs.create(bundlePath);
 
-      OozieScheduling.writeBundle(appClass, conf, appPath, coordinatorPaths, outputStream);
+      OozieScheduling.writeBundle(appClass, conf, appPath, schedules, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);

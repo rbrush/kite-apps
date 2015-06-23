@@ -8,18 +8,22 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.spi.oozie.XMLUtil;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.data.MiniDFSTest;
 import org.kitesdk.data.spi.DefaultConfiguration;
+import org.w3c.dom.Document;
 
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import javax.xml.xpath.XPath;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Random;
 
 public class AppDeployerTest extends MiniDFSTest {
 
@@ -29,13 +33,20 @@ public class AppDeployerTest extends MiniDFSTest {
 
   @Before
   public void setup() throws IOException {
-    this.testDirectory = new Path(Files.createTempDir().getAbsolutePath());
+
     this.fs = getDFS();
+
+    // Create a test direcotry in HDFS.
+    String tempBase = getConfiguration().get("hadoop.tmp.dir", "/tmp");
+
+    String tempName = "testapp-" + (new Random().nextInt() & Integer.MAX_VALUE);
+    this.testDirectory = fs.makeQualified(new Path(tempBase, tempName));
+
     DefaultConfiguration.set(getConfiguration());
   }
 
   @Test
-  public void testDeploySimpleApp() throws IOException {
+  public void testDeploySimpleApp() throws Exception {
 
     AppDeployer deployer = new AppDeployer(fs, getConfiguration());
     deployer.install(ScheduledInputOutputApp.class, testDirectory, Collections.<File>emptyList());
@@ -47,10 +58,10 @@ public class AppDeployerTest extends MiniDFSTest {
    * Asserts that the application installed at thet given path is a valid
    * structure.
    */
-  private void assertValidInstallation(Path appPath) throws IOException {
+  private void assertValidInstallation(Path appPath) throws Exception {
 
-    Path workflowDir = new Path(appPath, AppDeployer.WORKFLOW_DIR);
-    Path coordDir = new Path(appPath, AppDeployer.COORD_DIR);
+    Path workflowDir = new Path(appPath, "oozie/workflows");
+    Path coordDir = new Path(appPath, "oozie/coordinators");
     Path bundleFile = new Path(appPath, "oozie/bundle.xml");
 
     Assert.assertTrue(fs.exists(appPath));
@@ -58,21 +69,53 @@ public class AppDeployerTest extends MiniDFSTest {
     Assert.assertTrue(fs.exists(coordDir));
     Assert.assertTrue(fs.exists(bundleFile));
 
+    // Make sure the expected application path is set.
+    InputStream input = fs.open(bundleFile);
+
+    try {
+
+      Document dom = XMLUtil.toDom(fs.open(bundleFile));
+
+      XPath xpath = XMLUtil.getXPath();
+
+      // Make sure our root is written to the exptected test directory.
+      String appRoot = xpath.evaluate("bn:bundle-app/bn:parameters/bn:property" +
+          "/bn:value[../bn:name/text() = \"kiteAppRoot\"]", dom);
+
+      Assert.assertTrue(appRoot.startsWith(testDirectory.toString()));
+
+    } finally {
+
+      input.close();
+    }
+
+    boolean foundWorkflow = false;
+
     // Ensure all workflow files are valid.
     for (FileStatus status: fs.listStatus(workflowDir)) {
+
+      foundWorkflow = true;
 
       Path workflowFile = new Path(status.getPath(), "workflow.xml");
 
       validateSchema(fs, workflowFile);
     }
 
+    Assert.assertTrue("No test workflow found.", foundWorkflow);
+
+    boolean foundCoordinator = false;
+
     // Ensure all coordinator files are valid.
     for (FileStatus status: fs.listStatus(coordDir)) {
+
+      foundCoordinator = true;
 
       Path coordinatorFile = new Path(status.getPath(), "coordinator.xml");
 
       validateSchema(fs, coordinatorFile);
     }
+
+    Assert.assertTrue("No test coordinator found.", foundCoordinator);
 
     validateSchema(fs, bundleFile);
   }

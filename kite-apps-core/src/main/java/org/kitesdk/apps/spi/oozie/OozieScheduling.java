@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 
@@ -54,6 +55,33 @@ public class OozieScheduling {
 
   private static final String WORKFLOW_NOMINAL_TIME = "workflowNominalTime";
   private static final String HIVE_METASTORE_URIS = "hive.metastore.uris";
+
+  /**
+   * Relative path to where Oozie workflows are stored.
+   */
+  private static final String WORKFLOW_DIR = "oozie/workflows";
+
+  /**
+   * Relative path to where Oozie coordinators are stored.
+   */
+  private static final String COORD_DIR = "oozie/coordinators";
+
+
+  /**
+   * Returns the relative path for the workflow generated for the schedule.
+   */
+  public static String workflowPath(Schedule schedule) {
+
+    return WORKFLOW_DIR + "/" + schedule.getName();
+  }
+
+  /**
+   * Returns the relative path for the coordinator generated for the schedule.
+   */
+  public static String coordPath(Schedule schedule) {
+
+    return COORD_DIR + "/" + schedule.getName();
+  }
 
   public static Instant getNominalTime(Configuration conf) {
 
@@ -207,12 +235,10 @@ public class OozieScheduling {
    *
    * @param schedule the schedule for which a coordinator is to be written
    * @param manager the manager instance fot the scheduled job
-   * @param workflowPath the path to the workflow
    * @param output an output stream to which the generated schedule is written
    */
   public static void writeCoordinator(Schedule schedule,
                                       SchedulableJobManager manager,
-                                      Path workflowPath,
                                       OutputStream output) throws IOException {
 
     XmlStreamWriter streamWriter = WriterFactory.newXmlWriter(output);
@@ -236,7 +262,7 @@ public class OozieScheduling {
     writer.startElement("action");
 
     writer.startElement("workflow");
-    element(writer, "app-path", workflowPath.toString());
+    element(writer, "app-path", "${kiteAppRoot}/" + workflowPath(schedule));
 
     writer.startElement("configuration");
 
@@ -277,18 +303,11 @@ public class OozieScheduling {
     writer.endElement();
   }
 
-  /**
-   * Returns the path to write libraries to based on the
-   * underlying root path.
-   */
-  public static final Path libPath(Path appRootPath) {
-    return new Path(appRootPath, "lib");
-  }
 
   public static void writeBundle(Class appClass,
                                  Configuration conf,
                                  Path appPath,
-                                 Map<String,Path> coordinatorPaths,
+                                 List<Schedule> schedules,
                                  OutputStream output) throws IOException {
 
     XmlStreamWriter streamWriter = WriterFactory.newXmlWriter(output);
@@ -301,7 +320,14 @@ public class OozieScheduling {
 
     writer.startElement("parameters");
 
-    property(writer, "oozie.libpath", libPath(appPath).toString());
+    // Default to the HDFS scheme for the root path if none is provided.
+    Path qualifiedPath = appPath.toUri().getScheme() == null ?
+        appPath.makeQualified(URI.create("hdfs:/"), appPath) :
+        appPath;
+
+    property(writer, "kiteAppRoot", qualifiedPath.toString());
+
+    property(writer, "oozie.libpath", "${kiteAppRoot}/lib");
     property(writer, "nameNode", conf.get("fs.default.name"));
 
     String resourceManager = conf.get("yarn.resourcemanager.address");
@@ -325,24 +351,15 @@ public class OozieScheduling {
     // TODO: handle application configuration.
 //    if (appConfigPath != null)
 //     property(writer, "appConfigPath", appConfigPath.toString());
-
-
-    // Default to the HDFS scheme for the root path if none is provided.
-    Path qualifiedPath = appPath.toUri().getScheme() == null ?
-        appPath.makeQualified(URI.create("hdfs:/"), appPath) :
-        appPath;
-
-    property(writer, "kiteAppRoot", qualifiedPath.toString());
-
     writer.endElement(); // parameters
 
     int i = 0;
 
-    for (Map.Entry<String,Path> coordinator: coordinatorPaths.entrySet()) {
+    for (Schedule schedule: schedules) {
       writer.startElement("coordinator");
-      writer.addAttribute("name", coordinator.getKey());
+      writer.addAttribute("name", schedule.getName());
 
-      element(writer, "app-path", coordinator.getValue().toString());
+      element(writer, "app-path", "${kiteAppRoot}/" + coordPath(schedule));
       writer.endElement(); // coordinator
     }
 
