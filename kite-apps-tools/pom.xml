@@ -17,7 +17,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>kite-apps-tools-cdh5</artifactId>
+  <artifactId>kite-apps-tools</artifactId>
   <packaging>pom</packaging>
 
   <parent>
@@ -27,7 +27,7 @@
     <relativePath>../</relativePath>
   </parent>
 
-  <name>Kite Apps Tools CDH5 Module</name>
+  <name>Kite Apps Tools Module</name>
   <description>
     Builds a tarball (and zip) of the kite-apps-tools runtime. This project should be merged with kite-tools when
     app support stabilizes.
@@ -46,7 +46,7 @@
               <goal>single</goal>
             </goals>
             <configuration>
-              <descriptor>src/main/assembly/cdh5.xml</descriptor>
+              <descriptor>src/main/assembly/runtime.xml</descriptor>
               <appendAssemblyId>false</appendAssemblyId>
             </configuration>
           </execution>
@@ -119,18 +119,12 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- This is based on the kite-tools POM so that its dependencies are
-         inherited. Inheritance is necessary because the dependencies to bundle
-         are provided, which are not included transitively. This section adds
-         the CDH5 bundles for Hadoop and HBase, and fixes some versions.
-         -->
-
     <dependency>
       <groupId>org.kitesdk</groupId>
       <artifactId>kite-hadoop-cdh5-dependencies</artifactId>
       <version>${kite.version}</version>
       <type>pom</type>
-      <scope>runtime</scope>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -138,7 +132,7 @@
       <artifactId>kite-hbase-cdh5-dependencies</artifactId>
       <version>${kite.version}</version>
       <type>pom</type>
-      <scope>runtime</scope>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

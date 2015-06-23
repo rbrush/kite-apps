@@ -1,6 +1,7 @@
 package org.kitsdk.apps.spark.spi;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -10,12 +11,13 @@ import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
-import org.kitesdk.apps.spi.oozie.OozieScheduledJobMain;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
+import org.kitesdk.apps.spi.oozie.ShareLibs;
 import org.kitesdk.data.View;
 import org.kitsdk.apps.spark.AbstractSchedulableSparkJob;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -24,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.kitesdk.apps.spi.oozie.OozieScheduling.element;
+import static org.kitesdk.apps.spi.oozie.OozieScheduling.property;
 
 /**
  * Spark job manager.
@@ -109,6 +112,9 @@ class SparkJobManager extends SchedulableJobManager {
     // Make the nominal time visible to the workflow action.
     writer.startElement("configuration");
 
+    // Use the spark and hive sharelibs since many actions use both.
+    property(writer, "oozie.action.sharelib.for.spark", "spark,hive2");
+
     OozieScheduling.writeJobConfiguration(writer, schedule, getConf());
 
     writer.endElement(); // configuration
@@ -157,7 +163,7 @@ class SparkJobManager extends SchedulableJobManager {
     return builder.toString();
   }
 
-  private static final String getJarString(Class jobClass) {
+  private final String getJarString(Class jobClass) {
 
     List<File> libJars = getLibraryJars();
 
@@ -171,13 +177,31 @@ class SparkJobManager extends SchedulableJobManager {
         if (!first)
           builder.append(",");
 
-        // TODO: need to include only the appropriate library JARs,
-        // Append the file name in the lib folder.
         builder.append("${kiteAppRoot}/lib/");
         builder.append(jarFile.getName());
 
         first = false;
       }
+    }
+
+    try {
+
+      // Add sharelib JARs explicitly to the action as a workaround
+      // for https://issues.apache.org/jira/browse/OOZIE-2277
+
+      // No need to add the Spark shared library here because
+      // it is automatically included in the spark action.
+      List<Path> jars = ShareLibs.jars(getConf(), "hive2");
+
+      for (Path jar: jars) {
+
+        builder.append(",");
+        builder.append(jar.toString());
+      }
+
+    } catch (IOException e) {
+
+      throw new AppException(e);
     }
 
     return builder.toString();

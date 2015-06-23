@@ -125,6 +125,12 @@
       <artifactId>kite-apps-core</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.oozie</groupId>
+      <artifactId>oozie-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- Misc -->
     <dependency>
       <groupId>org.slf4j</groupId>

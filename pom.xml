@@ -14,7 +14,7 @@
     <module>kite-apps-spark</module>
     <module>kite-apps-examples</module>
     <module>kite-apps-cli</module>
-    <module>kite-apps-tools-cdh5</module>
+    <module>kite-apps-tools</module>
   </modules>
 
   <name>Kite Apps Module</name>
@@ -131,18 +131,21 @@
          <groupId>org.apache.spark</groupId>
          <artifactId>spark-core_2.10</artifactId>
          <version>${vers.spark}</version>
+         <scope>provided</scope>
        </dependency>
 
        <dependency>
          <groupId>org.apache.spark</groupId>
          <artifactId>spark-streaming_2.10</artifactId>
          <version>${vers.spark}</version>
+         <scope>provided</scope>
        </dependency>
 
        <dependency>
          <groupId>org.apache.hadoop</groupId>
          <artifactId>hadoop-common</artifactId>
          <version>${vers.hadoop}</version>
+         <scope>provided</scope>
          <!-- Excluded due to version conflict in tests. -->
          <exclusions>
            <exclusion>
@@ -207,6 +210,7 @@
          <groupId>org.apache.oozie</groupId>
          <artifactId>oozie-client</artifactId>
          <version>${vers.oozie}</version>
+         <scope>provided</scope>
          <exclusions>
 
            <!-- Oozie brings in an slf4j implementation that conflicts with others,

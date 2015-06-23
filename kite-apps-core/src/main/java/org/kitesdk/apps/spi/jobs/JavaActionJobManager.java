@@ -80,6 +80,10 @@ class JavaActionJobManager extends SchedulableJobManager {
     // Write the job configuration settings.
     writer.startElement("configuration");
 
+    // Use the hive sharelib since actions frequently interact
+    // with Hive.
+    property(writer, "oozie.action.sharelib.for.java", "hive2");
+
     for (Map.Entry<String,String> setting: settings.entrySet()) {
 
       property(writer, setting.getKey(), setting.getValue());
