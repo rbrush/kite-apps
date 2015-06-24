@@ -1,5 +1,7 @@
 ## Kite Apps
-Kite Apps is a prescriptive approach for writing, deploying and managing applications based on Hadoop and Kite. Developers use a simple fluent-style API to schedule jobs and define Kite views as inputs and outputs. This library handles all scheduling work for the developer, generating Oozie coordinators and workflows to satisfy the described schedule.
+Kite Apps is a prescriptive approach for writing, deploying and managing applications on Hadoop and Kite. Developers use a simple fluent Java API to schedule Crunch or Spark jobs, wiring them to Kite views as inputs and outputs. This library handles all scheduling work, generating and deploying the needed Oozie coordinators, workflows, and application libraries itself.
+
+This library is still maturing and may be subject to non-passive changes. It has been tested on CDH 5.4.
 
 ## Writing a Kite Application
 Users of this library work with two major concepts:
@@ -39,8 +41,8 @@ public class ExampleApp extends AbstractApplication {
     Schedule schedule = new Schedule.Builder()
         .jobClass(ExampleJob.class)
         .frequency("0 * * * *")
-        .withView("example.events", EVENT_URI_PATTERN, 60)
-        .withView("example.output", OUTPUT_URI_PATTERN, 60)
+        .withInput("example.events", EVENT_URI_PATTERN, "0 * * * *")
+        .withOutput("example.output", OUTPUT_URI_PATTERN)
         .build();
 
     schedule(schedule);
@@ -52,23 +54,50 @@ The schedule of a job provides a cron-style frequency and a pattern to create th
 
 See the kite-apps-examples projects for several complete examples.
 
-## Installing the CLI
-A CLI pre-packaged for CDH5 is available in the kite-apps-tools-cdh5 project. This project produces a gzipped TAR file that contains a kite-apps shell script to launch the CLI. Example usage is below.
+## Installation
+This library has two parts to install: Oozie URI support for Kite datasets and a command-line tool for deploying applications.
+
+### Installing the Oozie URI Handler
+The Oozie URI handler available starting with Kite 1.1 must be installed by hand for the time being. Better documentation to include with Oozie is being tracked in [OOZIE-2269](https://issues.apache.org/jira/browse/OOZIE-2269). For now, users can take these steps:
+
+First, the following files should be installed where Oozie can see them. Installing into ```/var/lib/oozie``` works on a Cloudera quickstart machine. The jars are:
+
+* kite-data-core-1.1.0.jar
+* kite-data-oozie-1.1.0.jar
+* kite-hadoop-compatibility-1.1.0.jar
+* kite-data-hive-1.1.0.jar
+* commons-jexl-2.1.1.jar
+* jackson-core-2.3.1.jar
+* jackson-databind-2.3.1.jar
+
+These libraries can be found in Maven repositories or in the lib folder of the kite-apps-tools assembly.
+
+Second, the following must be added to the oozie-site.xml. (Cloudera users can do so via the oozie-site safety valve in Cloudera manager.)
+
+```xml
+<property>
+  <name>oozie.service.URIHandlerService.uri.handlers</name>
+  <value>org.apache.oozie.dependency.FSURIHandler,org.apache.oozie.dependency.HCatURIHandler,org.kitesdk.data.oozie.KiteURIHandler</value>
+</property>
+```
+
+Finally, Oozie needs to be restarted for these changes to take effect.
+
+### Installing the CLI
+A CLI pre-packaged is available in the kite-apps-tools project. This project produces a gzipped TAR file that contains a kite-apps shell script to launch the CLI. Example usage is below.
 
 ## Setup
-The examples assume that Hadoop, Hive, and Oozie configuration settings are visible. These are often set in Hadoop environments. Here is an example setting them up on a Cloudera Quickstart VM:
+The examples assume that Hadoop, Hive, and Oozie configuration settings are visible. These are often set in Hadoop environments. On a Cloudera quickstart VM, one simply needs to define the OOZIE_URL:
 
 ```bash
-export HADOOP_CONF_DIR=/etc/hadoop/conf
-export HIVE_CONF_DIR=/etc/hive/conf
 export OOZIE_URL=http://quickstart.cloudera:11000/oozie
 ```
 
-With these in place, simply untar the Kite Apps tool and it will be ready for use:
+With this in place, simply untar the Kite Apps tool and it will be ready for use:
 
 ```bash
-tar xzf kite-apps-tools-cdh5-0.1.0-SNAPSHOT.tar.gz
-cd kite-apps-tools-cdh5-0.1.0-SNAPSHOT
+tar xzf kite-apps-tools-0.1.0-SNAPSHOT.tar.gz
+cd kite-apps-tools-0.1.0-SNAPSHOT
 ```
 
 ## Running the examples
@@ -104,8 +133,7 @@ Kite Applications are installed to a target directory, which contains the follow
 This will be expanded in the future, with separate directories to contain user-editable configuration or other content.
 
 ## Outstanding items
-* Unit tests and documentation are very lacking
-* Use a Dataset URI Handler for Oozie integration rather than the current (fragile) shim.
-* Add a way for job configuration to be externally defined, possibly providing a job-settings.xml for each Kite job.
-* Add support for a StreamingJob, based on Spark Streaming and Kafka, to complement the existing ScheduledJob.
-* Move Kite Apps and underlying libraries to a shared library to avoid duplicating them in every application
+* Improved documentation and unit tests.
+* Add a way for job configuration to be externally defined, possibly providing a job-settings.xml for each Kite job. See [issue 3](https://github.com/rbrush/kite-apps/issues/3).
+* Add support for a StreamingJob, based on Spark Streaming and Kafka, to complement the existing ScheduledJob. See [issue 4](https://github.com/rbrush/kite-apps/issues/4).
+* Tooling to simplify upgrades and uninstallation of applications. See [issue 10](https://github.com/rbrush/kite-apps/issues/10).
