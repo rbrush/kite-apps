@@ -1,8 +1,5 @@
 package org.kitesdk.apps.spi.oozie;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import junit.framework.Assert;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
@@ -16,22 +13,10 @@ import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
 import org.w3c.dom.Document;
 
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathFactory;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;;
 
 import static org.junit.Assert.assertEquals;
 
@@ -182,5 +167,33 @@ public class OozieSchedulingTest  {
 
     assertEquals("${kiteAppRoot}/" + OozieScheduling.coordPath(schedule2),
         xpath.evaluate("bn:bundle-app/bn:coordinator[2]/bn:app-path", bundle));
+  }
+
+  @Test
+  public void testQualifyHiveUri() {
+    String template = "view:hive:example/events" +
+        "?year=${YEAR}&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}";
+
+    Configuration conf = new Configuration();
+    conf.set("hive.metastore.uris", "thrift://examplehost:1234");
+
+    String qualified = OozieScheduling.qualifyUri(conf, template);
+
+    assertEquals("view:hive://examplehost:1234/example/events?year=${YEAR}" +
+        "&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}",
+        qualified);
+  }
+
+  @Test
+  public void testAlreadyQualifiedUri() {
+    String template = "view:hive://examplehost:1234/example/events?year=${YEAR}" +
+        "&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}";
+
+    Configuration conf = new Configuration();
+    conf.set("hive.metastore.uris", "thrift://examplehost:1234");
+
+    String qualified = OozieScheduling.qualifyUri(conf, template);
+
+    assertEquals(template, qualified);
   }
 }

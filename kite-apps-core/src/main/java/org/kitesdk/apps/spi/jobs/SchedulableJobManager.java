@@ -9,6 +9,7 @@ import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.data.Signalable;
 import org.kitesdk.data.View;
 
 import java.lang.annotation.Annotation;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Manager class for working with schedulable jobs.
@@ -153,6 +155,24 @@ public abstract class SchedulableJobManager {
     }
 
     return args;
+  }
+
+  /**
+   * Signal the produced views as ready for downstream processing.
+   */
+  protected void signalOutputViews(Map<String,View> views) {
+
+    Set<String> outputNames = getOutputs().keySet();
+
+    for (String outputName: outputNames) {
+
+      View view = views.get(outputName);
+
+      if (view instanceof Signalable) {
+
+        ((Signalable) view).signalReady();
+      }
+    }
   }
 
   /**

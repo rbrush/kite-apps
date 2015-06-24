@@ -1,5 +1,6 @@
 package org.kitesdk.apps.spi.oozie;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -163,6 +164,47 @@ public class OozieScheduling {
     return name.replace(".", "_");
   }
 
+  /**
+   * Qualifies the given URI template with metastore URI information
+   * from the given configuration, if it doesn't exist.
+   */
+  @VisibleForTesting
+  static final String qualifyUri(Configuration conf, String uriTemplate) {
+
+    // Create a URI that doesn't include the initial view: or dataset: prefix
+    // and excludes the parameters.
+    URI baseURI = URI.create(uriTemplate.substring(uriTemplate.indexOf(':') + 1, uriTemplate.indexOf('?')));
+
+    // We only need to qualify hive URIs that
+    // are not already qualified with a host,
+    // when there is a Hive metastore URI configured.
+    if (!"hive".equals(baseURI.getScheme()) ||
+        baseURI.getHost() != null ||
+        conf.get(HIVE_METASTORE_URIS) == null) {
+
+      return uriTemplate;
+    }
+
+    String[] uris = conf.get(HIVE_METASTORE_URIS).split(",");
+
+    if (uris.length == 0) {
+      return uriTemplate;
+    }
+
+    URI hiveUri = URI.create(uris[0]);
+
+    String host = hiveUri.getHost();
+    int port = hiveUri.getPort();
+
+    // Recreate a template this is qualified with host and port information.
+    String prefix = uriTemplate.startsWith("dataset") ? "dataset:hive:" :
+        "view:hive:";
+
+    String rest = uriTemplate.substring(prefix.length());
+
+    return prefix + "//" + host + ":" + port + "/" + rest;
+  }
+
   private static final void writeCoordinatorDatasets(XMLWriter writer,
                                                      Schedule schedule,
                                                      SchedulableJobManager manager) {
@@ -187,7 +229,9 @@ public class OozieScheduling {
 
       writer.addAttribute("timezone", "UTC");
 
-      element(writer, "uri-template", URIShim.kiteToHDFS(entry.getValue().getUriTemplate()));
+      String qualifiedTemplate = qualifyUri(manager.getConf(), entry.getValue().getUriTemplate());
+
+      element(writer, "uri-template", qualifiedTemplate);
 
       // Don't create a done flag. This may be something we can remove when
       // when using a URI handler aware of Kite.
@@ -382,10 +426,8 @@ public class OozieScheduling {
 
       String uri = conf.get("wf_" + OozieScheduling.toIdentifier(input.name()));
 
-      String kiteURI = URIShim.HDFSToKite(uri);
-
       views.put(input.name(),
-          Datasets.load(kiteURI, input.type()));
+          Datasets.load(uri, input.type()));
     }
 
     Collection<DataOut> outputs = manager.getOutputs().values();
@@ -394,10 +436,8 @@ public class OozieScheduling {
 
       String uri = conf.get("wf_" + OozieScheduling.toIdentifier(output.name()));
 
-      String kiteURI = URIShim.HDFSToKite(uri);
-
       views.put(output.name(),
-          Datasets.load(kiteURI, output.type()));
+          Datasets.load(uri, output.type()));
     }
 
     return views;

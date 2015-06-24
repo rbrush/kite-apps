@@ -63,6 +63,8 @@ class JavaActionJobManager extends SchedulableJobManager {
     } catch (InvocationTargetException e) {
       throw new AppException(e);
     }
+
+    signalOutputViews(views);
   }
 
   @Override

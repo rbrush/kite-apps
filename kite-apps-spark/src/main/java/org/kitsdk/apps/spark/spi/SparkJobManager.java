@@ -96,6 +96,8 @@ class SparkJobManager extends SchedulableJobManager {
       if (localContext)
         context.stop();
     }
+
+    signalOutputViews(views);
   }
 
   @Override
