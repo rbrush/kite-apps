@@ -1,3 +1,19 @@
+/**
+ * Copyright 2015 Cerner Corporation.
+ * Copyright 2015 Cloudera, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.kitesdk.apps.cli;
 
 import com.beust.jcommander.JCommander;
@@ -27,6 +43,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
+/**
+ * This class is based on logic from kite-tools project. Ultimately
+ * this logic should be factored out to eliminate this duplication.
+ */
 public class Main extends Configured implements Tool {
 
   public static void main (String[] args) throws Exception {
@@ -54,7 +74,7 @@ public class Main extends Configured implements Tool {
   String programName = DEFAULT_PROGRAM_NAME;
 
   @VisibleForTesting
-  static final String DEFAULT_PROGRAM_NAME = "kite-dataset";
+  static final String DEFAULT_PROGRAM_NAME = "kite-apps";
 
   private static Set<String> HELP_ARGS = ImmutableSet.of("-h", "-help", "--help", "help");
 

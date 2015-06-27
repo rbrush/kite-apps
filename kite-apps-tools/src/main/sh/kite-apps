@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # Copyright 2011 The Apache Software Foundation
+# Copyright 2015 Cerner Corporation
+# Copyright 2015 Cloudera, Inc.
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
