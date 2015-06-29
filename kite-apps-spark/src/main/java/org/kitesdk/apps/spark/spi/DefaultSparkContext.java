@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitsdk.apps.spark.spi;
+package org.kitesdk.apps.spark.spi;
 
 import org.apache.spark.api.java.JavaSparkContext;
 

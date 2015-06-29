@@ -21,10 +21,8 @@ import org.junit.Test;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spark.apps.SimpleSparkApp;
 import org.kitesdk.apps.spark.apps.SimpleSparkJob;
-import org.kitesdk.apps.spi.oozie.OozieScheduledJobMain;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
 import org.kitesdk.apps.spi.oozie.XMLUtil;
-import org.kitsdk.apps.spark.spi.SparkScheduledJobMain;
 import org.w3c.dom.Document;
 
 import javax.xml.xpath.XPath;

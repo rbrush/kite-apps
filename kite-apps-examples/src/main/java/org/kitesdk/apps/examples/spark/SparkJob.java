@@ -24,7 +24,7 @@ import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.data.View;
 import org.kitesdk.data.mapreduce.DatasetKeyInputFormat;
 import org.kitesdk.data.mapreduce.DatasetKeyOutputFormat;
-import org.kitsdk.apps.spark.AbstractSchedulableSparkJob;
+import org.kitesdk.apps.spark.AbstractSchedulableSparkJob;
 import scala.Tuple2;
 
 import java.io.IOException;

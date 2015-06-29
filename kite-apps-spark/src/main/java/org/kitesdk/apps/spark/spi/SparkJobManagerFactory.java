@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitsdk.apps.spark.spi;
+package org.kitesdk.apps.spark.spi;
 
 import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.spark.AbstractSchedulableSparkJob;
 import org.kitesdk.apps.spi.jobs.JobManagerFactory;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
-import org.kitsdk.apps.spark.AbstractSchedulableSparkJob;
 
 /**
  * Job manager for working with Spark jobs.

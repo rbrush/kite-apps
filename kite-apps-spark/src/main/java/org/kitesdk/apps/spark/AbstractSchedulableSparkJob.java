@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitsdk.apps.spark;
+package org.kitesdk.apps.spark;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;

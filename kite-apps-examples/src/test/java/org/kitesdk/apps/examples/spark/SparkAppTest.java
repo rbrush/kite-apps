@@ -33,7 +33,7 @@ import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
-import org.kitsdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.spark.spi.DefaultSparkContext;
 
 
 public class SparkAppTest extends MiniAppTest {

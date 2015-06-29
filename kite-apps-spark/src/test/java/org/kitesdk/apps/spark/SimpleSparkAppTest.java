@@ -35,7 +35,7 @@ import org.kitesdk.data.PartitionView;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
 import org.kitesdk.data.spi.filesystem.DatasetTestUtilities;
-import org.kitsdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.spark.spi.DefaultSparkContext;
 
 import java.net.URI;
 import java.util.List;
