@@ -16,7 +16,6 @@
 package org.kitesdk.apps.spi;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -34,7 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
@@ -57,6 +55,12 @@ public class AppDeployer {
    * Deploys the application to the cluster.
    */
   public void deploy(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
+
+    deploySchedulableJobs(applicationClass, appPath, jars);
+    deployStreamingJobs(applicationClass, appPath, jars);
+  }
+
+  private void deploySchedulableJobs(Class<? extends Application> applicationClass, Path appPath, List<File> jars)  {
     install(applicationClass, appPath, jars);
 
     // TODO: get the oozie URL from arguments?
@@ -69,6 +73,11 @@ public class AppDeployer {
     OozieClient client =  new OozieClient(oozieURL);
 
     start(client, appPath);
+  }
+
+  private void deployStreamingJobs(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
+
+    // TODO: get streaming jobs, load a streaming job manager, and deploy the to the cluster...
   }
 
   @VisibleForTesting
@@ -85,7 +94,7 @@ public class AppDeployer {
       app = applicationClass.newInstance();
 
     } catch (Exception e) {
-      throw new AppException("Unable to create an instance of the app: "
+      throw new AppException("Unable to createSchedulable an instance of the app: "
           + applicationClass, e);
     }
 
@@ -209,7 +218,7 @@ public class AppDeployer {
 
   private void installCoordinator(Path appPath, Schedule schedule) {
 
-    SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
 
     Path coordDirectory = new Path (appPath, OozieScheduling.coordPath(schedule));
 

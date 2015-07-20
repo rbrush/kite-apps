@@ -160,7 +160,7 @@ public class Schedule {
   }
 
   /**
-   * A fluent builder to create {@link Schedule} instances.
+   * A fluent builder to createSchedulable {@link Schedule} instances.
    */
   public static class Builder {
 
@@ -186,7 +186,7 @@ public class Schedule {
 
       this.jobClass = jobClass;
 
-      manager = JobManagers.create(jobClass, new Configuration());
+      manager = JobManagers.createSchedulable(jobClass, new Configuration());
 
       String name = manager.getName();
 

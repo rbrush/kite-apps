@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark.spi;
+package org.kitesdk.apps.spark.spi.scheduled;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -25,6 +25,8 @@ import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
 import org.kitesdk.apps.spi.oozie.ShareLibs;
@@ -66,7 +68,7 @@ class SparkJobManager extends SchedulableJobManager {
 
     job.setContext(DefaultSparkContext.getContext());
 
-    Method runMethod = resolveRunMethod(job);
+    Method runMethod = JobUtil.resolveRunMethod(job);
 
     return new SparkJobManager(job, runMethod, conf);
   }
@@ -83,7 +85,7 @@ class SparkJobManager extends SchedulableJobManager {
 
     boolean localContext = false;
 
-    // If no default spark context exists, create one for this job.
+    // If no default spark context exists, createSchedulable one for this job.
     if (context == null) {
 
       localContext = true;
@@ -99,7 +101,7 @@ class SparkJobManager extends SchedulableJobManager {
       job.setConf(getConf());
       ((AbstractSchedulableSparkJob) job).setContext(context);
 
-      Object[] args = getArgs(views);
+      Object[] args = JobUtil.getArgs(runMethod, views);
 
       runMethod.invoke(job, args);
     } catch (IllegalAccessException e) {

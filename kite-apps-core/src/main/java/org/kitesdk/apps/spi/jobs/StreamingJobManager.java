@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark;
+package org.kitesdk.apps.spi.jobs;
 
-import org.apache.spark.api.java.JavaSparkContext;
-import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
+import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.streaming.StreamDescription;
+import org.kitesdk.apps.streaming.StreamingJob;
 
-/**
- * Abstract base class for a schedulable Spark job.
- */
-public abstract class AbstractSchedulableSparkJob extends AbstractSchedulableJob {
+public interface StreamingJobManager<T extends StreamingJob> {
 
-  private JavaSparkContext context;
+  /**
+   * Deploys the job to the cluster.
+   */
+  public void deploy();
 
-  public void setContext(JavaSparkContext context) {
-    this.context = context;
-  }
+  /**
+   * Runs the stream in a local setting.
+   */
+  public void run();
 
-  public JavaSparkContext getContext() {
-    return context;
-  }
 }

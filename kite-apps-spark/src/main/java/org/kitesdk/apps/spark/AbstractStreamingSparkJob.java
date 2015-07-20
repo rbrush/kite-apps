@@ -15,21 +15,12 @@
  */
 package org.kitesdk.apps.spark;
 
-import org.apache.spark.api.java.JavaSparkContext;
-import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
+import org.apache.hadoop.conf.Configured;
+import org.kitesdk.apps.streaming.StreamingJob;
 
 /**
- * Abstract base class for a schedulable Spark job.
+ * Abstract base class for a streaming Spark job.
  */
-public abstract class AbstractSchedulableSparkJob extends AbstractSchedulableJob {
+public abstract class AbstractStreamingSparkJob extends Configured implements StreamingJob  {
 
-  private JavaSparkContext context;
-
-  public void setContext(JavaSparkContext context) {
-    this.context = context;
-  }
-
-  public JavaSparkContext getContext() {
-    return context;
-  }
 }

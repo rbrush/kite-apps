@@ -17,6 +17,7 @@ package org.kitesdk.apps;
 
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.streaming.StreamDescription;
 
 import java.util.List;
 
@@ -55,4 +56,12 @@ public interface Application {
    * @return a list of schedules
    */
   public List<Schedule> getSchedules();
+
+  /**
+   * Gets the list of stream descriptions defining stream-based
+   * jobs.
+   *
+   * @return a list of stream descriptions.
+   */
+  public List<StreamDescription> getStreamDescriptions();
 }

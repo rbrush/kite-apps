@@ -17,6 +17,7 @@ package org.kitesdk.apps;
 
 import com.google.common.collect.Lists;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.DatasetExistsException;
@@ -33,12 +34,17 @@ public abstract class AbstractApplication implements Application {
 
   private final List<Schedule> schedules = Lists.newArrayList();
 
-  public void createDataset(String uri, DatasetDescriptor descriptor) {}
+  private final List<StreamDescription> descriptions = Lists.newArrayList();
 
   protected void schedule(Schedule schedule) {
 
     schedules.add(schedule);
   };
+
+  protected void stream(StreamDescription description) {
+
+    descriptions.add(description);
+  }
 
   /**
    * Ensures the given dataset exists, creating it if it doesn't
@@ -74,5 +80,10 @@ public abstract class AbstractApplication implements Application {
   public List<Schedule> getSchedules() {
 
     return Collections.unmodifiableList(schedules);
+  }
+
+  public List<StreamDescription> getStreamDescriptions() {
+
+    return Collections.unmodifiableList(descriptions);
   }
 }

@@ -18,9 +18,9 @@ package org.kitesdk.apps.spi.jobs;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * Factory for creating job managers that support the given implementation class.
+ * Factory for creating schedulable job managers that support the given implementation class.
  */
-public interface JobManagerFactory {
+public interface SchedulableJobManagerFactory {
 
   public abstract boolean supports(Class jobClass);
 

@@ -90,7 +90,7 @@ public class OozieSchedulingTest  {
   public void testWriteCoordinator() throws Exception {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    SchedulableJobManager manager = JobManagers.create(ScheduledInputOutputJob.class,
+    SchedulableJobManager manager = JobManagers.createSchedulable(ScheduledInputOutputJob.class,
         new Configuration());
 
     OozieScheduling.writeCoordinator(testSchedule, manager, output);

@@ -76,6 +76,8 @@
     <vers.log4j>1.2.16</vers.log4j>
     <vers.crunch>0.11.0-cdh${cdh5.version}</vers.crunch>
     <vers.avro>1.7.6-cdh${cdh5.version}</vers.avro>
+    <vers.kafka>0.8.2.0-kafka-1.2.0</vers.kafka>
+    <vers.curator>2.7.1</vers.curator>
   </properties>
 
   <dependencyManagement>
@@ -155,6 +157,16 @@
          <artifactId>spark-streaming_2.10</artifactId>
          <version>${vers.spark}</version>
          <scope>provided</scope>
+       </dependency>
+
+       <!-- Kafka dependencies are compile rather than provided
+            since they may not exist or be easily located
+            on a Hadoop cluster. -->
+       <dependency>
+         <groupId>org.apache.spark</groupId>
+         <artifactId>spark-streaming-kafka_2.10</artifactId>
+         <version>${vers.spark}</version>
+         <scope>compile</scope>
        </dependency>
 
        <dependency>
@@ -421,6 +433,21 @@
        </dependency>
 
        <!-- Testing -->
+       <dependency>
+         <groupId>org.apache.kafka</groupId>
+         <artifactId>kafka_2.10</artifactId>
+         <classifier>test</classifier>
+         <version>${vers.kafka}</version>
+         <scope>test</scope>
+       </dependency>
+
+       <dependency>
+         <groupId>org.apache.curator</groupId>
+         <artifactId>curator-test</artifactId>
+         <version>${vers.curator}</version>
+         <scope>test</scope>
+       </dependency>
+
        <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>

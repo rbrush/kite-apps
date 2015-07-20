@@ -184,6 +184,12 @@
       <artifactId>kite-apps-spark</artifactId>
     </dependency>
 
+
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_2.10</artifactId>
+    </dependency>
+
     <!-- Crunch -->
     <dependency>
       <groupId>org.apache.crunch</groupId>
@@ -217,6 +223,13 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>org.kitesdk</groupId>
+      <artifactId>kite-apps-spark</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

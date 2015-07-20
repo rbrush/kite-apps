@@ -122,7 +122,7 @@ public class TestScheduler {
 
     for (Schedule schedule: app.getSchedules()) {
 
-      SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
+      SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
 
       manager.run(nominalTime, views);
     }

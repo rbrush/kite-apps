@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark;
-
-import org.apache.spark.api.java.JavaSparkContext;
-import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
 
 /**
- * Abstract base class for a schedulable Spark job.
+ * Temporary backport of SparkLauncher so this can be used
+ * in a Spark 1.3 environment. This package should be removed when
+ * we upgrade to Spark 1.4.
  */
-public abstract class AbstractSchedulableSparkJob extends AbstractSchedulableJob {
-
-  private JavaSparkContext context;
-
-  public void setContext(JavaSparkContext context) {
-    this.context = context;
-  }
-
-  public JavaSparkContext getContext() {
-    return context;
-  }
-}
+package org.kitesdk.spark.backport.launcher;

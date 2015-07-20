@@ -59,7 +59,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
     job.setConf(conf);
 
-    Method runMethod = resolveRunMethod(job);
+    Method runMethod = JobUtil.resolveRunMethod(job);
 
     return new JavaActionJobManager(job, runMethod, conf);
   }
@@ -69,7 +69,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
     job.setNominalTime(nominalTime);
 
-    Object[] args = getArgs(views);
+    Object[] args = JobUtil.getArgs(runMethod, views);
 
     try {
       runMethod.invoke(job, args);

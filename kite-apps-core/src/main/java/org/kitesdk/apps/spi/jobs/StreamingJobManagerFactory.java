@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark.spi;
+package org.kitesdk.apps.spi.jobs;
 
 import org.apache.hadoop.conf.Configuration;
-import org.kitesdk.apps.spark.AbstractSchedulableSparkJob;
-import org.kitesdk.apps.spi.jobs.JobManagerFactory;
-import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
+import org.kitesdk.apps.streaming.StreamDescription;
 
 /**
- * Job manager for working with Spark jobs.
+ * Factory for creating streaming job managers that support the given implementation class.
  */
-public class SparkJobManagerFactory implements JobManagerFactory {
+public interface StreamingJobManagerFactory {
 
-  @Override
-  public boolean supports(Class jobClass) {
+  public abstract boolean supports(Class jobClass);
 
-    return AbstractSchedulableSparkJob.class.isAssignableFrom(jobClass);
-  }
-
-  @Override
-  public SchedulableJobManager createManager(Class jobClass, Configuration conf) {
-
-    return SparkJobManager.create(jobClass, conf);
-  }
+  public abstract StreamingJobManager createManager(StreamDescription description, Configuration conf);
 }

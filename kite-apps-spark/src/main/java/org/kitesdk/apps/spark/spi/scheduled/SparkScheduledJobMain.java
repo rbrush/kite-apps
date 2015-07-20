@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark.spi;
+package org.kitesdk.apps.spark.spi.scheduled;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.joda.time.Instant;
+import org.kitesdk.apps.spark.spi.DefaultSparkContext;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
@@ -53,7 +54,7 @@ public class SparkScheduledJobMain {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.create(jobClass, conf);
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, conf);
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, conf);

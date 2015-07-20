@@ -29,7 +29,7 @@ import org.kitesdk.data.PartitionStrategy;
 public class DataGeneratorApp extends AbstractApplication {
 
   /**
-   * URI of the dataset to create.
+   * URI of the dataset to createSchedulable.
    */
   public static final String EVENT_DS_URI = "dataset:hive:example/events";
 
@@ -43,7 +43,7 @@ public class DataGeneratorApp extends AbstractApplication {
   public void setup(Configuration conf) {
 
     // Create the test dataset, partitioned by the minute
-    // so we quickly create data.
+    // so we quickly createSchedulable data.
     PartitionStrategy strategy = new PartitionStrategy.Builder()
         .year("timestamp")
         .month("timestamp")

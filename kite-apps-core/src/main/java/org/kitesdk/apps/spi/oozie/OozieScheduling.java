@@ -36,7 +36,6 @@ import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -154,7 +153,7 @@ public class OozieScheduling {
     writer.addAttribute("retry-interval", "1");
 
     // Write the appropriate action to be used in the job.
-    SchedulableJobManager manager = JobManagers.create(schedule.getJobClass(), conf);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
     manager.writeOozieActionBlock(writer, schedule);
 
     element(writer, "ok", "to", "end");
@@ -248,7 +247,7 @@ public class OozieScheduling {
 
       element(writer, "uri-template", qualifiedTemplate);
 
-      // Don't create a done flag. This may be something we can remove when
+      // Don't createSchedulable a done flag. This may be something we can remove when
       // when using a URI handler aware of Kite.
       element(writer, "done-flag", "");
       writer.endElement(); // dataset

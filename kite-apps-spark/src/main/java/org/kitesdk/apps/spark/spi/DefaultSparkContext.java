@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spark.spi;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
 /**
  * Default spark context for the application.
@@ -31,4 +32,16 @@ public class DefaultSparkContext {
   public static JavaSparkContext getContext() {
     return context;
   }
+
+
+  private static volatile JavaStreamingContext streamingContext;
+
+  public static void setStreamingContext(JavaStreamingContext context) {
+    DefaultSparkContext.streamingContext = context;
+  }
+
+  public static JavaStreamingContext getStreamingContext() {
+    return streamingContext;
+  }
+
 }

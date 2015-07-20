@@ -18,6 +18,8 @@ package org.kitesdk.apps.spi.jobs;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.scheduled.SchedulableJob;
+import org.kitesdk.apps.streaming.StreamDescription;
+import org.kitesdk.apps.streaming.StreamingJob;
 
 import java.util.List;
 import java.util.ServiceLoader;
@@ -27,9 +29,13 @@ import java.util.ServiceLoader;
  */
 public abstract class JobManagers {
 
-  private static final List<JobManagerFactory> FACTORIES = Lists.newArrayList();
+  private static final List<SchedulableJobManagerFactory> SCHEDULABLE_FACTORIES
+      = Lists.newArrayList();
 
-  static class DefaultJobManagerFactory implements JobManagerFactory {
+  private static final List<StreamingJobManagerFactory> STREAMING_FACTORIES
+      = Lists.newArrayList();
+
+  static class DefaultSchedulableJobManagerFactory implements SchedulableJobManagerFactory {
 
     @Override
     public boolean supports(Class jobClass) {
@@ -42,11 +48,11 @@ public abstract class JobManagers {
     }
   }
 
-  private static final JobManagerFactory DEFAULT_INSTANCE = new DefaultJobManagerFactory();
+  private static final SchedulableJobManagerFactory DEFAULT_INSTANCE = new DefaultSchedulableJobManagerFactory();
 
-  public static SchedulableJobManager create(Class<? extends SchedulableJob> jobClass, Configuration conf) {
+  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, Configuration conf) {
 
-    for (JobManagerFactory factory: FACTORIES) {
+    for (SchedulableJobManagerFactory factory: SCHEDULABLE_FACTORIES) {
 
       if (factory.supports(jobClass))
         return factory.createManager(jobClass, conf);
@@ -59,11 +65,28 @@ public abstract class JobManagers {
     return DEFAULT_INSTANCE.createManager(jobClass, conf);
   }
 
-  static {
-    ServiceLoader<JobManagerFactory> impls = ServiceLoader.load(JobManagerFactory.class);
+  public static StreamingJobManager createStreaming(StreamDescription description, Configuration conf) {
 
-    for (JobManagerFactory factory: impls) {
-      FACTORIES.add(factory);
+    for (StreamingJobManagerFactory factory: STREAMING_FACTORIES) {
+
+      if (factory.supports(description.getJobClass()))
+        return factory.createManager(description, conf);
+    }
+
+    throw new IllegalArgumentException("Job class " + description.getJobClass() + " not supported by any streaming job manager.");
+  }
+
+  static {
+    ServiceLoader<SchedulableJobManagerFactory> schedulables = ServiceLoader.load(SchedulableJobManagerFactory.class);
+
+    for (SchedulableJobManagerFactory factory: schedulables) {
+      SCHEDULABLE_FACTORIES.add(factory);
+    }
+
+    ServiceLoader<StreamingJobManagerFactory> streamings = ServiceLoader.load(StreamingJobManagerFactory.class);
+
+    for (StreamingJobManagerFactory factory: streamings) {
+      STREAMING_FACTORIES.add(factory);
     }
   }
 }

@@ -82,7 +82,7 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.create(jobClass, getConf());
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, getConf());
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, getConf());
