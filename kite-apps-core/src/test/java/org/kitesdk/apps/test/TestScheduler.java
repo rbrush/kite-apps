@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.scheduled.Schedule;
@@ -59,7 +60,7 @@ public class TestScheduler {
     }
 
     // Set up the application.
-    app.setup(conf);
+    app.setup(new AppContext(conf));
 
     return new TestScheduler(app, conf);
   }

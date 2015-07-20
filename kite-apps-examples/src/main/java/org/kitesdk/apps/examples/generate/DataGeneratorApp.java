@@ -18,6 +18,7 @@ package org.kitesdk.apps.examples.generate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.DatasetDescriptor;
@@ -40,7 +41,7 @@ public class DataGeneratorApp extends AbstractApplication {
       "?year=${YEAR}&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}";
 
   @Override
-  public void setup(Configuration conf) {
+  public void setup(AppContext context) {
 
     // Create the test dataset, partitioned by the minute
     // so we quickly createSchedulable data.

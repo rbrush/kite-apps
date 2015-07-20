@@ -23,6 +23,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.scheduled.Schedule;
@@ -128,11 +129,11 @@ public class OozieScheduling {
    * Generates an Oozie workflow to execute the job in the given schedule.
    *
    * @param schedule the schedule to write
-   * @param conf the Hadoop configuration
+   * @param context the application's context
    * @param output an output stream to which the workflow is written
    */
   public static void writeWorkFlow(Schedule schedule,
-                                   Configuration conf,
+                                   AppContext context,
                                    OutputStream output) throws IOException {
 
     XmlStreamWriter streamWriter = WriterFactory.newXmlWriter(output);
@@ -153,7 +154,7 @@ public class OozieScheduling {
     writer.addAttribute("retry-interval", "1");
 
     // Write the appropriate action to be used in the job.
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context.getHadoopConf());
     manager.writeOozieActionBlock(writer, schedule);
 
     element(writer, "ok", "to", "end");
@@ -363,10 +364,12 @@ public class OozieScheduling {
 
 
   public static void writeBundle(Class appClass,
-                                 Configuration conf,
+                                 AppContext context,
                                  Path appPath,
                                  List<Schedule> schedules,
                                  OutputStream output) throws IOException {
+
+    Configuration conf = context.getHadoopConf();
 
     XmlStreamWriter streamWriter = WriterFactory.newXmlWriter(output);
 

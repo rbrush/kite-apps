@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spi.oozie.XMLUtil;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.data.MiniDFSTest;
@@ -63,7 +64,7 @@ public class AppDeployerTest extends MiniDFSTest {
   @Test
   public void testDeploySimpleApp() throws Exception {
 
-    AppDeployer deployer = new AppDeployer(fs, getConfiguration());
+    AppDeployer deployer = new AppDeployer(fs, new AppContext(getConfiguration()));
     deployer.install(ScheduledInputOutputApp.class, testDirectory, Collections.<File>emptyList());
 
     assertValidInstallation(testDirectory);

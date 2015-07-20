@@ -17,6 +17,7 @@ package org.kitesdk.apps.test.apps;
 
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.PartitionStrategy;
@@ -46,7 +47,7 @@ public class ScheduledInputOutputApp extends AbstractApplication {
   public static final String OUTPUT_URI_PATTERN = "view:hdfs:///tmp/test/output_records" +
       "?year=${YEAR}&month=${MONTH}&day=${DAY}&hour=${HOUR}";
 
-  public void setup(Configuration conf) {
+  public void setup(AppContext context) {
 
     // Create the input and output datasets.
     PartitionStrategy strategy = new PartitionStrategy.Builder()

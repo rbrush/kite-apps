@@ -26,6 +26,7 @@ import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.util.ManualClock;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.spark.spi.DefaultSparkContext;
@@ -92,7 +93,7 @@ public class SparkTestHarness {
     }
 
     // Set up the application.
-    app.setup(conf);
+    app.setup(new AppContext(conf));
 
     return new SparkTestHarness(app, conf);
   }

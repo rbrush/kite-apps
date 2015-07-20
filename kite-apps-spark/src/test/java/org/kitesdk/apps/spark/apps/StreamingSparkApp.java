@@ -17,6 +17,7 @@ package org.kitesdk.apps.spark.apps;
 
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spark.KafkaUtils;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.data.DatasetDescriptor;
@@ -35,7 +36,7 @@ public class StreamingSparkApp extends AbstractApplication {
   public static final String EVENTS_DS_URI = "dataset:hdfs:///tmp/sparkstreamtest/sparkevents";
 
   @Override
-  public void setup(Configuration conf) {
+  public void setup(AppContext context) {
 
     DatasetDescriptor descriptor = new DatasetDescriptor.Builder()
         .schema(SmallEvent.class)

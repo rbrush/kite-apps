@@ -17,6 +17,7 @@ package org.kitesdk.apps.examples.triggered;
 
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.DatasetDescriptor;
@@ -44,7 +45,8 @@ public class TriggeredApp extends AbstractApplication {
   static final String ODD_USER_URI_PATTERN = "view:hive:example/odd_users" +
       "?year=${YEAR}&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}";
 
-  public void setup(Configuration conf) {
+  @Override
+  public void setup(AppContext context) {
 
     // Create a dataset to contain items partitioned by event.
     PartitionStrategy strategy = new PartitionStrategy.Builder()

@@ -45,9 +45,9 @@ public interface Application {
    * operations such as installing datasets, importing data,
    * or configuring scheduled jobs.
    *
-   * @param conf Hadoop configuration for the environment
+   * @param context Context and configuration for the application's environment.
    */
-  public void setup(Configuration conf);
+  public void setup(AppContext context);
 
   /**
    * Gets the list of schedules for jobs that are launched

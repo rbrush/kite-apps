@@ -19,6 +19,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
@@ -31,6 +32,7 @@ import org.w3c.dom.Document;
 import javax.xml.xpath.XPath;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -38,6 +40,8 @@ import static org.junit.Assert.assertEquals;
 public class OozieSchedulingTest  {
 
   Schedule testSchedule;
+
+  AppContext context;
 
   @Before
   public void createTestSchedule() {
@@ -47,6 +51,8 @@ public class OozieSchedulingTest  {
         .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
         .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
+
+    context = new AppContext(Collections.<String,String>emptyMap(), new Configuration());
   }
 
 
@@ -55,7 +61,7 @@ public class OozieSchedulingTest  {
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    OozieScheduling.writeWorkFlow(testSchedule, new Configuration(), output);
+    OozieScheduling.writeWorkFlow(testSchedule, context, output);
 
     Document workflow = XMLUtil.toDom(output);
 
@@ -162,7 +168,7 @@ public class OozieSchedulingTest  {
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    OozieScheduling.writeBundle(ScheduledInputOutputApp.class, new Configuration(),
+    OozieScheduling.writeBundle(ScheduledInputOutputApp.class, context,
         new Path(appPath), schedules, output);
 
     Document bundle = XMLUtil.toDom(output);

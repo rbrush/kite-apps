@@ -17,6 +17,7 @@ package org.kitesdk.apps.examples.streaming;
 
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.spark.KafkaUtils;
 
@@ -42,7 +43,7 @@ public class SparkStreamingApp extends AbstractApplication {
   static final String EVENTS_DS_URI = "dataset:hive:example/sparkevents";
 
   @Override
-  public void setup(Configuration conf) {
+  public void setup(AppContext context) {
 
     DatasetDescriptor descriptor = new DatasetDescriptor.Builder()
         .schema(ExampleEvent.getClassSchema())

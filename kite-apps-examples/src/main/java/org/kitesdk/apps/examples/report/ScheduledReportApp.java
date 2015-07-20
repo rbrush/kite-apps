@@ -19,6 +19,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.PartitionStrategy;
@@ -39,7 +40,7 @@ public class ScheduledReportApp extends AbstractApplication {
       .requiredLong("event_count")
       .endRecord();
 
-  public void setup(Configuration conf) {
+  public void setup(AppContext context) {
 
     PartitionStrategy strategy = new PartitionStrategy.Builder()
         .provided("year", "int")

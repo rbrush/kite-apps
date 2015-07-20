@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spi.AppDeployer;
 import org.kitesdk.cli.commands.BaseCommand;
 import org.slf4j.Logger;
@@ -85,7 +86,10 @@ public class InstallCommand extends BaseCommand {
       return 1;
     }
 
-    AppDeployer deployer = new AppDeployer(fs, getConf());
+    // TODO: read configuration properties.
+    AppContext context = new AppContext(Collections.<String,String>emptyMap(), getConf());
+
+    AppDeployer deployer = new AppDeployer(fs, context);
 
     // Load the needed libraries and the application jar
     // so they are deployed to the coordinator.

@@ -22,6 +22,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.OozieClient;
 import org.apache.oozie.client.OozieClientException;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.scheduled.Schedule;
@@ -43,12 +44,12 @@ public class AppDeployer {
 
   private final FileSystem fs;
 
-  private final Configuration conf;
+  private final AppContext context;
 
 
-  public AppDeployer(FileSystem fs, Configuration conf) {
+  public AppDeployer(FileSystem fs, AppContext context) {
     this.fs = fs;
-    this.conf = conf;
+    this.context = context;
   }
 
   /**
@@ -85,7 +86,7 @@ public class AppDeployer {
 
     // Install to a temporary destination and rename it to avoid
     // potential races against other installers.
-    String tempBase = conf.get("hadoop.tmp.dir", "/tmp");
+    String tempBase = context.getHadoopConf().get("hadoop.tmp.dir", "/tmp");
     Path tempDestination =  new Path(tempBase, "kite-" + (new Random().nextInt() & Integer.MAX_VALUE));
 
     Application app;
@@ -98,7 +99,7 @@ public class AppDeployer {
           + applicationClass, e);
     }
 
-    app.setup(conf);
+    app.setup(context);
 
     try {
 
@@ -204,7 +205,7 @@ public class AppDeployer {
 
       outputStream = fs.create(workflowXMLPath);
 
-      OozieScheduling.writeWorkFlow(schedule, conf, outputStream);
+      OozieScheduling.writeWorkFlow(schedule, context, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);
@@ -218,7 +219,7 @@ public class AppDeployer {
 
   private void installCoordinator(Path appPath, Schedule schedule) {
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context.getHadoopConf());
 
     Path coordDirectory = new Path (appPath, OozieScheduling.coordPath(schedule));
 
@@ -253,7 +254,7 @@ public class AppDeployer {
 
       outputStream = fs.create(bundlePath);
 
-      OozieScheduling.writeBundle(appClass, conf, appPath, schedules, outputStream);
+      OozieScheduling.writeBundle(appClass, context, appPath, schedules, outputStream);
 
     } catch (IOException e) {
       throw new AppException(e);

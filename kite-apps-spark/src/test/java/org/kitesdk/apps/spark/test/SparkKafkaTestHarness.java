@@ -40,6 +40,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.util.ManualClock;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.spark.apps.StreamingSparkApp;
@@ -123,7 +124,7 @@ public class SparkKafkaTestHarness {
     }
 
     // Set up the application
-    app.setup(conf);
+    app.setup(new AppContext(conf));
 
     producer = new Producer<byte[],byte[]>(new ProducerConfig(harness.getProducerProps()));
 

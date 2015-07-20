@@ -18,6 +18,7 @@ package org.kitesdk.apps.spark.spi;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spark.apps.SimpleSparkApp;
 import org.kitesdk.apps.spark.apps.SimpleSparkJob;
@@ -54,7 +55,7 @@ public class OozieSparkSchedulingTest {
 
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    OozieScheduling.writeWorkFlow(testSchedule, new Configuration(), output);
+    OozieScheduling.writeWorkFlow(testSchedule, new AppContext(new Configuration()), output);
 
     Document workflow = XMLUtil.toDom(output);
 
