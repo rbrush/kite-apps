@@ -29,6 +29,6 @@ public abstract class AbstractCrunchJob extends AbstractSchedulableJob {
 
   protected Pipeline getPipeline() {
 
-    return new MRPipeline(AbstractCrunchJob.class, getName(), getConf());
+    return new MRPipeline(AbstractCrunchJob.class, getName(), getJobContext().getHadoopConf());
   }
 }

@@ -17,12 +17,13 @@ package org.kitesdk.apps.scheduled;
 
 import org.apache.hadoop.conf.Configurable;
 import org.joda.time.Instant;
+import org.kitesdk.apps.JobContext;
 
 /**
  * Interface for schedulable jobs. Implementations of this interface
  * must provide a nullary constructor.
  */
-public interface SchedulableJob extends Configurable {
+public interface SchedulableJob<T extends JobContext>  {
 
   /**
    * The name of the schedulable job, which may be the class name.
@@ -34,6 +35,18 @@ public interface SchedulableJob extends Configurable {
   /** Returns the nominal time at which the job is run. */
   Instant getNominalTime();
 
-  /** Sets the nominal time at which the job is run. */
+  /** Sets the nominal time at which the job is run. This is called
+   * before the job is run.
+   */
   void setNominalTime(Instant instant);
+
+  /**
+   * Sets the context for the job. This is called before the job is run.
+   */
+  void setJobContext(T jobContext);
+
+  /**
+   * Gets the context for the job.
+   */
+  T getJobContext();
 }

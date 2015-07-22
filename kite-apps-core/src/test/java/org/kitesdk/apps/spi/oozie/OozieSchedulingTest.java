@@ -97,7 +97,7 @@ public class OozieSchedulingTest  {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     SchedulableJobManager manager = JobManagers.createSchedulable(ScheduledInputOutputJob.class,
-        new Configuration());
+        new AppContext(new Configuration()));
 
     OozieScheduling.writeCoordinator(testSchedule, manager, output);
 

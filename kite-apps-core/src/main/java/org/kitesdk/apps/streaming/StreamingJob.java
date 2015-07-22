@@ -17,12 +17,28 @@ package org.kitesdk.apps.streaming;
 
 
 import org.apache.hadoop.conf.Configurable;
+import org.kitesdk.apps.JobContext;
 
 /**
  * Interface for streaming jobs. Implementations of this interface
  * must provide a nullary constructor.
  */
-public interface StreamingJob extends Configurable {
+public interface StreamingJob<T extends JobContext>  {
 
+  /**
+   * The name of the streaming job, which may be the class name.
+   * This name will be used in job-specific configuration files and
+   * be visible in system management tooling.
+   */
+  String getName();
 
+  /**
+   * Sets the context for the job. This is called before the job is run.
+   */
+  void setJobContext(T jobContext);
+
+  /**
+   * Gets the context for the job.
+   */
+  T getJobContext();
 }

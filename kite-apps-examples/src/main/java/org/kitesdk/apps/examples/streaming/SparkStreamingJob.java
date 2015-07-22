@@ -39,4 +39,9 @@ public class SparkStreamingJob extends AbstractStreamingSparkJob {
 
     SparkDatasets.save(stream, output);
   }
+
+  @Override
+  public String getName() {
+    return "test-event-stream";
+  }
 }

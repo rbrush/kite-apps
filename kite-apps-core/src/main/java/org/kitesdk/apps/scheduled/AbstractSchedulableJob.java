@@ -17,25 +17,16 @@ package org.kitesdk.apps.scheduled;
 
 import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
+import org.kitesdk.apps.JobContext;
 
 /**
  * Abstract base class for schedulable jobs.
  */
-public abstract class AbstractSchedulableJob implements SchedulableJob {
+public abstract class AbstractSchedulableJob implements SchedulableJob<JobContext> {
 
-  private Configuration configuration;
+  private JobContext context;
 
   private Instant nominalTime;
-
-  @Override
-  public void setConf(Configuration configuration) {
-    this.configuration = configuration;
-  }
-
-  @Override
-  public Configuration getConf() {
-    return configuration;
-  }
 
   @Override
   public Instant getNominalTime() {
@@ -45,5 +36,19 @@ public abstract class AbstractSchedulableJob implements SchedulableJob {
   @Override
   public void setNominalTime(Instant nominalTime) {
     this.nominalTime = nominalTime;
+  }
+
+  /**
+   * Sets the context for the job. This is called before the job is run.
+   */
+  public void setJobContext(JobContext jobContext) {
+    this.context = jobContext;
+  }
+
+  /**
+   * Gets the context for the job.
+   */
+  public JobContext getJobContext() {
+    return context;
   }
 }

@@ -16,6 +16,8 @@
 package org.kitesdk.apps.spi.jobs;
 
 import com.google.common.collect.Maps;
+import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
@@ -28,6 +30,24 @@ import java.util.Map;
  * Utility functions work working with jobs.
  */
 public class JobUtil {
+
+  /**
+   *
+   * @param jobName
+   * @param context
+   * @return
+   */
+  public static Map<String,String> toJobSettings(String jobName, AppContext context) {
+
+    // TODO: implement.
+    return context.getSettings();
+  }
+
+  public static Configuration toJobHadoopConf(String jobNAme, AppContext context) {
+
+    // TODO: implement.
+    return context.getHadoopConf();
+  }
 
   public static Method resolveRunMethod(Object job) {
 

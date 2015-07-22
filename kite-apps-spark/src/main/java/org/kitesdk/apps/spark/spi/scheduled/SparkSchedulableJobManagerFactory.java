@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spark.spi.scheduled;
 
 import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spark.AbstractSchedulableSparkJob;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManagerFactory;
@@ -32,8 +33,8 @@ public class SparkSchedulableJobManagerFactory implements SchedulableJobManagerF
   }
 
   @Override
-  public SchedulableJobManager createManager(Class jobClass, Configuration conf) {
+  public SchedulableJobManager createManager(Class jobClass, AppContext context) {
 
-    return SparkJobManager.create(jobClass, conf);
+    return SparkJobManager.create(jobClass, context);
   }
 }

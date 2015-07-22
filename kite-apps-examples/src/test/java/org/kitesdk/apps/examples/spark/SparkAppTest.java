@@ -15,8 +15,7 @@
  */
 package org.kitesdk.apps.examples.spark;
 
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
+import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
@@ -24,16 +23,19 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.examples.generate.DataGeneratorApp;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.test.TestScheduler;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+
+import java.util.Map;
 
 
 public class SparkAppTest extends MiniAppTest {
@@ -42,27 +44,27 @@ public class SparkAppTest extends MiniAppTest {
   @Before
   public void startSparkContext() {
     DefaultConfiguration.set(getConfiguration());
-
-    SparkConf conf = new SparkConf()
-        .setMaster("local[3]")
-        .setAppName("spark-test");
-
-    DefaultSparkContext.setContext(new JavaSparkContext(conf));
   }
 
   @After
   public void stopSparkContext() {
 
-    DefaultSparkContext.getContext().stop();
-    DefaultSparkContext.setContext(null);
+    SparkContextFactory.shutdown();
   }
 
   @Test
   public void testTriggeredApp() {
 
-    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
+    Map<String,String> settings = ImmutableMap.<String,String>builder()
+        .put("spark.master", "local[3]")
+        .put("spark.app.name", "spark-test")
+        .build();
 
-    TestScheduler triggeredRunner = TestScheduler.load(SparkApp.class, getConfiguration());
+    AppContext appContext = new AppContext(settings, getConfiguration());
+
+    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, appContext);
+
+    TestScheduler triggeredRunner = TestScheduler.load(SparkApp.class, appContext);
 
     DateTime firstNominalTime = new DateTime(2015, 5, 7, 12, 0, 0);
 

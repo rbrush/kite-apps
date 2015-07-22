@@ -18,6 +18,7 @@ package org.kitesdk.apps.examples.generate;
 import org.joda.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.test.TestScheduler;
@@ -36,7 +37,7 @@ public class DataGeneratorAppTest extends MiniAppTest {
   @Test
   public void testGenerateData() {
 
-    TestScheduler container = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
+    TestScheduler container = TestScheduler.load(DataGeneratorApp.class, new AppContext(getConfiguration()));
 
     container.runScheduledJobs(new Instant());
 

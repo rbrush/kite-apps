@@ -21,6 +21,7 @@ import org.joda.time.Instant;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.examples.generate.DataGeneratorApp;
@@ -42,9 +43,9 @@ public class TriggeredAppTest extends MiniAppTest {
   @Test
   public void testTriggeredApp() {
 
-    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
+    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, new AppContext(getConfiguration()));
 
-    TestScheduler triggeredRunner = TestScheduler.load(TriggeredApp.class, getConfiguration());
+    TestScheduler triggeredRunner = TestScheduler.load(TriggeredApp.class, new AppContext(getConfiguration()));
 
     DateTime firstNominalTime = new DateTime(2015, 5, 7, 12, 0, 0);
 

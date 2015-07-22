@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spark.spi;
 
 import org.apache.hadoop.conf.Configuration;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.AppContext;
@@ -48,6 +49,11 @@ public class OozieSparkSchedulingTest {
         .withView("source.users", SimpleSparkApp.INPUT_URI_PATTERN, 1)
         .withView("target.users", SimpleSparkApp.OUTPUT_URI_PATTERN, 1)
         .build();
+  }
+
+  @After
+  public void cleanupContext() {
+    SparkContextFactory.shutdown();
   }
 
   @Test

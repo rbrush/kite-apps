@@ -17,23 +17,55 @@ package org.kitesdk.apps.spark;
 
 import com.google.common.collect.Maps;
 import kafka.admin.AdminUtils;
-import kafka.javaapi.TopicMetadataRequest;
-import kafka.javaapi.TopicMetadataResponse;
-import kafka.javaapi.consumer.SimpleConsumer;
+
 import kafka.utils.ZKStringSerializer$;
 import org.I0Itec.zkclient.ZkClient;
-import org.kitesdk.apps.spark.spi.DefaultKafkaContext;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.apache.avro.Schema;
+import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobContext;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 
 public class KafkaUtils {
 
-  public static final String TOPIC_NAME = "topic";
+  public static final String TOPIC_NAME = "topic.name";
 
+  public static final String ZOOKEEPER_CONNECT = "zookeeper.connect";
 
+  public static final String BROKER_LIST = "metadata.broker.list";
+
+  private static final String PREFIX = "kafka.";
+
+  private static String getKafkaProp(AppContext context, String property) {
+
+    String kafkaPropName = PREFIX + property;
+
+    String value = context.getSettings().get(kafkaPropName);
+
+    if (value == null)
+      throw new AppException("Required property " + kafkaPropName + " does not exist.");
+
+    return value;
+  }
+
+  private static String getKafkaProp(JobContext context, String property) {
+
+    String kafkaPropName = PREFIX + property;
+
+    String value = context.getSettings().get(kafkaPropName);
+
+    if (value == null)
+      throw new AppException("Required property " + kafkaPropName + " does not exist.");
+
+    return value;
+  }
+
+  /**
+   * Helper function to create settings that can be used when defining
+   * a job input or output.
+   */
   public static Map<String,String> kafkaProps(String topic) {
 
     Map<String,String> props = Maps.newHashMap();
@@ -43,32 +75,40 @@ public class KafkaUtils {
     return props;
   }
 
-  public static void createTopic(String topicName) {
+  public static Map<String,String> getDirectStreamParams(SparkJobContext context) {
 
-    ZkClient client = new ZkClient(DefaultKafkaContext.getZookeeperConnectionString(), 1000, 1000, ZKStringSerializer$.MODULE$);
+    Map<String,String> params = Maps.newHashMap();
 
-    if (!AdminUtils.topicExists(client, topicName)) {
-      AdminUtils.createTopic(client, topicName, 1, 1, new Properties());
-    }
+    params.put("metadata.broker.list", getKafkaProp(context, BROKER_LIST));
+    params.put("zookeeper.connect", getKafkaProp(context, ZOOKEEPER_CONNECT));
+    params.put("group.id", "test_group");
+    params.put("client.id", "test_client");
+    params.put("socket.timeout.ms", "500");
+    params.put("consumer.id", "test");
+    params.put("auto.offset.reset", "smallest");
+    params.put("retry.backoff.ms", Integer.toString(500));
+    params.put("message.send.max.retries", Integer.toString(20));
 
-    // Hack to poll for availability of the topic's metadata, since some users
-    // may immediately use the topic after creating it.
-    String host = DefaultKafkaContext.getKafkaBrokerList().split(":")[0];
-    int port = Integer.parseInt(DefaultKafkaContext.getKafkaBrokerList().split(":")[1]);
+    return params;
+  }
 
-    SimpleConsumer consumer = new SimpleConsumer(host, port, 1000, 10000, "test");
+  public static void createTopic(AppContext context,
+                                 String topicName,
+                                 int partitions,
+                                 int replicationFactor,
+                                 Schema schema) {
 
-    for (int i = 0; i < 10; ++i) {
-      TopicMetadataResponse response = consumer.send(new TopicMetadataRequest(Collections.singletonList(topicName)));
+    // Currently the schema parameter is unused, but we have it here so it can
+    // be applied to a schema registry for the topic when that is available.
 
-      if (response.topicsMetadata().size() > 0)
-        break;
+    ZkClient client = new ZkClient(getKafkaProp(context, ZOOKEEPER_CONNECT), 1000, 1000, ZKStringSerializer$.MODULE$);
 
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+    try {
+      if (!AdminUtils.topicExists(client, topicName)) {
+        AdminUtils.createTopic(client, topicName, partitions, replicationFactor, new Properties());
       }
+    } finally {
+      client.close();
     }
   }
 }

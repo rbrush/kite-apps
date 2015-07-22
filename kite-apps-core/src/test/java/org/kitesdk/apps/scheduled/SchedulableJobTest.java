@@ -24,6 +24,7 @@ import org.joda.time.Instant;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.test.TestScheduler;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.data.Dataset;
@@ -47,7 +48,9 @@ public class SchedulableJobTest extends MiniDFSTest {
   @Test
   public void testSimpleMap() {
 
-    TestScheduler scheduler = TestScheduler.load(ScheduledInputOutputApp.class, getConfiguration());
+    AppContext context = new AppContext(getConfiguration());
+
+    TestScheduler scheduler = TestScheduler.load(ScheduledInputOutputApp.class, context);
 
     Instant nominalTime = new DateTime(2015, 5, 15, 12, 0, 0, 0, DateTimeZone.UTC).toInstant();
 

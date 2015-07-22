@@ -46,7 +46,8 @@ public class SimpleSparkJob extends AbstractSchedulableSparkJob {
     DatasetKeyOutputFormat.configure(job).writeTo(output);
 
     @SuppressWarnings("unchecked")
-    JavaPairRDD<GenericData.Record, Void> inputData = getContext()
+    JavaPairRDD<GenericData.Record, Void> inputData = getJobContext()
+        .getSparkContext()
         .newAPIHadoopRDD(job.getConfiguration(), DatasetKeyInputFormat.class,
             GenericData.Record.class, Void.class);
 

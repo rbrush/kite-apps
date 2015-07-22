@@ -16,20 +16,38 @@
 package org.kitesdk.apps.spark;
 
 import org.apache.spark.api.java.JavaSparkContext;
+import org.joda.time.Instant;
+import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
+import org.kitesdk.apps.scheduled.SchedulableJob;
 
 /**
  * Abstract base class for a schedulable Spark job.
  */
-public abstract class AbstractSchedulableSparkJob extends AbstractSchedulableJob {
+public abstract class AbstractSchedulableSparkJob  implements SchedulableJob<SparkJobContext> {
 
-  private JavaSparkContext context;
+  private SparkJobContext context;
 
-  public void setContext(JavaSparkContext context) {
+  private Instant nominalTime;
+
+  @Override
+  public Instant getNominalTime() {
+    return nominalTime;
+  }
+
+  @Override
+  public void setNominalTime(Instant nominalTime) {
+
+    this.nominalTime = nominalTime;
+  }
+
+  @Override
+  public void setJobContext(SparkJobContext context) {
     this.context = context;
   }
 
-  public JavaSparkContext getContext() {
+  @Override
+  public SparkJobContext getJobContext() {
     return context;
   }
 }

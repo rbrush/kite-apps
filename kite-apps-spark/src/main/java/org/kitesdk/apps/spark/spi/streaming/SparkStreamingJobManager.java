@@ -19,15 +19,14 @@ import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.spark.streaming.api.java.JavaDStream;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
-import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
-import org.kitesdk.apps.spark.spi.DefaultKafkaContext;
+import org.kitesdk.apps.spark.SparkJobContext;
 import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.streaming.StreamDescription;
@@ -55,19 +54,19 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
   private final Method runMethod;
 
-  private final Configuration conf;
+  private final SparkJobContext sparkJobContext;
 
   public SparkStreamingJobManager(StreamDescription description,
-                                  AbstractStreamingSparkJob job, Method runMethod, Configuration conf) {
+                                  AbstractStreamingSparkJob job, Method runMethod, AppContext context) {
 
     this.description = description;
     this.job = job;
     this.runMethod = runMethod;
-    this.conf = conf;
+    this.sparkJobContext = new SparkJobContext(job.getName(), context);
   }
 
   public static SparkStreamingJobManager create(StreamDescription description,
-                                                Configuration conf) {
+                                                AppContext context) {
 
     AbstractStreamingSparkJob job;
 
@@ -79,11 +78,9 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       throw new AppException(e);
     }
 
-    job.setConf(conf);
-
     Method runMethod = JobUtil.resolveRunMethod(job);
 
-    return new SparkStreamingJobManager(description, job, runMethod, conf);
+    return new SparkStreamingJobManager(description, job, runMethod, context);
   }
 
   private static final List<File> getLibraryJars() {
@@ -130,10 +127,9 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       launcher.addJar(file.getAbsolutePath());
     }
 
+    // TODO: add path to app and root?
     // Pass in the broker, zookeeper, and job connection information.
-    launcher.addAppArgs(DefaultKafkaContext.getKafkaBrokerList(),
-        DefaultKafkaContext.getZookeeperConnectionString(),
-        description.toString());
+    launcher.addAppArgs();
 
     try {
 
@@ -176,7 +172,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       Schema schema = SpecificData.get().getSchema(input.type());
 
-      return loader.load(schema, stream.getProperties(), conf);
+      return loader.load(schema, stream.getProperties(), sparkJobContext);
 
     } else {
       throw new UnsupportedOperationException("Current implementation only supports specific types in streams.");
@@ -226,6 +222,8 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     }
 
     Object[] args = JobUtil.getArgs(runMethod, parameters);
+
+    job.setJobContext(sparkJobContext);
 
     // Run the job itself.
     try {

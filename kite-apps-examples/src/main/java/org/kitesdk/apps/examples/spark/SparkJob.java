@@ -50,11 +50,12 @@ public class SparkJob extends AbstractSchedulableSparkJob {
   public void run(@DataIn(name="example.events", type=ExampleEvent.class) View<ExampleEvent> input,
                   @DataOut(name="odd.users", type=ExampleEvent.class) View<ExampleEvent> output) throws IOException {
 
-    Job job = Job.getInstance(getConf());
+    Job job = Job.getInstance(getJobContext().getHadoopConf());
     DatasetKeyInputFormat.configure(job).readFrom(input);
     DatasetKeyOutputFormat.configure(job).writeTo(output);
 
-    JavaPairRDD<ExampleEvent, Void> inputData = getContext()
+    JavaPairRDD<ExampleEvent, Void> inputData = getJobContext()
+        .getSparkContext()
         .newAPIHadoopRDD(job.getConfiguration(), DatasetKeyInputFormat.class,
             ExampleEvent.class, Void.class);
 

@@ -20,6 +20,7 @@ import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.examples.generate.DataGeneratorApp;
@@ -41,14 +42,14 @@ public class ScheduledReportAppTest extends MiniAppTest {
     DateTime firstNominalTime = new DateTime(2015, 5, 7, 12, 0, 0);
 
     // Run the generator job at each minute.
-    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, getConfiguration());
+    TestScheduler generatorRunner = TestScheduler.load(DataGeneratorApp.class, new AppContext(getConfiguration()));
 
     for (int i = 0; i < 5; ++i) {
       generatorRunner.runScheduledJobs(firstNominalTime.plusMinutes(i).toInstant());
     }
 
     // Now run the report job to aggregate over the schedule.
-    TestScheduler reportRunner = TestScheduler.load(ScheduledReportApp.class, getConfiguration());
+    TestScheduler reportRunner = TestScheduler.load(ScheduledReportApp.class, new AppContext(getConfiguration()));
     reportRunner.runScheduledJobs(firstNominalTime.plusMinutes(5).toInstant());
 
     // Verify the expected data was written.

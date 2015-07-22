@@ -154,7 +154,7 @@ public class OozieScheduling {
     writer.addAttribute("retry-interval", "1");
 
     // Write the appropriate action to be used in the job.
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context.getHadoopConf());
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context);
     manager.writeOozieActionBlock(writer, schedule);
 
     element(writer, "ok", "to", "end");
@@ -244,7 +244,8 @@ public class OozieScheduling {
 
       writer.addAttribute("timezone", "UTC");
 
-      String qualifiedTemplate = qualifyUri(manager.getConf(), entry.getValue().getUriTemplate());
+      String qualifiedTemplate = qualifyUri(manager.getAppContext().getHadoopConf(),
+          entry.getValue().getUriTemplate());
 
       element(writer, "uri-template", qualifiedTemplate);
 

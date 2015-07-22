@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spark.spi.streaming;
 
 import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.spi.jobs.StreamingJobManagerFactory;
@@ -31,8 +32,8 @@ public class SparkStreamingJobManagerFactory implements StreamingJobManagerFacto
   }
 
   @Override
-  public StreamingJobManager createManager(StreamDescription description, Configuration conf) {
+  public StreamingJobManager createManager(StreamDescription description, AppContext context) {
 
-    return SparkStreamingJobManager.create(description, conf);
+    return SparkStreamingJobManager.create(description, context);
   }
 }

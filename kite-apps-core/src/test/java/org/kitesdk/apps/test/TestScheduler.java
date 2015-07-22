@@ -38,15 +38,14 @@ public class TestScheduler {
 
   private final Application app;
 
-  private final Configuration conf;
+  private final AppContext context;
 
-  TestScheduler(Application app, Configuration conf) {
+  TestScheduler(Application app, AppContext context) {
     this.app = app;
-    this.conf = conf;
+    this.context = context;
   }
 
-  public static TestScheduler load(Class<? extends Application> appClass,
-                                     Configuration conf) {
+  public static TestScheduler load(Class<? extends Application> appClass, AppContext context) {
 
     Application app;
 
@@ -60,9 +59,9 @@ public class TestScheduler {
     }
 
     // Set up the application.
-    app.setup(new AppContext(conf));
+    app.setup(context);
 
-    return new TestScheduler(app, conf);
+    return new TestScheduler(app, context);
   }
 
   /**
@@ -123,7 +122,7 @@ public class TestScheduler {
 
     for (Schedule schedule: app.getSchedules()) {
 
-      SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), conf);
+      SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context);
 
       manager.run(nominalTime, views);
     }

@@ -19,7 +19,9 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.scheduled.SchedulableJob;
@@ -41,16 +43,16 @@ public abstract class SchedulableJobManager {
 
   protected final SchedulableJob job;
 
-  protected final Configuration conf;
+  protected final AppContext context;
 
   protected final Method runMethod;
 
   protected SchedulableJobManager(SchedulableJob job,
                                   Method runMethod,
-                                  Configuration conf) {
+                                  AppContext context) {
     this.job = job;
     this.runMethod = runMethod;
-    this.conf = conf;
+    this.context = context;
   }
 
   /**
@@ -72,11 +74,16 @@ public abstract class SchedulableJobManager {
   }
 
   /**
-   * Gets the configuration used for the job.
+   * Gets the application context used with this job.
    */
-  public Configuration getConf() {
-    return conf;
+  public AppContext getAppContext() {
+    return context;
   }
+
+  /**
+   * Returns the context used by the job.
+   */
+  public abstract JobContext getJobContext();
 
   /**
    * Gets a map of job output names to the {@link DataOut} annotations

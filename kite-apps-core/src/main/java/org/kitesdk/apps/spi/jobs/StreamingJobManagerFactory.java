@@ -15,7 +15,7 @@
  */
 package org.kitesdk.apps.spi.jobs;
 
-import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.streaming.StreamDescription;
 
 /**
@@ -25,5 +25,5 @@ public interface StreamingJobManagerFactory {
 
   public abstract boolean supports(Class jobClass);
 
-  public abstract StreamingJobManager createManager(StreamDescription description, Configuration conf);
+  public abstract StreamingJobManager createManager(StreamDescription description, AppContext context);
 }

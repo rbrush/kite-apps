@@ -29,6 +29,11 @@ import org.kitesdk.data.event.SmallEvent;
  */
 public class StreamingSparkJob extends AbstractStreamingSparkJob {
 
+  @Override
+  public String getName() {
+    return "simple-spark-streaming";
+  }
+
   public void run(@DataIn(name = "event.stream", type = SmallEvent.class)
                   JavaDStream<SmallEvent> stream,
                   @DataOut(name = "event.output", type = SmallEvent.class)

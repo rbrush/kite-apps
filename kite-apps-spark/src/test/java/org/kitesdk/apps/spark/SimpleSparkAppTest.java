@@ -17,8 +17,6 @@ package org.kitesdk.apps.spark;
 
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericData;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
@@ -26,7 +24,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spark.apps.SimpleSparkApp;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.test.TestScheduler;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.Datasets;
@@ -35,9 +35,9 @@ import org.kitesdk.data.PartitionView;
 import org.kitesdk.data.View;
 import org.kitesdk.data.spi.DefaultConfiguration;
 import org.kitesdk.data.spi.filesystem.DatasetTestUtilities;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,25 +48,20 @@ public class SimpleSparkAppTest extends MiniDFSTest {
   @Before
   public void setDefaultConfig() {
     DefaultConfiguration.set(getConfiguration());
-
-    SparkConf conf = new SparkConf()
-        .setMaster("local[3]")
-        .setAppName("spark-test");
-
-    DefaultSparkContext.setContext(new JavaSparkContext(conf));
   }
 
   @After
-  public void stopContext() {
-
-    DefaultSparkContext.getContext().stop();
-    DefaultSparkContext.setContext(null);
+  public void cleanupContext() {
+    SparkContextFactory.shutdown();
   }
 
   @Test
   public void testSimpleMap() {
 
-    TestScheduler scheduler = TestScheduler.load(SimpleSparkApp.class, getConfiguration());
+    AppContext context = new AppContext(Collections.singletonMap("spark.master", "local[2]"),
+        getConfiguration());
+
+    TestScheduler scheduler = TestScheduler.load(SimpleSparkApp.class, context);
 
     Instant nominalTime = new DateTime(2015, 5, 15, 12, 0, 0, 0, DateTimeZone.UTC).toInstant();
 

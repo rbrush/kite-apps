@@ -15,17 +15,16 @@
  */
 package org.kitesdk.apps.spark.spi.scheduled;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.spark.SparkJobContext;
 import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
@@ -50,9 +49,11 @@ import static org.kitesdk.apps.spi.oozie.OozieScheduling.property;
  */
 class SparkJobManager extends SchedulableJobManager {
 
+  private volatile SparkJobContext sparkJobContext;
+
 
   public static SparkJobManager create(Class<? extends AbstractSchedulableSparkJob> jobClass,
-                                       Configuration conf) {
+                                       AppContext context) {
 
     AbstractSchedulableSparkJob job;
 
@@ -64,42 +65,34 @@ class SparkJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-    job.setConf(conf);
-
-    job.setContext(DefaultSparkContext.getContext());
-
     Method runMethod = JobUtil.resolveRunMethod(job);
 
-    return new SparkJobManager(job, runMethod, conf);
+    return new SparkJobManager(job, runMethod, context);
   }
 
-  SparkJobManager(SchedulableJob job, Method runMethod, Configuration conf) {
-    super(job, runMethod, conf);
+  SparkJobManager(SchedulableJob job, Method runMethod, AppContext context) {
+    super(job, runMethod, context);
+
+  }
+
+  @Override
+  public JobContext getJobContext() {
+
+    if (sparkJobContext == null) {
+      sparkJobContext = new SparkJobContext(job.getName(), context);
+    }
+
+    return sparkJobContext;
   }
 
   @Override
   public void run(Instant nominalTime, Map<String,View> views) {
 
-    // Use the default context if provided.
-    JavaSparkContext context = DefaultSparkContext.getContext();
-
-    boolean localContext = false;
-
-    // If no default spark context exists, createSchedulable one for this job.
-    if (context == null) {
-
-      localContext = true;
-      SparkConf conf = new SparkConf().setAppName(job.getName());
-
-      context = new JavaSparkContext(conf);
-    }
 
     try {
 
       job.setNominalTime(nominalTime);
-
-      job.setConf(getConf());
-      ((AbstractSchedulableSparkJob) job).setContext(context);
+      job.setJobContext(getJobContext());
 
       Object[] args = JobUtil.getArgs(runMethod, views);
 
@@ -109,9 +102,6 @@ class SparkJobManager extends SchedulableJobManager {
     } catch (InvocationTargetException e) {
       throw new AppException(e);
     } finally {
-      // If we created our own context, stop it.
-      if (localContext)
-        context.stop();
     }
 
     signalOutputViews(views);
@@ -134,7 +124,7 @@ class SparkJobManager extends SchedulableJobManager {
     // Use the spark and hive sharelibs since many actions use both.
     property(writer, "oozie.action.sharelib.for.spark", "spark,hive2");
 
-    OozieScheduling.writeJobConfiguration(writer, schedule, getConf());
+    OozieScheduling.writeJobConfiguration(writer, schedule, context.getHadoopConf());
 
     writer.endElement(); // configuration
 
@@ -161,7 +151,7 @@ class SparkJobManager extends SchedulableJobManager {
 
     // Pass the job settings as Hadoop settings to be used by the underlying
     // system.
-    Map<String, String> settings = OozieScheduling.getJobSettings(schedule, getConf());
+    Map<String, String> settings = OozieScheduling.getJobSettings(schedule, context.getHadoopConf());
 
     StringBuilder builder = new StringBuilder();
 
@@ -210,7 +200,7 @@ class SparkJobManager extends SchedulableJobManager {
 
       // No need to add the Spark shared library here because
       // it is automatically included in the spark action.
-      List<Path> jars = ShareLibs.jars(getConf(), "hive2");
+      List<Path> jars = ShareLibs.jars(context.getHadoopConf(), "hive2");
 
       for (Path jar: jars) {
 

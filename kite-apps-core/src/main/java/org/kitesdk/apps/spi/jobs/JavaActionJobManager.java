@@ -19,7 +19,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.XmlStreamWriter;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.oozie.OozieScheduledJobMain;
@@ -40,12 +42,20 @@ import static org.kitesdk.apps.spi.oozie.OozieScheduling.property;
 class JavaActionJobManager extends SchedulableJobManager {
 
 
-  public JavaActionJobManager(SchedulableJob job, Method runMethod, Configuration conf) {
-    super(job, runMethod, conf);
+  public JavaActionJobManager(SchedulableJob job, Method runMethod, AppContext context) {
+    super(job, runMethod, context);
+  }
+
+  @Override
+  public JobContext getJobContext() {
+    Map<String, String> settings = JobUtil.toJobSettings(job.getName(), context);
+    Configuration conf = JobUtil.toJobHadoopConf(job.getName(), context);
+
+    return new JobContext(settings, conf);
   }
 
   public static JavaActionJobManager create(Class<? extends SchedulableJob> jobClass,
-                                            Configuration conf) {
+                                            AppContext context) {
 
     SchedulableJob job;
 
@@ -57,17 +67,19 @@ class JavaActionJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-    job.setConf(conf);
+
+//    job.setJobContext(context);
 
     Method runMethod = JobUtil.resolveRunMethod(job);
 
-    return new JavaActionJobManager(job, runMethod, conf);
+    return new JavaActionJobManager(job, runMethod, context);
   }
 
   @Override
   public void run(Instant nominalTime, Map<String,View> views) {
 
     job.setNominalTime(nominalTime);
+    job.setJobContext(getJobContext());
 
     Object[] args = JobUtil.getArgs(runMethod, views);
 
@@ -92,7 +104,7 @@ class JavaActionJobManager extends SchedulableJobManager {
     // element(writer, "job-xml", "${appConfigPath}");
 
 
-    Map<String, String> settings = OozieScheduling.getJobSettings(schedule, getConf());
+    Map<String, String> settings = OozieScheduling.getJobSettings(schedule, context.getHadoopConf());
 
     // Write the job configuration settings.
     writer.startElement("configuration");

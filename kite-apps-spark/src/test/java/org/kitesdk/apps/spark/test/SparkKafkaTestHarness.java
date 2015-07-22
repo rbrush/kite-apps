@@ -15,6 +15,7 @@
  */
 package org.kitesdk.apps.spark.test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import kafka.consumer.Consumer;
@@ -35,17 +36,13 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.util.ManualClock;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.spark.apps.StreamingSparkApp;
-import org.kitesdk.apps.spark.spi.DefaultKafkaContext;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
 import org.kitesdk.apps.spark.spi.streaming.SparkStreamingJobManager;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
@@ -67,8 +64,6 @@ public class SparkKafkaTestHarness {
 
   private final StreamingSparkApp app;
 
-  private final Configuration conf;
-
   private final JavaStreamingContext context;
 
   private final ManualClock clock;
@@ -80,38 +75,32 @@ public class SparkKafkaTestHarness {
   private final Producer<byte[],byte[]> producer;
 
   public SparkKafkaTestHarness(Class cls, Configuration conf) throws IOException {
-    this.conf = conf;
-
-    // Set up Spark
-    SparkConf sparkConf = new SparkConf()
-        .setMaster("local[3]")
-        .setAppName("spark-test")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.streaming.clock", "org.apache.spark.util.ManualClock");
-
-    JavaSparkContext javaContext = new JavaSparkContext(sparkConf);
-
-    context = new JavaStreamingContext(javaContext, new Duration(1000));
-
-    DefaultSparkContext.setContext(javaContext);
-    DefaultSparkContext.setStreamingContext(context);
-
-    File tempDir = Files.createTempDir();
-    context.checkpoint(tempDir.toString());
-
-    clock = (ManualClock) context.ssc().scheduler().clock();
 
     // Set up Kafka.
     harness = new KafkaBrokerTestHarness();
     harness.setUp();
 
+    // Create an application context configured to use the Kafka test instance.
     String brokerList = (String) harness.getProducerProps().get("metadata.broker.list");
-
-    DefaultKafkaContext.setKafkaBrokerList(brokerList);
-
     String zookeeperString = (String) harness.getConsumerProps().get("zookeeper.connect");
 
-    DefaultKafkaContext.setZookeeperConnectionString(zookeeperString);
+    Map<String,String> props = ImmutableMap.<String,String>builder()
+        .put("spark.master", "local[3]")
+        .put("spark.app.name", "spark-test")
+        .put("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        .put("spark.streaming.clock", "org.apache.spark.util.ManualClock")
+        .put("kafka.metadata.broker.list", brokerList)
+        .put("kafka.zookeeper.connect", zookeeperString)
+        .build();
+
+    AppContext appContext = new AppContext(props, conf);
+
+    context = SparkContextFactory.getStreamingContext(appContext);
+
+    File tempDir = Files.createTempDir();
+    context.checkpoint(tempDir.toString());
+
+    clock = (ManualClock) context.ssc().scheduler().clock();
 
     try {
       app = (StreamingSparkApp) cls.newInstance();
@@ -124,7 +113,7 @@ public class SparkKafkaTestHarness {
     }
 
     // Set up the application
-    app.setup(new AppContext(conf));
+    app.setup(appContext);
 
     producer = new Producer<byte[],byte[]>(new ProducerConfig(harness.getProducerProps()));
 
@@ -132,7 +121,7 @@ public class SparkKafkaTestHarness {
 
     for (StreamDescription description: descriptions) {
 
-      SparkStreamingJobManager manager = (SparkStreamingJobManager) JobManagers.createStreaming(description, conf);
+      SparkStreamingJobManager manager = (SparkStreamingJobManager) JobManagers.createStreaming(description, appContext);
 
       managers.add(manager);
 

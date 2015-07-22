@@ -17,6 +17,8 @@ package org.kitesdk.apps.spi.jobs;
 
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
+import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
@@ -43,34 +45,34 @@ public abstract class JobManagers {
     }
 
     @Override
-    public SchedulableJobManager createManager(Class jobClass, Configuration conf) {
-      return JavaActionJobManager.create(jobClass, conf);
+    public SchedulableJobManager createManager(Class jobClass, AppContext context) {
+      return JavaActionJobManager.create(jobClass, context);
     }
   }
 
   private static final SchedulableJobManagerFactory DEFAULT_INSTANCE = new DefaultSchedulableJobManagerFactory();
 
-  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, Configuration conf) {
+  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, AppContext context) {
 
     for (SchedulableJobManagerFactory factory: SCHEDULABLE_FACTORIES) {
 
       if (factory.supports(jobClass))
-        return factory.createManager(jobClass, conf);
+        return factory.createManager(jobClass, context);
     }
 
     if (!DEFAULT_INSTANCE.supports(jobClass)) {
       throw new IllegalArgumentException("Job class " + jobClass + " not supported by any scheduled job manager.");
     }
 
-    return DEFAULT_INSTANCE.createManager(jobClass, conf);
+    return DEFAULT_INSTANCE.createManager(jobClass, context);
   }
 
-  public static StreamingJobManager createStreaming(StreamDescription description, Configuration conf) {
+  public static StreamingJobManager createStreaming(StreamDescription description, AppContext context) {
 
     for (StreamingJobManagerFactory factory: STREAMING_FACTORIES) {
 
       if (factory.supports(description.getJobClass()))
-        return factory.createManager(description, conf);
+        return factory.createManager(description, context);
     }
 
     throw new IllegalArgumentException("Job class " + description.getJobClass() + " not supported by any streaming job manager.");

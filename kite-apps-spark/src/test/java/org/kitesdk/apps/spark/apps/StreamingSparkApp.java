@@ -44,7 +44,7 @@ public class StreamingSparkApp extends AbstractApplication {
 
     dataset(EVENTS_DS_URI, descriptor);
 
-    KafkaUtils.createTopic(TOPIC_NAME);
+    KafkaUtils.createTopic(context, TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
 
     StreamDescription streamDescription = new StreamDescription.Builder()
         .jobClass(StreamingSparkJob.class)

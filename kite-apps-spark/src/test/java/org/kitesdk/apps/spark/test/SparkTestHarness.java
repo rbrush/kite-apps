@@ -15,27 +15,24 @@
  */
 package org.kitesdk.apps.spark.test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
-import com.google.common.io.Files;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.util.ManualClock;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
 import org.kitesdk.data.View;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -51,7 +48,9 @@ public class SparkTestHarness {
 
   private final Configuration conf;
 
-  private final JavaStreamingContext context;
+  private final AppContext context;
+
+  private final JavaStreamingContext streamingContext;
 
   private final ManualClock clock;
 
@@ -59,22 +58,25 @@ public class SparkTestHarness {
     this.app = app;
     this.conf = conf;
 
-    SparkConf sparkConf = new SparkConf()
-        .setMaster("local[3]")
-        .setAppName("spark-test")
-        .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-        .set("spark.streaming.clock", "org.apache.spark.util.ManualClock");
+    Map<String,String> settings = ImmutableMap.<String,String>builder()
+        .put("spark.app.name", "spark-test")
+        .put("spark.master", "local[3]")
+        .put("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        .put("spark.streaming.clock", "org.apache.spark.util.ManualClock")
+        .build();
 
-    JavaSparkContext javaContext = new JavaSparkContext(sparkConf);
 
-    DefaultSparkContext.setContext(javaContext);
+    context = new AppContext(settings, new Configuration());
 
-    context = new JavaStreamingContext(javaContext, new Duration(1000));
+    JavaSparkContext javaContext = SparkContextFactory.getSparkContext(context);
 
-    File tempDir = Files.createTempDir();
-    context.checkpoint(tempDir.toString());
 
-    clock = (ManualClock) context.ssc().scheduler().clock();
+    streamingContext = SparkContextFactory.getStreamingContext(context);
+
+    // File tempDir = Files.createTempDir();
+    //context.checkpoint(tempDir.toString());
+
+    clock = (ManualClock) streamingContext.ssc().scheduler().clock();
 
   }
 
@@ -127,11 +129,11 @@ public class SparkTestHarness {
 
         Queue<JavaRDD<Object>> queue = Queues.newLinkedBlockingQueue();
 
-        JavaRDD rdd = context.sparkContext().parallelize(stream.getValue());
+        JavaRDD rdd = streamingContext.sc().parallelize(stream.getValue());
 
         queue.add(rdd);
 
-        JavaDStream dstream = context.queueStream(queue);
+        JavaDStream dstream = streamingContext.queueStream(queue);
 
         namedArgs.put(stream.getKey(), dstream);
       }
@@ -151,24 +153,10 @@ public class SparkTestHarness {
         throw new AppException(e);
       }
 
-      context.start();
+      streamingContext.start();
       clock.advance(120000);
 
-      // FIXME: attempts at a graceful shutdown seem to block
-      // indefinitely. Therefore we shut down on a separate thread
-      // and timeout so we can make progress on tests.
-      Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-
-          context.stop(true,true);
-        }
-      });
-
-      thread.setDaemon(true);
-      thread.start();
-
-      context.awaitTermination(5000);
+      SparkContextFactory.shutdown();
     }
   }
 }

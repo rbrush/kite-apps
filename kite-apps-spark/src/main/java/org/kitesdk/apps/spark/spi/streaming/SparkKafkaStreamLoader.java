@@ -30,8 +30,8 @@ import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.spark.spi.DefaultKafkaContext;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.spark.SparkJobContext;
 import scala.Tuple2;
 
 
@@ -75,24 +75,15 @@ public class SparkKafkaStreamLoader {
     }
   }
 
-  public JavaDStream load(Schema schema, Map<String, String> properties, Configuration conf)  {
+  public JavaDStream load(Schema schema, Map<String, String> properties, JobContext jobContext)  {
 
     // JavaPairReceiverInputDStream<String, String> stream =  KafkaUtils.createStream(DefaultSparkContext.getStreamingContext(), "foo", "bar", null);
 
-    JavaStreamingContext ctx = DefaultSparkContext.getStreamingContext();
+    JavaStreamingContext ctx = ((SparkJobContext) jobContext).getSparkStreamingContext();
 
-    Map<String, String> params = Maps.newHashMap();
 
-    // FIXME: ugly hack. This should be propagated via configuration.
-    params.put("metadata.broker.list", DefaultKafkaContext.getKafkaBrokerList());
-    params.put("zookeeper.connect", DefaultKafkaContext.getZookeeperConnectionString());
-    params.put("group.id", "test_group");
-    params.put("client.id", "test_client");
-    params.put("socket.timeout.ms", "500");
-    params.put("consumer.id", "test");
-    params.put("auto.offset.reset", "smallest");
-    params.put("retry.backoff.ms", Integer.toString(500));
-    params.put("message.send.max.retries", Integer.toString(20));
+    Map<String, String> params = org.kitesdk.apps.spark.KafkaUtils.getDirectStreamParams((SparkJobContext) jobContext);
+
 
     Set<String> topics = new HashSet<String>();
     String topic = properties.get(org.kitesdk.apps.spark.KafkaUtils.TOPIC_NAME);

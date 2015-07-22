@@ -219,7 +219,7 @@ public class AppDeployer {
 
   private void installCoordinator(Path appPath, Schedule schedule) {
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context.getHadoopConf());
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context);
 
     Path coordDirectory = new Path (appPath, OozieScheduling.coordPath(schedule));
 

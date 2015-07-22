@@ -16,7 +16,24 @@
 package org.kitesdk.apps.streaming;
 
 import org.apache.hadoop.conf.Configured;
+import org.kitesdk.apps.JobContext;
 
-public class MockStreamingJob extends Configured implements StreamingJob {
+public class MockStreamingJob  implements StreamingJob{
 
+  private JobContext context;
+
+  @Override
+  public String getName() {
+    return "mock-job";
+  }
+
+  @Override
+  public void setJobContext(JobContext jobContext) {
+    this.context = context;
+  }
+
+  @Override
+  public JobContext getJobContext() {
+    return context;
+  }
 }

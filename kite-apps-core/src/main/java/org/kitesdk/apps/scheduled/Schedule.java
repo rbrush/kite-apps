@@ -18,6 +18,7 @@ package org.kitesdk.apps.scheduled;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
@@ -186,7 +187,7 @@ public class Schedule {
 
       this.jobClass = jobClass;
 
-      manager = JobManagers.createSchedulable(jobClass, new Configuration());
+      manager = JobManagers.createSchedulable(jobClass, new AppContext(new Configuration()));
 
       String name = manager.getName();
 

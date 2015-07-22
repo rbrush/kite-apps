@@ -22,6 +22,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
@@ -82,7 +83,7 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, getConf());
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, new AppContext(getConf()));
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, getConf());

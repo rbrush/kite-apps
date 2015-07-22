@@ -15,12 +15,22 @@
  */
 package org.kitesdk.apps.spark;
 
-import org.apache.hadoop.conf.Configured;
 import org.kitesdk.apps.streaming.StreamingJob;
 
 /**
  * Abstract base class for a streaming Spark job.
  */
-public abstract class AbstractStreamingSparkJob extends Configured implements StreamingJob  {
+public abstract class AbstractStreamingSparkJob implements StreamingJob<SparkJobContext>  {
 
+  private SparkJobContext context;
+
+  @Override
+  public void setJobContext(SparkJobContext context) {
+    this.context = context;
+  }
+
+  @Override
+  public SparkJobContext getJobContext() {
+    return context;
+  }
 }

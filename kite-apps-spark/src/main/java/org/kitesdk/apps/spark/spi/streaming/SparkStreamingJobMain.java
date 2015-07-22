@@ -15,13 +15,9 @@
  */
 package org.kitesdk.apps.spark.spi.streaming;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.streaming.Duration;
-import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import org.kitesdk.apps.spark.spi.DefaultKafkaContext;
-import org.kitesdk.apps.spark.spi.DefaultSparkContext;
+import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.streaming.StreamDescription;
@@ -51,24 +47,12 @@ public class SparkStreamingJobMain {
     // Create the spark context for the application.
     JavaSparkContext ctx = new JavaSparkContext(sparkConf);
 
-    // FIXME: what should we use for the duration here?
-    JavaStreamingContext streamingContext = new JavaStreamingContext(ctx, new Duration(100000));
-
-    // Set defaults for use in applications.
-    DefaultSparkContext.setContext(ctx);
-    DefaultSparkContext.setStreamingContext(streamingContext);
-    DefaultKafkaContext.setKafkaBrokerList(kafkaBrokers);
-    DefaultKafkaContext.setZookeeperConnectionString(zkConnectionString);
-
-    // FIXME: set the Kafka broker list and zookeeper information.
-
-    Configuration conf = ctx.hadoopConfiguration();
-
     // Use the loaded Hadoop configuration
     DefaultConfiguration.set(ctx.hadoopConfiguration());
 
+    // FIXME: set the Kafka broker list and zookeeper information.
     // Run the job.
-    StreamingJobManager manager = JobManagers.createStreaming(descrip, ctx.hadoopConfiguration());
+    StreamingJobManager manager = JobManagers.createStreaming(descrip, new AppContext(ctx.hadoopConfiguration()));
     manager.run();
   }
 }

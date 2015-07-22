@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.spark.apps.StreamingSparkApp;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.spark.test.SparkKafkaTestHarness;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
@@ -46,6 +47,11 @@ public class TestStreamingJob extends MiniDFSTest {
     DefaultConfiguration.set(getConfiguration());
 
     harness = new SparkKafkaTestHarness(StreamingSparkApp.class, getConfiguration());
+  }
+
+  @After
+  public void cleanupContext() {
+    SparkContextFactory.shutdown();
   }
 
   /**
