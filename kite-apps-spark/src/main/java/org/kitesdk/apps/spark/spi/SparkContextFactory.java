@@ -110,7 +110,9 @@ public class SparkContextFactory {
       thread.start();
 
       streamingContext.awaitTermination(5000);
-    } else if (sparkContext != null) {
+    }
+
+    if (sparkContext != null) {
       sparkContext.stop();
     }
 

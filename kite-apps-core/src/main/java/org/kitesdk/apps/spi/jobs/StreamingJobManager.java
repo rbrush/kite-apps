@@ -16,15 +16,22 @@
 package org.kitesdk.apps.spi.jobs;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
 
 public interface StreamingJobManager<T extends StreamingJob> {
 
   /**
-   * Deploys the job to the cluster.
+   * Installs the job to the cluster.
    */
-  public void deploy();
+  public void install(FileSystem fs, Path appRoot);
+
+  /**
+   * Starts the job instance installed at the given location.
+   */
+  public void start(FileSystem fs, Path appRoot);
 
   /**
    * Runs the stream in a local setting.

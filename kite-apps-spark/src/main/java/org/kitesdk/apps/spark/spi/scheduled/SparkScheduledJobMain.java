@@ -16,10 +16,13 @@
 package org.kitesdk.apps.spark.spi.scheduled;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
@@ -48,13 +51,21 @@ public class SparkScheduledJobMain {
     // Use the loaded Hadoop configuration
     DefaultConfiguration.set(ctx.hadoopConfiguration());
 
+    String kiteAppRoot = conf.get("kiteAppRoot");
+
+    Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
+
+    Map<String,String> settings = PropertyFiles.loadIfExists(FileSystem.get(conf), propertiesPath);
+
+    AppContext appContext = new AppContext(settings, conf);
+
     Instant nominalTime = OozieScheduling.getNominalTime(conf);
 
     ClassLoader loader = SparkScheduledJobMain.class.getClassLoader();
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, new AppContext(ctx.hadoopConfiguration()));
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, appContext);
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, conf);

@@ -74,6 +74,8 @@ public class SparkKafkaTestHarness {
 
   private final Producer<byte[],byte[]> producer;
 
+  private final AppContext appContext;
+
   public SparkKafkaTestHarness(Class cls, Configuration conf) throws IOException {
 
     // Set up Kafka.
@@ -93,7 +95,7 @@ public class SparkKafkaTestHarness {
         .put("kafka.zookeeper.connect", zookeeperString)
         .build();
 
-    AppContext appContext = new AppContext(props, conf);
+    appContext = new AppContext(props, conf);
 
     context = SparkContextFactory.getStreamingContext(appContext);
 
@@ -203,6 +205,10 @@ public class SparkKafkaTestHarness {
     }
 
     return records;
+  }
+
+  public AppContext getAppContext() {
+    return appContext;
   }
 
   /**

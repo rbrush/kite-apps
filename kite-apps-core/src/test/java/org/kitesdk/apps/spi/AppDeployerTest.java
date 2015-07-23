@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spi;
 
 
+import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import junit.framework.Assert;
 import org.apache.hadoop.fs.FileStatus;
@@ -36,14 +37,14 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import javax.xml.xpath.XPath;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Properties;
 import java.util.Random;
 
 public class AppDeployerTest extends MiniDFSTest {
-
-  Path testDirectory;
 
   FileSystem fs;
 
@@ -53,19 +54,54 @@ public class AppDeployerTest extends MiniDFSTest {
     this.fs = getDFS();
 
     // Create a test direcotry in HDFS.
+
+
+    DefaultConfiguration.set(getConfiguration());
+  }
+
+  private Path createTestDirectory() {
     String tempBase = getConfiguration().get("hadoop.tmp.dir", "/tmp");
 
     String tempName = "testapp-" + (new Random().nextInt() & Integer.MAX_VALUE);
-    this.testDirectory = fs.makeQualified(new Path(tempBase, tempName));
+    return fs.makeQualified(new Path(tempBase, tempName));
+  }
 
-    DefaultConfiguration.set(getConfiguration());
+  private static File createTestProperties() throws IOException {
+
+    File propFile = File.createTempFile("test", "properties");
+
+    Properties props = new Properties();
+
+    props.put("key1", "val1");
+    props.put("key2", "val2");
+
+    FileOutputStream output = new FileOutputStream(propFile);
+
+    try {
+
+      props.store(output, "");
+
+    } finally {
+      output.close();
+    }
+
+    return propFile;
   }
 
   @Test
   public void testDeploySimpleApp() throws Exception {
 
+    Path testDirectory = createTestDirectory();
+
     AppDeployer deployer = new AppDeployer(fs, new AppContext(getConfiguration()));
-    deployer.install(ScheduledInputOutputApp.class, testDirectory, Collections.<File>emptyList());
+
+    ScheduledInputOutputApp app = new ScheduledInputOutputApp();
+
+    app.setup(new AppContext(getConfiguration()));
+
+    File propFile = createTestProperties();
+
+    deployer.install(app, testDirectory, propFile, Collections.<File>emptyList());
 
     assertValidInstallation(testDirectory);
   }
@@ -79,11 +115,15 @@ public class AppDeployerTest extends MiniDFSTest {
     Path workflowDir = new Path(appPath, "oozie/workflows");
     Path coordDir = new Path(appPath, "oozie/coordinators");
     Path bundleFile = new Path(appPath, "oozie/bundle.xml");
+    Path confFile = new Path(appPath, "conf/app.properties");
 
     Assert.assertTrue(fs.exists(appPath));
     Assert.assertTrue(fs.exists(workflowDir));
     Assert.assertTrue(fs.exists(coordDir));
     Assert.assertTrue(fs.exists(bundleFile));
+    Assert.assertTrue(fs.exists(confFile));
+
+    validatePropertyFile(fs, confFile);
 
     // Make sure the expected application path is set.
     InputStream input = fs.open(bundleFile);
@@ -98,7 +138,7 @@ public class AppDeployerTest extends MiniDFSTest {
       String appRoot = xpath.evaluate("bn:bundle-app/bn:parameters/bn:property" +
           "/bn:value[../bn:name/text() = \"kiteAppRoot\"]", dom);
 
-      Assert.assertTrue(appRoot.startsWith(testDirectory.toString()));
+      Assert.assertTrue(appRoot.startsWith(appPath.toString()));
 
     } finally {
 
@@ -134,6 +174,26 @@ public class AppDeployerTest extends MiniDFSTest {
     Assert.assertTrue("No test coordinator found.", foundCoordinator);
 
     validateSchema(fs, bundleFile);
+  }
+
+  private void validatePropertyFile(FileSystem fs, Path path) {
+
+    InputStream input = null;
+
+    try {
+      input = fs.open(path);
+
+      Properties props = new Properties();
+
+      props.load(input);
+
+      Assert.assertTrue(props.stringPropertyNames().size() > 0);
+
+    } catch (IOException e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      Closeables.closeQuietly(input);
+    }
   }
 
 

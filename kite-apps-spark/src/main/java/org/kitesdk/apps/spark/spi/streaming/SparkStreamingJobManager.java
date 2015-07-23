@@ -16,9 +16,12 @@
 package org.kitesdk.apps.spark.spi.streaming;
 
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.kitesdk.apps.AppContext;
@@ -35,8 +38,13 @@ import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 import org.kitesdk.spark.backport.launcher.SparkLauncher;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -56,13 +64,76 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
   private final SparkJobContext sparkJobContext;
 
+  private final AppContext appContext;
+
   public SparkStreamingJobManager(StreamDescription description,
                                   AbstractStreamingSparkJob job, Method runMethod, AppContext context) {
 
     this.description = description;
     this.job = job;
     this.runMethod = runMethod;
+    this.appContext = context;
     this.sparkJobContext = new SparkJobContext(job.getName(), context);
+  }
+
+  public static Path jobDescriptionFile(Path appRoot, String jobName) {
+    return new Path (appRoot, "streaming/" + jobName + ".json");
+  }
+
+
+  public static StreamDescription loadDescription(FileSystem fs, Path appRoot, String jobName) {
+
+    Path streamingJobPath = jobDescriptionFile(appRoot, jobName);
+
+    StringBuilder builder = new StringBuilder();
+    InputStream input = null;
+
+    try {
+      input = fs.open(streamingJobPath);
+
+      InputStreamReader streamReader = new InputStreamReader(input);
+
+      BufferedReader reader = new BufferedReader(streamReader);
+
+
+
+      String line;
+
+      while ((line = reader.readLine()) != null) {
+
+        builder.append(line);
+      }
+    } catch(IOException e) {
+      throw new AppException(e);
+    } finally {
+      Closeables.closeQuietly(input);
+    }
+
+    return StreamDescription.parseJson(builder.toString());
+  }
+
+  private static void writeDescription(FileSystem fs, Path appRoot, StreamDescription description) {
+
+    Path streamingJobPath = jobDescriptionFile(appRoot, description.getJobName());
+
+    try {
+      fs.mkdirs(streamingJobPath.getParent());
+    } catch (IOException e) {
+      throw new AppException(e);
+    }
+
+    OutputStream output = null;
+
+    try {
+      output = fs.append(streamingJobPath);
+      OutputStreamWriter writer = new OutputStreamWriter(output);
+      writer.write(description.toString());
+
+    } catch (IOException e) {
+      throw new AppException(e);
+    } finally {
+      Closeables.closeQuietly(output);
+    }
   }
 
   public static SparkStreamingJobManager create(StreamDescription description,
@@ -106,8 +177,32 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
   }
 
   @Override
-  public void deploy() {
+  public void install(FileSystem fs, Path appRoot) {
 
+    Path descriptionFile = jobDescriptionFile(appRoot, job.getName());
+
+    try {
+
+      OutputStream output = fs.create(descriptionFile);
+
+      try {
+
+        OutputStreamWriter writer = new OutputStreamWriter(output);
+
+        writer.append(description.toString());
+        writer.flush();
+
+      } finally {
+        output.close();
+      }
+
+    } catch (IOException e) {
+      throw new AppException(e);
+    }
+  }
+
+  @Override
+  public void start(FileSystem fs, Path appRoot) {
     JobConf jobConf = new JobConf();
     jobConf.setJarByClass(job.getClass());
     String containingJar = jobConf.getJar();
@@ -127,9 +222,8 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       launcher.addJar(file.getAbsolutePath());
     }
 
-    // TODO: add path to app and root?
-    // Pass in the broker, zookeeper, and job connection information.
-    launcher.addAppArgs();
+    launcher.addAppArgs(appRoot.toString(),
+        description.getJobName());
 
     try {
 

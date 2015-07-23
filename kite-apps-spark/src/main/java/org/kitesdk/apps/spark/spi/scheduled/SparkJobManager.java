@@ -123,6 +123,7 @@ class SparkJobManager extends SchedulableJobManager {
 
     // Use the spark and hive sharelibs since many actions use both.
     property(writer, "oozie.action.sharelib.for.spark", "spark,hive2");
+    property(writer, "kiteAppRoot", "${kiteAppRoot}");
 
     OozieScheduling.writeJobConfiguration(writer, schedule, context.getHadoopConf());
 

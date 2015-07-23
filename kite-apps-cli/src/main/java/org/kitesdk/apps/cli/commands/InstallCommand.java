@@ -17,17 +17,23 @@ package org.kitesdk.apps.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.internal.Maps;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.AppDeployer;
+import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.cli.commands.BaseCommand;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -35,13 +41,17 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.Properties;
 
 @Parameters(commandDescription="Installs a Kite application.")
 public class InstallCommand extends BaseCommand {
 
   @Parameter(description = "<app jar path> <class name> <destination>")
   List<String> args;
+
+  @Parameter(description = "Configuration properties file.", names={"--properties-file"})
+  String propertiesFileName;
 
   private final Logger console;
 
@@ -86,8 +96,20 @@ public class InstallCommand extends BaseCommand {
       return 1;
     }
 
-    // TODO: read configuration properties.
-    AppContext context = new AppContext(Collections.<String,String>emptyMap(), getConf());
+    File settingsFile = propertiesFileName != null ?
+        new File(propertiesFileName) :
+        null;
+
+    if (settingsFile != null &&
+        (!settingsFile.exists() || !settingsFile.isFile())) {
+
+      console.error("File {} is not a valid properties file.", propertiesFileName);
+      return 1;
+    }
+
+    Map<String,String> settings = PropertyFiles.load(settingsFile);
+
+    AppContext context = new AppContext(settings, getConf());
 
     AppDeployer deployer = new AppDeployer(fs, context);
 
@@ -98,12 +120,13 @@ public class InstallCommand extends BaseCommand {
 
     allJars.add(appJarFile);
 
-    deployer.deploy(appClass, destination, allJars);
+    deployer.deploy(appClass, destination, settingsFile, allJars);
 
     console.info("Application JAR installed.");
 
     return 0;
   }
+
 
   @Override
   public List<String> getExamples() {

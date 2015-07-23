@@ -36,6 +36,8 @@ public class StreamDescriptionTest {
         .withStream("example.stream", props)
         .withView("example.view", "dataset:hive:example/view").build();
 
+    Assert.assertEquals(new MockStreamingJob().getName(), descrip.getJobName());
+
     Assert.assertEquals(MockStreamingJob.class, descrip.getJobClass());
 
     Map<String, StreamDescription.Stream> streams = descrip.getStreams();

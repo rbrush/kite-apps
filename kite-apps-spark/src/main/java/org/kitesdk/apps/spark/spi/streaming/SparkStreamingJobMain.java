@@ -15,9 +15,13 @@
  */
 package org.kitesdk.apps.spark.spi.streaming;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.streaming.StreamDescription;
@@ -32,27 +36,44 @@ public class SparkStreamingJobMain {
 
   public static void main(String[] args) throws Exception {
 
-    String kafkaBrokers = args[0];
-    String zkConnectionString = args[1];
-    String jobDescription = args[2];
+    String kiteAppRoot = args[0];
 
-    // Parse the description passed to the launcher.
-    StreamDescription descrip = StreamDescription.parseJson(jobDescription);
+    String jobName = args[1];
 
-    System.out.println("RUNNING JOB:");
-    System.out.println(jobDescription);
+    Configuration conf = getConf();
 
-    SparkConf sparkConf = new SparkConf().setAppName(descrip.getJobClass().getName());
+    // Use the loaded Hadoop configuration
+    DefaultConfiguration.set(conf);
+
+    FileSystem fs = FileSystem.get(conf);
+
+    Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
+    Map<String,String> settings = PropertyFiles.loadIfExists(fs, propertiesPath);
+
+    AppContext appContext = new AppContext(settings, conf);
+
+    Path appPath = new Path(kiteAppRoot);
+
+    StreamDescription descrip = SparkStreamingJobManager.loadDescription(fs, appPath, jobName);
+
+    // Run the job.
+    StreamingJobManager manager = JobManagers.createStreaming(descrip, appContext);
+    manager.run();
+  }
+
+  private static Configuration getConf() {
+
+    // TODO: create spark configuration to load Hadoop configuration resources.
+    // Is there a cleaner way to do this?
+    SparkConf sparkConf = new SparkConf().setAppName("PLACEHOLDER");
 
     // Create the spark context for the application.
     JavaSparkContext ctx = new JavaSparkContext(sparkConf);
 
-    // Use the loaded Hadoop configuration
-    DefaultConfiguration.set(ctx.hadoopConfiguration());
+    Configuration conf = ctx.hadoopConfiguration();
 
-    // FIXME: set the Kafka broker list and zookeeper information.
-    // Run the job.
-    StreamingJobManager manager = JobManagers.createStreaming(descrip, new AppContext(ctx.hadoopConfiguration()));
-    manager.run();
+    ctx.close();
+
+    return conf;
   }
 }

@@ -28,7 +28,9 @@ import org.kitesdk.apps.Application;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
+import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
+import org.kitesdk.apps.streaming.StreamDescription;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,42 +54,8 @@ public class AppDeployer {
     this.context = context;
   }
 
-  /**
-   * Deploys the application to the cluster.
-   */
-  public void deploy(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
 
-    deploySchedulableJobs(applicationClass, appPath, jars);
-    deployStreamingJobs(applicationClass, appPath, jars);
-  }
-
-  private void deploySchedulableJobs(Class<? extends Application> applicationClass, Path appPath, List<File> jars)  {
-    install(applicationClass, appPath, jars);
-
-    // TODO: get the oozie URL from arguments?
-    String oozieURL = System.getenv("OOZIE_URL");
-
-    if (oozieURL == null) {
-      throw new AppException("No OOZIE_URL environment variable specified");
-    }
-
-    OozieClient client =  new OozieClient(oozieURL);
-
-    start(client, appPath);
-  }
-
-  private void deployStreamingJobs(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
-
-    // TODO: get streaming jobs, load a streaming job manager, and deploy the to the cluster...
-  }
-
-  @VisibleForTesting
-  void install(Class<? extends Application> applicationClass, Path appPath, List<File> jars) {
-
-    // Install to a temporary destination and rename it to avoid
-    // potential races against other installers.
-    String tempBase = context.getHadoopConf().get("hadoop.tmp.dir", "/tmp");
-    Path tempDestination =  new Path(tempBase, "kite-" + (new Random().nextInt() & Integer.MAX_VALUE));
+  public void deploy(Class<? extends Application> applicationClass, Path appPath, File settingsFile, List<File> jars)  {
 
     Application app;
 
@@ -101,6 +69,39 @@ public class AppDeployer {
 
     app.setup(context);
 
+    install(app, appPath, settingsFile, jars);
+
+    // Start scheduled apps with Oozie, if there are any.
+    if (!app.getSchedules().isEmpty()) {
+      // TODO: get the oozie URL from arguments?
+      String oozieURL = System.getenv("OOZIE_URL");
+
+      if (oozieURL == null) {
+        throw new AppException("No OOZIE_URL environment variable specified");
+      }
+
+      OozieClient client =  new OozieClient(oozieURL);
+
+      start(client, appPath);
+    }
+
+    // Start the streaming jobs.
+    for (StreamDescription description: app.getStreamDescriptions()) {
+
+      StreamingJobManager manager =  JobManagers.createStreaming(description, context);
+
+      manager.start(fs, appPath);
+    }
+  }
+
+  @VisibleForTesting
+  public void install(Application app, Path appPath, File settingsFile, List<File> jars) {
+
+    // Install to a temporary destination and rename it to avoid
+    // potential races against other installers.
+    String tempBase = context.getHadoopConf().get("hadoop.tmp.dir", "/tmp");
+    Path tempDestination =  new Path(tempBase, "kite-" + (new Random().nextInt() & Integer.MAX_VALUE));
+
     try {
 
       fs.mkdirs(tempDestination);
@@ -109,6 +110,21 @@ public class AppDeployer {
       throw new AppException(e);
     }
 
+    if (settingsFile != null) {
+
+      // Install the configuration.
+      Path appProps = new Path(tempDestination, "conf/app.properties");
+
+      try {
+
+        fs.copyFromLocalFile(new Path(settingsFile.getAbsolutePath()), appProps);
+      } catch (IOException e) {
+        throw new AppException(e);
+      }
+    }
+
+
+    // Install the scheduled jobs.
     List<Schedule> schedules = app.getSchedules();
 
     for (Schedule schedule: schedules) {
@@ -118,10 +134,22 @@ public class AppDeployer {
       installCoordinator(tempDestination, schedule);
     }
 
-    installBundle(applicationClass, tempDestination, appPath, schedules);
+    installBundle(app.getClass(), tempDestination, appPath, schedules);
 
+    // Install the streaming jobs.
+    List<StreamDescription> descriptions = app.getStreamDescriptions();
+
+    for (StreamDescription description: descriptions) {
+
+      StreamingJobManager manager = JobManagers.createStreaming(description, context);
+
+      manager.install(fs, tempDestination);
+    }
+
+    // Install the library JARs.
     installJars(new Path(tempDestination, "lib"), jars);
 
+    // Copy the temporary path to the final location.
     try {
       if (!fs.rename(tempDestination, appPath)) {
 

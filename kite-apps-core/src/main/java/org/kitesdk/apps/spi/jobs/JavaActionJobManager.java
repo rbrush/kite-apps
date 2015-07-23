@@ -113,6 +113,8 @@ class JavaActionJobManager extends SchedulableJobManager {
     // with Hive.
     property(writer, "oozie.action.sharelib.for.java", "hive2");
 
+    property(writer, "kiteAppRoot", "${kiteAppRoot}");
+
     for (Map.Entry<String,String> setting: settings.entrySet()) {
 
       property(writer, setting.getKey(), setting.getValue());

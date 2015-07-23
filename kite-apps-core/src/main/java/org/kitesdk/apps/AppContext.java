@@ -16,6 +16,7 @@
 package org.kitesdk.apps;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 
 import java.util.Collections;
 import java.util.Map;

@@ -40,8 +40,9 @@ import java.util.Map;
  */
 public class StreamDescription {
 
-
   private final Class<? extends StreamingJob> jobClass;
+
+  private final String jobName;
 
   private final Map<String,Stream> streams;
 
@@ -51,6 +52,10 @@ public class StreamDescription {
     return jobClass;
   }
 
+  public String getJobName() {
+    return jobName;
+  }
+
   public Map<String,Stream> getStreams() {
     return streams;
   }
@@ -58,9 +63,11 @@ public class StreamDescription {
   public Map<String,URI> getViewUris() {return viewUris;}
 
   private StreamDescription(Class<? extends StreamingJob> jobClass,
+                            String jobName,
                             Map<String,Stream> streams,
                             Map<String,URI> viewUris) {
     this.jobClass = jobClass;
+    this.jobName = jobName;
     this.streams = streams;
     this.viewUris = viewUris;
   }
@@ -111,6 +118,8 @@ public class StreamDescription {
 
     private Class<? extends StreamingJob> jobClass;
 
+    private String jobName;
+
     private final Map<String,Stream> streams = Maps.newHashMap();
 
     private final Map<String,URI> viewUris = Maps.newHashMap();
@@ -121,9 +130,19 @@ public class StreamDescription {
      *
      * @return An instance of the builder for method chaining.
      */
-    public Builder jobClass(Class jobClass) {
+    public Builder jobClass(Class<? extends StreamingJob> jobClass) {
 
       this.jobClass = jobClass;
+
+      try {
+        StreamingJob job = jobClass.newInstance();
+        jobName = job.getName();
+
+      } catch (InstantiationException e) {
+        throw new AppException(e);
+      } catch (IllegalAccessException e) {
+        throw new AppException(e);
+      }
 
       return this;
     }
@@ -168,7 +187,7 @@ public class StreamDescription {
      * @return a StreamDescription.
      */
     public StreamDescription build() {
-      return new StreamDescription(jobClass, streams, viewUris);
+      return new StreamDescription(jobClass, jobName, streams, viewUris);
     }
   }
 
@@ -319,7 +338,8 @@ public class StreamDescription {
 
     StreamDescription _that = (StreamDescription) that;
 
-    return jobClass.equals(_that.jobClass) &&
+    return jobName.equals(_that.jobName) &&
+        jobClass.equals(_that.jobClass) &&
         streams.equals(_that.streams) &&
         viewUris.equals(_that.viewUris);
   }

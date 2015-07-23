@@ -17,6 +17,7 @@ package org.kitesdk.apps.spi.oozie;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
@@ -24,6 +25,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.data.View;
@@ -75,6 +77,14 @@ public class OozieScheduledJobMain extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
 
+    String kiteAppRoot = getConf().get("kiteAppRoot");
+
+    Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
+
+    Map<String,String> settings = PropertyFiles.loadIfExists(FileSystem.get(getConf()), propertiesPath);
+
+    AppContext appContext = new AppContext(settings, getConf());
+
     Instant nominalTime = OozieScheduling.getNominalTime(getConf());
 
     String jobClassName = args[0];
@@ -83,7 +93,7 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, new AppContext(getConf()));
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, appContext);
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, getConf());
