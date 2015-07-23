@@ -162,6 +162,7 @@ export HADOOP_MAPRED_HOME
 export HBASE_HOME
 export HIVE_CONF_DIR
 export HIVE_HOME
+export SPARK_HOME
 
 if [ -x "$HADOOP_COMMON_HOME/bin/hadoop" ]; then
   exec ${HADOOP_COMMON_HOME}/bin/hadoop jar lib/kite-apps-cli-*-SNAPSHOT.jar $flags org.kitesdk.apps.cli.Main --dollar-zero "$0" "$@"

@@ -69,6 +69,8 @@ public class InstallCommand extends BaseCommand {
     String appClassName = args.get(1);
     Path destination = new Path(args.get(2));
 
+    console.info("Installing {} to {}.", appClassName, destination);
+
     FileSystem fs = FileSystem.get(getConf());
 
     if (fs.exists(destination)) {
@@ -107,7 +109,9 @@ public class InstallCommand extends BaseCommand {
       return 1;
     }
 
-    Map<String,String> settings = PropertyFiles.load(settingsFile);
+    Map<String,String> settings = settingsFile != null ?
+        PropertyFiles.load(settingsFile) :
+        Collections.<String,String>emptyMap();
 
     AppContext context = new AppContext(settings, getConf());
 

@@ -68,10 +68,10 @@ public class SparkTestHarness {
 
     context = new AppContext(settings, new Configuration());
 
-    JavaSparkContext javaContext = SparkContextFactory.getSparkContext(context);
+    JavaSparkContext javaContext = SparkContextFactory.getSparkContext(context.getSettings());
 
 
-    streamingContext = SparkContextFactory.getStreamingContext(context);
+    streamingContext = SparkContextFactory.getStreamingContext(context.getSettings());
 
     // File tempDir = Files.createTempDir();
     //context.checkpoint(tempDir.toString());

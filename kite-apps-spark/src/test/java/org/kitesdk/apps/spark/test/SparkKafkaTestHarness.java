@@ -97,7 +97,7 @@ public class SparkKafkaTestHarness {
 
     appContext = new AppContext(props, conf);
 
-    context = SparkContextFactory.getStreamingContext(appContext);
+    context = SparkContextFactory.getStreamingContext(appContext.getSettings());
 
     File tempDir = Files.createTempDir();
     context.checkpoint(tempDir.toString());

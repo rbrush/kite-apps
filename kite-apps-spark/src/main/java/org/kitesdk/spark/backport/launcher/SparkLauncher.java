@@ -271,6 +271,8 @@ public class SparkLauncher {
     }
 
     ProcessBuilder pb = new ProcessBuilder(cmd.toArray(new String[cmd.size()]));
+
+
     for (Map.Entry<String, String> e : builder.childEnv.entrySet()) {
       pb.environment().put(e.getKey(), e.getValue());
     }

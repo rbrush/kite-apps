@@ -38,11 +38,11 @@ public class SparkContextFactory {
 
   private static JavaStreamingContext streamingContext = null;
 
-  private static SparkConf createConf(AppContext context) {
+  private static SparkConf createConf(Map<String,String> settings) {
 
     SparkConf conf = new SparkConf().setAppName("FIXME_PLACEHOLDER");
 
-    for (Map.Entry<String,String> entry: context.getSettings().entrySet()) {
+    for (Map.Entry<String,String> entry: settings.entrySet()) {
 
       if (entry.getKey().startsWith("spark.")) {
 
@@ -53,21 +53,22 @@ public class SparkContextFactory {
     return conf;
   }
 
-  public static synchronized JavaSparkContext getSparkContext(AppContext context) {
+  public static synchronized JavaSparkContext getSparkContext(Map<String,String> settings) {
 
     if (sparkContext == null) {
 
       appSettings = ImmutableMap.<String,String>builder()
-          .putAll(context.getSettings())
+          .putAll(settings)
           .build();
 
-      SparkConf conf = createConf(context);
+      SparkConf conf = createConf(appSettings);
 
       sparkContext = new JavaSparkContext(conf);
+
     } else {
 
       // Check to see if the settings are compatible.
-      if (!appSettings.equals(context.getSettings()))
+      if (!appSettings.equals(settings))
         throw new AppException("Can only create a Spark context for one collection of settings. See SPARK-2243.");
 
     }
@@ -75,16 +76,16 @@ public class SparkContextFactory {
     return sparkContext;
   }
 
-  public static synchronized JavaStreamingContext getStreamingContext(AppContext context) {
+  public static synchronized JavaStreamingContext getStreamingContext(Map<String,String> settings) {
 
 
     if (streamingContext == null) {
 
-      streamingContext = new JavaStreamingContext(getSparkContext(context), new Duration(1000));
+      streamingContext = new JavaStreamingContext(getSparkContext(settings), new Duration(1000));
     } else {
 
       // Check to see if the settings are compatible.
-      if (!appSettings.equals(context.getSettings()))
+      if (!appSettings.equals(settings))
         throw new AppException("Can only create a Spark context for one collection of settings. See SPARK-2243.");
 
     }

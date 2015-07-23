@@ -20,7 +20,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
@@ -40,15 +42,18 @@ public class SparkStreamingJobMain {
 
     String jobName = args[1];
 
-    Configuration conf = getConf();
-
-    // Use the loaded Hadoop configuration
-    DefaultConfiguration.set(conf);
-
-    FileSystem fs = FileSystem.get(conf);
+    FileSystem fs = FileSystem.get(new Configuration());
 
     Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
     Map<String,String> settings = PropertyFiles.loadIfExists(fs, propertiesPath);
+
+    // Create the spark context for the application.
+    JavaSparkContext context = SparkContextFactory.getSparkContext(settings);
+
+    Configuration conf = context.hadoopConfiguration();
+
+    // Use the loaded Hadoop configuration
+    DefaultConfiguration.set(conf);
 
     AppContext appContext = new AppContext(settings, conf);
 
@@ -59,21 +64,10 @@ public class SparkStreamingJobMain {
     // Run the job.
     StreamingJobManager manager = JobManagers.createStreaming(descrip, appContext);
     manager.run();
-  }
 
-  private static Configuration getConf() {
-
-    // TODO: create spark configuration to load Hadoop configuration resources.
-    // Is there a cleaner way to do this?
-    SparkConf sparkConf = new SparkConf().setAppName("PLACEHOLDER");
-
-    // Create the spark context for the application.
-    JavaSparkContext ctx = new JavaSparkContext(sparkConf);
-
-    Configuration conf = ctx.hadoopConfiguration();
-
-    ctx.close();
-
-    return conf;
+    JavaStreamingContext streamingContext = SparkContextFactory.getStreamingContext(settings);
+    
+    streamingContext.start();
+    streamingContext.awaitTermination();
   }
 }

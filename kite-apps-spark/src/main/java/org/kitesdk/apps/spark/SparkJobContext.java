@@ -28,16 +28,16 @@ import org.kitesdk.apps.spi.jobs.JobUtil;
 public class SparkJobContext extends JobContext {
 
 
-  AppContext appContext;
+  private final AppContext appContext;
 
   public JavaSparkContext getSparkContext() {
 
-    return SparkContextFactory.getSparkContext(appContext);
+    return SparkContextFactory.getSparkContext(appContext.getSettings());
   }
 
   public JavaStreamingContext getSparkStreamingContext() {
 
-    return SparkContextFactory.getStreamingContext(appContext);
+    return SparkContextFactory.getStreamingContext(appContext.getSettings());
   }
 
   /**

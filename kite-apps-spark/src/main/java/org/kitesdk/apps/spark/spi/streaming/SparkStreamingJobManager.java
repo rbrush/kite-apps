@@ -20,6 +20,7 @@ import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
@@ -45,6 +46,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -52,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 
 public class SparkStreamingJobManager implements StreamingJobManager<AbstractStreamingSparkJob> {
@@ -204,22 +207,34 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
   @Override
   public void start(FileSystem fs, Path appRoot) {
     JobConf jobConf = new JobConf();
-    jobConf.setJarByClass(job.getClass());
+    jobConf.setJarByClass(SparkStreamingJobMain.class);
     String containingJar = jobConf.getJar();
 
-    String jarName = containingJar != null ?
-        "${kiteAppRoot}/lib/" + new File(containingJar).getName() :
-        "";
+    Path libPath = new Path(appRoot, "lib");
+
+    Path jarPath = new Path(libPath, new File(containingJar).getName());
+    jarPath = fs.makeQualified(jarPath);
+
     SparkLauncher launcher = new SparkLauncher();
 
     launcher.setMainClass(SparkStreamingJobMain.class.getName());
 
-    launcher.setAppResource(jarName);
+    launcher.setAppResource(jarPath.toString());
 
-    List<File> jarFiles = getLibraryJars();
+    launcher.setMaster("yarn-cluster");
 
-    for (File file: jarFiles) {
-      launcher.addJar(file.getAbsolutePath());
+    // Add the library JARs from HDFS so we don't need to reload
+    // them separately into Spark.
+    try {
+      FileStatus[] libJars = fs.listStatus(libPath);
+
+      for (FileStatus jar: libJars) {
+
+        launcher.addJar(jar.getPath().toString());
+      }
+
+    } catch (IOException e) {
+      throw new AppException(e);
     }
 
     launcher.addAppArgs(appRoot.toString(),
@@ -229,7 +244,14 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       Process process = launcher.launch();
 
+      // Redirect the spark-submit output to be visible to the reader.
+      Thread stdoutThread = writeOutput(process.getInputStream(), System.out);
+      Thread stderrThread = writeOutput(process.getErrorStream(), System.err);
+
       int result = process.waitFor();
+
+      stdoutThread.join();
+      stderrThread.join();
 
       if (result != 0) {
         throw new AppException("spark-submit returned error status: " + result);
@@ -240,6 +262,29 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     } catch (InterruptedException e) {
       throw new AppException(e);
     }
+  }
+
+  /**
+   * Writes the output to std out.
+   */
+  private static Thread writeOutput(final InputStream stream, final PrintStream target) {
+
+    Thread thread = new Thread("spark-submit-output-redirect") {
+
+      public void run() {
+
+        Scanner scanner = new Scanner(stream);
+
+        while (scanner.hasNextLine()) {
+          target.println(scanner.nextLine());
+        }
+      }
+    };
+
+    thread.setDaemon(true);
+    thread.start();
+
+    return thread;
   }
 
 
@@ -274,7 +319,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
   }
 
   /**
-   * Run the job in the local process.
+   * Run the job in the local process. This is generally used for unit tests.
    */
   public void run()  {
 
