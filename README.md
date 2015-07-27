@@ -54,8 +54,46 @@ The schedule of a job provides a cron-style frequency and a pattern to create th
 
 See the kite-apps-examples projects for several complete examples.
 
+## Writing a Streaming Job
+Regularly scheduled jobs via Oozie are simple to operate and understand and meet many use cases. However, they are not sufficient for workloads that require very low latency. Therefore we also support stream-based processing. This is accomplished via Spark Streaming, but other stream-based models could be added in the future.
+
+Here is an example of a very simple streaming job:
+
+
+```java
+public class SparkStreamingJob extends AbstractStreamingSparkJob {
+
+  public void run(@DataIn(name = "event.stream", type = ExampleEvent.class)
+                  JavaDStream<ExampleEvent> stream,
+                  @DataOut(name = "event.output", type = ExampleEvent.class)
+                  Dataset<ExampleEvent> output) {
+
+    SparkDatasets.save(stream, output);
+  }
+
+  @Override
+  public String getName() {
+    return "test-event-stream";
+  }
+}
+```
+
+This job simply writes data from the given DStream to the given Kite dataset, but jobs may perform arbitrary Spark Streaming operations on the given DStream. A Kite Application can install such jobs in the ```setup``` method much like the scheduled job example above. Simply add a segment like this:
+
+```java
+StreamDescription streamDescription = new StreamDescription.Builder()
+    .jobClass(SparkStreamingJob.class)
+    .withStream("event.stream", KafkaUtils.kafkaProps(TOPIC_NAME))
+    .withView("event.output", EVENTS_DS_URI)
+    .build();
+
+stream(streamDescription);
+```
+
+The complete streaming example is available in the kite-apps-examples project.
+
 ## Installation
-This library has two parts to install: Oozie URI support for Kite datasets and a command-line tool for deploying applications.
+This library has two parts that must be installed: Oozie URI support for Kite datasets and a command-line tool for deploying applications.
 
 ### Installing the Oozie URI Handler
 The Oozie URI handler available starting with Kite 1.1 must be installed by hand for the time being. Better documentation to include with Oozie is being tracked in [OOZIE-2269](https://issues.apache.org/jira/browse/OOZIE-2269). For now, users can take these steps:
@@ -100,7 +138,7 @@ tar xzf kite-apps-tools-0.1.0-SNAPSHOT.tar.gz
 cd kite-apps-tools-0.1.0-SNAPSHOT
 ```
 
-## Running the examples
+## Running the scheduled job examples
 The kite-apps-examples sub-project offers several examples of using kite-apps. These include data generation and triggering Crunch jobs based on the presence of input data. To install an application that generates test data every minute, run the following:
 
 ```bash
@@ -117,10 +155,43 @@ org.kitesdk.apps.examples.triggered.TriggeredApp \
 /path/to/install/dir/on/hdfs
 ```
 
+## Running the streaming job example
+The streaming job pulls data from a Kafka queue and writes it to a Kite dataset. The application will create the Kafka queue and dataset if it doesn't already exist. For this to run we need to configure the application to use a Kafka installation. This is done by creating a properties file like this:
+
+```properties
+kafka.zookeeper.connect=example.zookeeper.host:2181
+kafka.metadata.broker.list=example.broker.host1:9092,example.broker.host2:9092
+```
+Any property defined by Kafka can be set by simply having a "kafka." prefix here. (Similarly, any Spark property can be defined in this file as well.)
+
+Once the example.properties file exists, we can install the application with this command:
+
+```bash
+bin/kite-apps install /path/to/example/target/kite-apps-examples-0.1.0-SNAPSHOT.jar \
+org.kitesdk.apps.examples.streaming.SparkStreamingApp \
+/path/to/install/dir/on/hdfs \
+--properties-file /path/to/example/example.properties
+```
+
+This will install the application to the given directory and create the Spark streaming job.
+
+The example includes a simple command to generate data and write it to the application's Spark topic, which can be run like this:
+
+```bash
+bin/kite-apps jar /path/to/example/target/kite-apps-examples-0.1.0-SNAPSHOT.jar \
+org.kitesdk.apps.examples.streaming.DataGenerator <kafka.broker.list> example_events
+```
+
+As data is written, the running example application should consume it and write output to the ```example/sparkevents``` dataset.
+
+**Note for CDH 5.4 Users:** CDH 5.4.x will have a version of Kite 1.0.x in the /usr/jars folder, which will appear on the classpath of the Spark Streaming executor. This conflicts with the 1.1.0 Kite Jars used by this project. It may be necessary to replace the Kite 1.0 JARS in /usr/jars with their kite 1.1 equivalents. This will be unnecessary in later versions of CDH that upgrade to Kite 1.1 or newer.
+
 ## Kite Apps layout
 Kite Applications are installed to a target directory, which contains the following structure:
 
 ```
+<app-root>/conf -- The app.properties file, and a place for future configuration.
+<app-root>/streaming -- JSON files containing descriptions of each streaming job.
 <app-root>/lib -- The set of JARs
 <app-root>/oozie -- All Oozie artifacts for the application are in here.
 <app-root>/oozie/bundle.xml -- the Oozie bundle for the entire application
@@ -134,6 +205,6 @@ This will be expanded in the future, with separate directories to contain user-e
 
 ## Outstanding items
 * Improved documentation and unit tests.
-* Add a way for job configuration to be externally defined, possibly providing a job-settings.xml for each Kite job. See [issue 3](https://github.com/rbrush/kite-apps/issues/3).
-* Add support for a StreamingJob, based on Spark Streaming and Kafka, to complement the existing ScheduledJob. See [issue 4](https://github.com/rbrush/kite-apps/issues/4).
+* Enhance interpretation of conf/app.properties for job-specific configuration and for well-defined configuration of subsystems like Spark and Kafka. See [issue 3](https://github.com/rbrush/kite-apps/issues/3).
 * Tooling to simplify upgrades and uninstallation of applications. See [issue 10](https://github.com/rbrush/kite-apps/issues/10).
+* Spark Streaming jobs must checkpoint their state to recover from failures. See [issue 12](https://github.com/rbrush/kite-apps/issues/12).
