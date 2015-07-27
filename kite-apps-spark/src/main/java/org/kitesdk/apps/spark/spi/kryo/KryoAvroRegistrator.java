@@ -16,15 +16,14 @@
 package org.kitesdk.apps.spark.spi.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-import org.apache.avro.specific.SpecificRecord;
 import org.apache.spark.serializer.KryoRegistrator;
 import org.kitesdk.apps.AppException;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KryoAvroRegistrator implements KryoRegistrator {
+
+  Logger LOGGER = LoggerFactory.getLogger(KryoAvroRegistrator.class);
 
   /**
    * System property identifying the Avro classes to be registered
@@ -37,22 +36,24 @@ public class KryoAvroRegistrator implements KryoRegistrator {
     String classesString = System.getProperty(KITE_AVRO_CLASSES);
 
     if (classesString == null || classesString.isEmpty()) {
-      throw new AppException("Property " + KITE_AVRO_CLASSES + " not set.");
+      LOGGER.info("No Avro classes set in property {}.", KITE_AVRO_CLASSES);
+    } else {
 
-    }
+      LOGGER.info("Registring Avro classes {}.", classesString);
 
-    String[] classes = classesString.split(",");
+      String[] classes = classesString.split(",");
 
-    for(String className: classes) {
+      for(String className: classes) {
 
-      Class cls = null;
-      try {
-        cls = Thread.currentThread().getContextClassLoader().loadClass(className);
-      } catch (ClassNotFoundException e) {
-        throw new AppException(e);
+        Class cls = null;
+        try {
+          cls = Thread.currentThread().getContextClassLoader().loadClass(className);
+        } catch (ClassNotFoundException e) {
+          throw new AppException(e);
+        }
+
+        kryo.register(cls, new KryoAvroSerializer(cls));
       }
-
-      kryo.register(cls, new KryoAvroSerializer(cls));
     }
   }
 }
