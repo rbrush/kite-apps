@@ -65,8 +65,6 @@ public class KryoAvroSerializer extends Serializer {
 
       byte[] bytes = byteStream.toByteArray();
 
-      LOGGER.info("WROTE {}, {}", bytes.length, bytes);
-
       output.writeInt(bytes.length, true);
       output.write(bytes);
       output.flush();
@@ -82,8 +80,6 @@ public class KryoAvroSerializer extends Serializer {
     int length = input.readInt(true);
 
     byte[] bytes = input.readBytes(length);
-
-    LOGGER.info("READ {}, {}", bytes.length, bytes);
 
     BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
 
