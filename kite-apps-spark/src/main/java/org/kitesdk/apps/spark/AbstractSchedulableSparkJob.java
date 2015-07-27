@@ -15,11 +15,15 @@
  */
 package org.kitesdk.apps.spark;
 
+import org.apache.avro.Schema;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.joda.time.Instant;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
 import org.kitesdk.apps.scheduled.SchedulableJob;
+import org.kitesdk.apps.spi.jobs.JobUtil;
+
+import java.util.List;
 
 /**
  * Abstract base class for a schedulable Spark job.
@@ -29,6 +33,18 @@ public abstract class AbstractSchedulableSparkJob  implements SchedulableJob<Spa
   private SparkJobContext context;
 
   private Instant nominalTime;
+
+  /**
+   * Returns a list of Avro schemas used by the job so they can be registered
+   * with the underlying serialization framework. By default this method simply
+   * inspects the {@link org.kitesdk.apps.scheduled.DataIn} and
+   * {@link org.kitesdk.apps.scheduled.DataOut} annotations for Avro types,
+   * but users may override this if further sharing is needed.
+   */
+  public List<Schema> getUsedSchemas() {
+
+    return JobUtil.getSchemas(this);
+  }
 
   @Override
   public Instant getNominalTime() {

@@ -34,7 +34,7 @@ public class SparkStreamingJob extends AbstractStreamingSparkJob {
 
   public void run(@DataIn(name = "event.stream", type = ExampleEvent.class)
                   JavaDStream<ExampleEvent> stream,
-                  @DataOut(name = "event.output")
+                  @DataOut(name = "event.output", type = ExampleEvent.class)
                   Dataset<ExampleEvent> output) {
 
     SparkDatasets.save(stream, output);

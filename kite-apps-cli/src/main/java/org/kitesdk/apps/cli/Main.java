@@ -32,6 +32,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
 import org.apache.log4j.PropertyConfigurator;
 import org.kitesdk.apps.cli.commands.InstallCommand;
+import org.kitesdk.apps.cli.commands.JarCommand;
 import org.kitesdk.cli.Command;
 import org.kitesdk.cli.Help;
 import org.kitesdk.data.DatasetIOException;
@@ -86,6 +87,7 @@ public class Main extends Configured implements Tool {
     this.console = console;
     this.jc = new JCommander(this);
     jc.addCommand("install", new InstallCommand(console));
+    jc.addCommand("jar", new JarCommand(console));
 
   }
 

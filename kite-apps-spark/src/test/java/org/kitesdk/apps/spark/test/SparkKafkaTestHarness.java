@@ -89,7 +89,6 @@ public class SparkKafkaTestHarness {
     Map<String,String> props = ImmutableMap.<String,String>builder()
         .put("spark.master", "local[3]")
         .put("spark.app.name", "spark-test")
-        .put("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .put("spark.streaming.clock", "org.apache.spark.util.ManualClock")
         .put("kafka.metadata.broker.list", brokerList)
         .put("kafka.zookeeper.connect", zookeeperString)

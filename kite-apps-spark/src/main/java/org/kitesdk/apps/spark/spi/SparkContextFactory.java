@@ -16,6 +16,8 @@
 package org.kitesdk.apps.spark.spi;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.Closeables;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.Duration;
@@ -23,7 +25,11 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Factor to create Spark contexts from application context. This is necessary
@@ -38,9 +44,34 @@ public class SparkContextFactory {
 
   private static JavaStreamingContext streamingContext = null;
 
+  private static Properties loadSparkDefaults() {
+    Properties defaults = new Properties();
+
+    InputStream stream = SparkContextFactory.class.getResourceAsStream("/kite-spark-defaults.properties");
+
+    try {
+      defaults.load(stream);
+
+    } catch (IOException e) {
+      throw new AppException(e);
+    } finally {
+      Closeables.closeQuietly(stream);
+    }
+
+    return defaults;
+  }
+
   private static SparkConf createConf(Map<String,String> settings) {
 
-    SparkConf conf = new SparkConf().setAppName("FIXME_PLACEHOLDER");
+    SparkConf conf = new SparkConf().setAppName("PLACEHOLDER");
+
+    // Set the defaults first so they may be overwritten.
+    Properties defaults = loadSparkDefaults();
+
+    for (String name: defaults.stringPropertyNames()) {
+
+      conf.set(name, defaults.getProperty(name));
+    }
 
     for (Map.Entry<String,String> entry: settings.entrySet()) {
 

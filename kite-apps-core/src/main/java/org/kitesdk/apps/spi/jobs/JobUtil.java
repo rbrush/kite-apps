@@ -15,7 +15,11 @@
  */
 package org.kitesdk.apps.spi.jobs;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
@@ -24,7 +28,10 @@ import org.kitesdk.apps.scheduled.DataOut;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility functions work working with jobs.
@@ -174,5 +181,41 @@ public class JobUtil {
     }
 
     return args;
+  }
+
+  /**
+   * Gets a list of all schemas used by a job.
+   */
+  public static List<Schema> getSchemas(Object job) {
+
+    Set<Class> types = new HashSet<Class>();
+
+    Method runMethod = resolveRunMethod(job);
+
+
+    for (DataIn input: getInputs(runMethod).values()) {
+
+      if (SpecificRecord.class.isAssignableFrom(input.type())) {
+        types.add(input.type());
+      }
+    }
+
+    for (DataOut output: getOutputs(runMethod).values()) {
+
+      if (SpecificRecord.class.isAssignableFrom(output.type())) {
+        types.add(output.type());
+      }
+    }
+
+    List<Schema> schemas = Lists.newArrayList();
+
+    for (Class type: types) {
+
+      Schema schema = SpecificData.get().getSchema(type);
+
+      schemas.add(schema);
+    }
+
+    return schemas;
   }
 }

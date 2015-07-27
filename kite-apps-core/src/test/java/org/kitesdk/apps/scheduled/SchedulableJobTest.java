@@ -84,4 +84,5 @@ public class SchedulableJobTest extends MiniDFSTest {
 
     Assert.assertTrue(uri.toString().endsWith("year=2015&month=5&day=15&hour=12"));
   }
+
 }

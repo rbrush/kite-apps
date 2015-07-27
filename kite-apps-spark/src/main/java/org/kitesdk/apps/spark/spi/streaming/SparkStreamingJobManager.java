@@ -31,8 +31,10 @@ import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkJobContext;
+import org.kitesdk.apps.spark.spi.kryo.KryoAvroRegistrator;
 import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
+import org.kitesdk.apps.spi.oozie.ShareLibs;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
 import org.kitesdk.data.Datasets;
@@ -223,14 +225,23 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
     launcher.setMaster("yarn-cluster");
 
-    // Add the library JARs from HDFS so we don't need to reload
-    // them separately into Spark.
+
     try {
+      // Add the library JARs from HDFS so we don't need to reload
+      // them separately into Spark.
       FileStatus[] libJars = fs.listStatus(libPath);
 
       for (FileStatus jar: libJars) {
 
         launcher.addJar(jar.getPath().toString());
+      }
+
+      // Add the sharelib JARs, since they are not visible to Spark otherwise.
+      List<Path> shareLibJars = ShareLibs.jars(sparkJobContext.getHadoopConf(), "hive2");
+
+      for (Path sharelibJar: shareLibJars) {
+
+        launcher.addJar(fs.makeQualified(sharelibJar).toString());
       }
 
     } catch (IOException e) {
@@ -239,6 +250,35 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
     launcher.addAppArgs(appRoot.toString(),
         description.getJobName());
+
+    // Explicitly set the metastore URI to be usable in the job.
+    launcher.setConf("spark.hadoop.hive.metastore.uris",
+        sparkJobContext.getHadoopConf().get("hive.metastore.uris"));
+
+    // Add the Avro classes.
+    List<Schema> schemas = JobUtil.getSchemas(job);
+    StringBuilder avroClassesArg = new StringBuilder();
+
+    avroClassesArg
+        .append("-D")
+        .append(KryoAvroRegistrator.KITE_AVRO_CLASSES)
+        .append("=");
+
+    boolean first = true;
+
+    for (Schema schema: schemas) {
+
+      if (!first) {
+        avroClassesArg.append(",");
+      }
+
+      avroClassesArg.append(SpecificData.get().getClass(schema).getName());
+
+      first = false;
+    }
+
+    launcher.setConf("spark.driver.extraJavaOptions", avroClassesArg.toString());
+    launcher.setConf("spark.executor.extraJavaOptions", avroClassesArg.toString());
 
     try {
 

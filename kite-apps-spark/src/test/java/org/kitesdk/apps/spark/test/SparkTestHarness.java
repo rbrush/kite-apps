@@ -61,7 +61,6 @@ public class SparkTestHarness {
     Map<String,String> settings = ImmutableMap.<String,String>builder()
         .put("spark.app.name", "spark-test")
         .put("spark.master", "local[3]")
-        .put("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         .put("spark.streaming.clock", "org.apache.spark.util.ManualClock")
         .build();
 

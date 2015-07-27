@@ -15,6 +15,8 @@
  */
 package org.kitesdk.apps.spark.spi.streaming;
 
+import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificData;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -22,19 +24,26 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.spi.SparkContextFactory;
+import org.kitesdk.apps.spark.spi.kryo.KryoAvroRegistrator;
 import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.data.spi.DefaultConfiguration;
+import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
 /**
  * Main entrypoint for Spark Streaming jobs.
  */
 public class SparkStreamingJobMain {
+
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(SparkStreamingJobMain.class);
+
 
   public static void main(String[] args) throws Exception {
 
@@ -43,6 +52,10 @@ public class SparkStreamingJobMain {
     String jobName = args[1];
 
     FileSystem fs = FileSystem.get(new Configuration());
+
+    Path appPath = new Path(kiteAppRoot);
+
+    StreamDescription descrip = SparkStreamingJobManager.loadDescription(fs, appPath, jobName);
 
     Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
     Map<String,String> settings = PropertyFiles.loadIfExists(fs, propertiesPath);
@@ -57,16 +70,13 @@ public class SparkStreamingJobMain {
 
     AppContext appContext = new AppContext(settings, conf);
 
-    Path appPath = new Path(kiteAppRoot);
-
-    StreamDescription descrip = SparkStreamingJobManager.loadDescription(fs, appPath, jobName);
 
     // Run the job.
     StreamingJobManager manager = JobManagers.createStreaming(descrip, appContext);
     manager.run();
 
     JavaStreamingContext streamingContext = SparkContextFactory.getStreamingContext(settings);
-    
+
     streamingContext.start();
     streamingContext.awaitTermination();
   }
