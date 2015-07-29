@@ -15,24 +15,18 @@
  */
 package org.kitesdk.apps.spi.jobs;
 
-import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobContext;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.Signalable;
 import org.kitesdk.data.View;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,7 +64,7 @@ public abstract class SchedulableJobManager {
    */
   public Map<String, DataIn> getInputs() {
 
-    return JobUtil.getInputs(runMethod);
+    return JobReflection.getInputs(runMethod);
   }
 
   /**
@@ -91,7 +85,7 @@ public abstract class SchedulableJobManager {
    */
   public Map<String,DataOut> getOutputs() {
 
-    return JobUtil.getOutputs(runMethod);
+    return JobReflection.getOutputs(runMethod);
   }
 
   /**

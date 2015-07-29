@@ -21,7 +21,6 @@ import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.Job;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.spark.spi.SparkContextFactory;
-import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.streaming.StreamDescription;
 
 /**

@@ -28,7 +28,7 @@ import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
 import org.kitesdk.apps.spark.spi.SparkContextFactory;
-import org.kitesdk.apps.spi.jobs.JobUtil;
+import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
 import org.kitesdk.data.View;
@@ -120,7 +120,7 @@ public class SparkTestHarness {
         throw new AppException(e);
       }
 
-      Method runMethod = JobUtil.resolveRunMethod(job.getClass());
+      Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
       Map<String,Object> namedArgs = Maps.newHashMap();
 
@@ -140,7 +140,7 @@ public class SparkTestHarness {
       // Add all views to the named arguments.
       namedArgs.putAll(views);
 
-      Object[] args = JobUtil.getArgs(runMethod, namedArgs);
+      Object[] args = JobReflection.getArgs(runMethod, namedArgs);
 
       // TODO: setup Spark context and population input...
 

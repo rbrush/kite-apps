@@ -20,8 +20,8 @@ import org.apache.crunch.PCollection;
 import org.apache.crunch.Pipeline;
 import org.kitesdk.apps.crunch.AbstractCrunchJob;
 import org.kitesdk.apps.example.event.ExampleEvent;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.data.View;
 import org.kitesdk.data.crunch.CrunchDatasets;
 

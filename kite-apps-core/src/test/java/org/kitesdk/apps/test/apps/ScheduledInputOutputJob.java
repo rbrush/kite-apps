@@ -18,8 +18,8 @@ package org.kitesdk.apps.test.apps;
 import com.google.common.io.Closeables;
 import org.apache.avro.generic.GenericRecord;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.View;
@@ -38,7 +38,7 @@ public class ScheduledInputOutputJob extends AbstractSchedulableJob {
 
   public void run(@DataIn(name="source.users") View<GenericRecord> input,
                   @DataOut(name="target.users") View<GenericRecord> output) {
-
+    
     DatasetReader<GenericRecord> reader = input.newReader();
     DatasetWriter<GenericRecord> writer = output.newWriter();
 

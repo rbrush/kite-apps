@@ -27,13 +27,13 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkJobContext;
 import org.kitesdk.apps.spark.kafka.KafkaOutput;
 import org.kitesdk.apps.spark.spi.kryo.KryoAvroRegistrator;
-import org.kitesdk.apps.spi.jobs.JobUtil;
+import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
 import org.kitesdk.apps.spi.oozie.ShareLibs;
 import org.kitesdk.apps.streaming.StreamDescription;
@@ -155,7 +155,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       throw new AppException(e);
     }
 
-    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
+    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
     return new SparkStreamingJobManager(description, job, runMethod, context);
   }
@@ -257,7 +257,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
         sparkJobContext.getHadoopConf().get("hive.metastore.uris"));
 
     // Add the Avro classes.
-    List<Schema> schemas = JobUtil.getSchemas(job);
+    List<Schema> schemas = JobReflection.getSchemas(job);
     StringBuilder avroClassesArg = new StringBuilder();
 
     avroClassesArg
@@ -367,11 +367,11 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
    */
   public void run()  {
 
-    Map<String, Class> sourceTypes = JobUtil.getTypes(runMethod);
+    Map<String, Class> sourceTypes = JobReflection.getTypes(runMethod);
 
     Map<String,Object> parameters = Maps.newHashMap();
 
-    for(DataIn input: JobUtil.getInputs(runMethod).values()) {
+    for(DataIn input: JobReflection.getInputs(runMethod).values()) {
 
       if (isStream(sourceTypes.get(input.name()))) {
 
@@ -387,7 +387,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       }
     }
 
-    for (DataOut output: JobUtil.getOutputs(runMethod).values()) {
+    for (DataOut output: JobReflection.getOutputs(runMethod).values()) {
 
       if (isStream(sourceTypes.get(output.name()))) {
 
@@ -410,7 +410,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       }
     }
 
-    Object[] args = JobUtil.getArgs(runMethod, parameters);
+    Object[] args = JobReflection.getArgs(runMethod, parameters);
 
     job.setJobContext(sparkJobContext);
 

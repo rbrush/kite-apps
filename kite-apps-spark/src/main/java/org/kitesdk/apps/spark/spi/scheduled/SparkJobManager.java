@@ -25,7 +25,7 @@ import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spark.SparkJobContext;
-import org.kitesdk.apps.spi.jobs.JobUtil;
+import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
 import org.kitesdk.apps.spi.oozie.ShareLibs;
@@ -65,7 +65,7 @@ class SparkJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
+    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
     return new SparkJobManager(job, runMethod, context);
   }
@@ -94,7 +94,7 @@ class SparkJobManager extends SchedulableJobManager {
       job.setNominalTime(nominalTime);
       job.setJobContext(getJobContext());
 
-      Object[] args = JobUtil.getArgs(runMethod, views);
+      Object[] args = JobReflection.getArgs(runMethod, views);
 
       runMethod.invoke(job, args);
     } catch (IllegalAccessException e) {

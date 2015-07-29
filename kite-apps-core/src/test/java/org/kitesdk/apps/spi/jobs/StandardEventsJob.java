@@ -16,10 +16,9 @@
 package org.kitesdk.apps.spi.jobs;
 
 import com.google.common.io.Closeables;
-import org.apache.avro.generic.GenericRecord;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.View;

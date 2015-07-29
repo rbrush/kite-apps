@@ -18,7 +18,7 @@ package org.kitesdk.apps.examples.generate;
 
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.Signalable;
 

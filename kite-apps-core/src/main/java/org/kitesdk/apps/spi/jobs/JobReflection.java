@@ -20,11 +20,9 @@ import com.google.common.collect.Maps;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
-import org.apache.hadoop.conf.Configuration;
-import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -34,9 +32,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Utility functions work working with jobs.
+ * Methods for inspecting the structure of a Job class based on reflection.
  */
-public class JobUtil {
+public class JobReflection {
 
   public static Method resolveRunMethod(Class jobClass) {
 

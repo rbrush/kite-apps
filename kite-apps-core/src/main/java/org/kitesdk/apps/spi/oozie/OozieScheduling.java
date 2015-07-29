@@ -24,8 +24,8 @@ import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.scheduled.Schedule;
 
 import org.codehaus.plexus.util.WriterFactory;

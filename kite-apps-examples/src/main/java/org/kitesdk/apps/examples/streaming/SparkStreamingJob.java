@@ -15,16 +15,12 @@
  */
 package org.kitesdk.apps.examples.streaming;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.kitesdk.apps.example.event.ExampleEvent;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkDatasets;
-import org.kitesdk.apps.streaming.StreamingJob;
 import org.kitesdk.data.Dataset;
 
 /**

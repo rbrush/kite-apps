@@ -17,12 +17,10 @@ package org.kitesdk.apps;
 
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
-import org.kitesdk.apps.scheduled.Schedule;
-import org.kitesdk.apps.spi.jobs.JobUtil;
+import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.streaming.StreamDescription;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,9 +107,9 @@ public class JobContext {
 
     descrip.getJobClass();
 
-    Method runMethod = JobUtil.resolveRunMethod(descrip.getJobClass());
+    Method runMethod = JobReflection.resolveRunMethod(descrip.getJobClass());
 
-    Set<String> inputNames = JobUtil.getInputs(runMethod).keySet();
+    Set<String> inputNames = JobReflection.getInputs(runMethod).keySet();
 
     Map<String,String> settings = Maps.newHashMap();
 

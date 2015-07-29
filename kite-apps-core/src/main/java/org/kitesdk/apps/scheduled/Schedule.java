@@ -20,6 +20,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.CronConverter;
@@ -94,8 +96,8 @@ public class Schedule {
   public Instant getStartTime() { return startTime; }
 
   /**
-   * Returns a map where the keys are the names of {@link org.kitesdk.apps.scheduled.DataIn} or
-   * {@link org.kitesdk.apps.scheduled.DataOut} parameters in a job. The map
+   * Returns a map where the keys are the names of {@link org.kitesdk.apps.DataIn} or
+   * {@link org.kitesdk.apps.DataOut} parameters in a job. The map
    * values are {@link org.kitesdk.apps.scheduled.Schedule.ViewTemplate}
    * objects that define the input pattern and type.
    *
@@ -121,8 +123,8 @@ public class Schedule {
     }
 
     /**
-     * Gets the name, which matches the associated {@link org.kitesdk.apps.scheduled.DataIn}
-     * or {@link org.kitesdk.apps.scheduled.DataOut} annotation.
+     * Gets the name, which matches the associated {@link org.kitesdk.apps.DataIn}
+     * or {@link org.kitesdk.apps.DataOut} annotation.
      *
      * @return the name of the template
      */

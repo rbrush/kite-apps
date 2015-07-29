@@ -15,10 +15,9 @@
  */
 package org.kitesdk.apps.spark.apps;
 
-import org.apache.avro.generic.GenericRecord;
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.kitesdk.apps.scheduled.DataIn;
-import org.kitesdk.apps.scheduled.DataOut;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkDatasets;
 import org.kitesdk.data.Dataset;

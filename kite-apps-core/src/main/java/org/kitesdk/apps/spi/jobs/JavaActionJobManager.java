@@ -15,9 +15,7 @@
  */
 package org.kitesdk.apps.spi.jobs;
 
-import org.apache.hadoop.conf.Configuration;
 import org.codehaus.plexus.util.xml.XMLWriter;
-import org.codehaus.plexus.util.xml.XmlStreamWriter;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
@@ -28,7 +26,6 @@ import org.kitesdk.apps.spi.oozie.OozieScheduledJobMain;
 import org.kitesdk.apps.spi.oozie.OozieScheduling;
 import org.kitesdk.data.View;
 
-import javax.xml.stream.XMLStreamWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -67,7 +64,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
 //    job.setJobContext(context);
 
-    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
+    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
     return new JavaActionJobManager(job, runMethod, context);
   }
@@ -78,7 +75,7 @@ class JavaActionJobManager extends SchedulableJobManager {
     job.setNominalTime(nominalTime);
     job.setJobContext(getJobContext());
 
-    Object[] args = JobUtil.getArgs(runMethod, views);
+    Object[] args = JobReflection.getArgs(runMethod, views);
 
     try {
       runMethod.invoke(job, args);

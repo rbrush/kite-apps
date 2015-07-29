@@ -13,27 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spi.jobs;
-
-import org.apache.avro.Schema;
-import org.apache.avro.specific.SpecificData;
-import org.junit.Assert;
-import org.junit.Test;
-import org.kitesdk.data.event.StandardEvent;
-
-
-import java.util.List;
-
-public class JobUtilTest {
-
-  @Test
-  public void testGetSchemas() {
-
-    List<Schema> schemas = JobReflection.getSchemas(new StandardEventsJob());
-
-    Assert.assertEquals(1, schemas.size());
-
-    Assert.assertEquals(SpecificData.get().getSchema(StandardEvent.class), schemas.get(0));
-  }
-
-}
+/**
+ * Support for stream-based jobs.
+ */
+package org.kitesdk.apps.streaming;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.scheduled;
+package org.kitesdk.apps;
 
 import org.apache.avro.generic.GenericData;
 
@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 public @interface DataOut {
 
   /**
-   * The name of the output to be used in a {@link Schedule}
+   * The name of the output to be used in a {@link org.kitesdk.apps.scheduled.Schedule}
    * or other tooling.
    */
   String name();
