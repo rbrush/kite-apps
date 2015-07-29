@@ -31,6 +31,7 @@ import org.kitesdk.apps.scheduled.DataIn;
 import org.kitesdk.apps.scheduled.DataOut;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkJobContext;
+import org.kitesdk.apps.spark.kafka.KafkaOutput;
 import org.kitesdk.apps.spark.spi.kryo.KryoAvroRegistrator;
 import org.kitesdk.apps.spi.jobs.JobUtil;
 import org.kitesdk.apps.spi.jobs.StreamingJobManager;
@@ -78,7 +79,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     this.job = job;
     this.runMethod = runMethod;
     this.appContext = context;
-    this.sparkJobContext = new SparkJobContext(job.getName(), context);
+    this.sparkJobContext = new SparkJobContext(description, job, context);
   }
 
   public static Path jobDescriptionFile(Path appRoot, String jobName) {
@@ -154,7 +155,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       throw new AppException(e);
     }
 
-    Method runMethod = JobUtil.resolveRunMethod(job);
+    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
 
     return new SparkStreamingJobManager(description, job, runMethod, context);
   }
@@ -330,10 +331,13 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
   private static boolean isStream(Class sourceType) {
 
-    return JavaDStream.class.isAssignableFrom(sourceType);
+    // DStream and Kafka outputs can be currently used to
+    // stream data.
+    return JavaDStream.class.isAssignableFrom(sourceType) ||
+        KafkaOutput.class.isAssignableFrom(sourceType);
   }
 
-  private JavaDStream load(StreamDescription description, DataIn input) {
+  private JavaDStream load(Map<String,String> inputSettings, StreamDescription description, DataIn input) {
 
     StreamDescription.Stream stream = description.getStreams().get(input.name());
 
@@ -351,7 +355,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       Schema schema = SpecificData.get().getSchema(input.type());
 
-      return loader.load(schema, stream.getProperties(), sparkJobContext);
+      return loader.load(schema, inputSettings, sparkJobContext);
 
     } else {
       throw new UnsupportedOperationException("Current implementation only supports specific types in streams.");
@@ -371,7 +375,9 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       if (isStream(sourceTypes.get(input.name()))) {
 
-        JavaDStream stream = load(description, input);
+        Map<String,String> inputSettings = sparkJobContext.getInputSettings(input.name());
+
+        JavaDStream stream = load(inputSettings, description, input);
 
         parameters.put(input.name(), stream);
 
@@ -385,7 +391,11 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       if (isStream(sourceTypes.get(output.name()))) {
 
-        throw new UnsupportedOperationException("stream outputs not yet supported.");
+        Map<String,String> outputSettings = sparkJobContext.getOutputSettings(output.name());
+
+        Schema schema = SpecificData.get().getSchema(output.type());
+
+        parameters.put(output.name(), new KafkaOutput(schema, outputSettings));
 
       } else {
 

@@ -15,17 +15,13 @@
  */
 package org.kitesdk.apps.examples.streaming;
 
-import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
-import org.kitesdk.apps.spark.KafkaUtils;
+import org.kitesdk.apps.spark.kafka.Topics;
 
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.data.DatasetDescriptor;
-
-
-import java.util.Map;
 
 /**
  * Example application that creates a spark streaming job.
@@ -56,7 +52,7 @@ public class SparkStreamingApp extends AbstractApplication {
 
     StreamDescription streamDescription = new StreamDescription.Builder()
         .jobClass(SparkStreamingJob.class)
-        .withStream("event.stream", KafkaUtils.kafkaProps(TOPIC_NAME))
+        .withStream("event.stream", Topics.topic(TOPIC_NAME))
         .withView("event.output", EVENTS_DS_URI)
         .build();
 

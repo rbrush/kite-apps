@@ -18,9 +18,11 @@ package org.kitesdk.apps.spark;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.Job;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.spi.jobs.JobUtil;
+import org.kitesdk.apps.streaming.StreamDescription;
 
 /**
  * Context for spark-based jobs.
@@ -43,9 +45,14 @@ public class SparkJobContext extends JobContext {
   /**
    * Creates a context with the given settings and Hadoop configuration.
    */
-  public SparkJobContext(String jobName, AppContext context) {
-    super(JobUtil.toJobSettings(jobName, context),
-        JobUtil.toJobHadoopConf(jobName, context));
+  public SparkJobContext(Job job, AppContext context) {
+    super(job, context.getSettings(), context.getHadoopConf());
+
+    this.appContext = context;
+  }
+
+  public SparkJobContext(StreamDescription descrip, Job job, AppContext context) {
+    super(descrip, job, context.getSettings(), context.getHadoopConf());
 
     this.appContext = context;
   }

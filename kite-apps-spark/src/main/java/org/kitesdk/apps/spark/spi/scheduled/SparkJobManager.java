@@ -65,7 +65,7 @@ class SparkJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-    Method runMethod = JobUtil.resolveRunMethod(job);
+    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
 
     return new SparkJobManager(job, runMethod, context);
   }
@@ -79,7 +79,7 @@ class SparkJobManager extends SchedulableJobManager {
   public JobContext getJobContext() {
 
     if (sparkJobContext == null) {
-      sparkJobContext = new SparkJobContext(job.getName(), context);
+      sparkJobContext = new SparkJobContext(job, context);
     }
 
     return sparkJobContext;

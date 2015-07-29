@@ -67,6 +67,9 @@ public class AppDeployer {
           + applicationClass, e);
     }
 
+
+    // TODO: get new app context... based on settings...
+
     app.setup(context);
 
     install(app, appPath, settingsFile, jars);

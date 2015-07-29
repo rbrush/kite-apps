@@ -48,10 +48,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
   @Override
   public JobContext getJobContext() {
-    Map<String, String> settings = JobUtil.toJobSettings(job.getName(), context);
-    Configuration conf = JobUtil.toJobHadoopConf(job.getName(), context);
-
-    return new JobContext(settings, conf);
+    return new JobContext(job, context.getSettings(), context.getHadoopConf());
   }
 
   public static JavaActionJobManager create(Class<? extends SchedulableJob> jobClass,
@@ -70,7 +67,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
 //    job.setJobContext(context);
 
-    Method runMethod = JobUtil.resolveRunMethod(job);
+    Method runMethod = JobUtil.resolveRunMethod(job.getClass());
 
     return new JavaActionJobManager(job, runMethod, context);
   }

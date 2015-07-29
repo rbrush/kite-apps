@@ -120,7 +120,7 @@ public class SparkTestHarness {
         throw new AppException(e);
       }
 
-      Method runMethod = JobUtil.resolveRunMethod(job);
+      Method runMethod = JobUtil.resolveRunMethod(job.getClass());
 
       Map<String,Object> namedArgs = Maps.newHashMap();
 

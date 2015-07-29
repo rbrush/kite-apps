@@ -15,15 +15,12 @@
  */
 package org.kitesdk.apps.spark.spi.streaming;
 
-import com.google.common.collect.Maps;
 import kafka.serializer.DefaultDecoder;
 import org.apache.avro.Schema;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificData;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.spark.SparkException;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
@@ -32,6 +29,7 @@ import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.spark.SparkJobContext;
+import org.kitesdk.apps.spark.kafka.Topics;
 import scala.Tuple2;
 
 
@@ -40,7 +38,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 public class SparkKafkaStreamLoader {
@@ -82,11 +79,11 @@ public class SparkKafkaStreamLoader {
     JavaStreamingContext ctx = ((SparkJobContext) jobContext).getSparkStreamingContext();
 
 
-    Map<String, String> params = org.kitesdk.apps.spark.KafkaUtils.getDirectStreamParams((SparkJobContext) jobContext);
+    Map<String, String> params = Topics.getDirectStreamParams((SparkJobContext) jobContext);
 
 
     Set<String> topics = new HashSet<String>();
-    String topic = properties.get(org.kitesdk.apps.spark.KafkaUtils.TOPIC_NAME);
+    String topic = properties.get(Topics.TOPIC_NAME);
     topics.add(topic);
 
     // We retry this ourselves since the underlying Kafka system does not retry.

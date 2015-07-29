@@ -62,7 +62,7 @@ import java.util.Properties;
  */
 public class SparkKafkaTestHarness {
 
-  private final StreamingSparkApp app;
+  private final Application app;
 
   private final JavaStreamingContext context;
 
@@ -104,7 +104,7 @@ public class SparkKafkaTestHarness {
     clock = (ManualClock) context.ssc().scheduler().clock();
 
     try {
-      app = (StreamingSparkApp) cls.newInstance();
+      app = (Application) cls.newInstance();
     } catch (IllegalAccessException e) {
 
       throw new AppException(e);
@@ -173,9 +173,9 @@ public class SparkKafkaTestHarness {
   }
 
 
-  public List<SpecificRecord> readMessages(String topic, Schema schema, int count) throws IOException {
+  public <T extends SpecificRecord> List<T> readMessages(String topic, Class<T> cls, int count) throws IOException {
 
-    List<SpecificRecord> records = Lists.newArrayList();
+    List<T> records = Lists.newArrayList();
 
     Properties props = harness.getConsumerProps();
     props.setProperty("group.id", "test_group");
@@ -190,6 +190,8 @@ public class SparkKafkaTestHarness {
 
     Iterator it = stream.iterator();
 
+    Schema schema = SpecificData.get().getSchema(cls);
+
     DatumReader reader = SpecificData.get().createDatumReader(schema);
 
     for (int i = 0; i < count; ++i) {
@@ -198,7 +200,7 @@ public class SparkKafkaTestHarness {
 
       BinaryDecoder binaryDecoder = DecoderFactory.get().binaryDecoder(message.message(),  null);
 
-      SpecificRecord record = (SpecificRecord) reader.read(null, binaryDecoder);
+      T record = (T) reader.read(null, binaryDecoder);
 
       records.add(record);
     }

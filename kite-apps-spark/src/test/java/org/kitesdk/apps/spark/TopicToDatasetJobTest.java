@@ -49,10 +49,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
-/**
- *
- */
-public class TestStreamingJob extends MiniDFSTest {
+public class TopicToDatasetJobTest extends MiniDFSTest {
 
 
   private SparkKafkaTestHarness harness;

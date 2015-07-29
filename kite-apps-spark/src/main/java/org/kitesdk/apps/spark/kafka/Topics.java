@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark;
+package org.kitesdk.apps.spark.kafka;
 
 import com.google.common.collect.Maps;
 import kafka.admin.AdminUtils;
@@ -24,13 +24,17 @@ import org.apache.avro.Schema;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.spark.SparkJobContext;
 
 import java.util.Map;
 import java.util.Properties;
 
-public class KafkaUtils {
+/**
+ * Support for working with topics.
+ */
+public class Topics {
 
-  public static final String TOPIC_NAME = "topic.name";
+  public static final String TOPIC_NAME = "kite.topic.name";
 
   public static final String ZOOKEEPER_CONNECT = "zookeeper.connect";
 
@@ -63,10 +67,11 @@ public class KafkaUtils {
   }
 
   /**
-   * Helper function to create settings that can be used when defining
-   * a job input or output.
+   * Given a Kafka topic name, returns a map of settings that can be passed to
+   * a {@link org.kitesdk.apps.streaming.StreamDescription} to configure it
+   * to use the given Kafka topic.
    */
-  public static Map<String,String> kafkaProps(String topic) {
+  public static Map<String,String> topic(String topic) {
 
     Map<String,String> props = Maps.newHashMap();
 
@@ -74,6 +79,22 @@ public class KafkaUtils {
 
     return props;
   }
+
+  /**
+   * Given a Kafka topic name and consumer group, returns a map of settings
+   * that can be passed to a {@link org.kitesdk.apps.streaming.StreamDescription}
+   * to configure it to use the given Kafka topic.
+   */
+  public static Map<String,String> topic(String topic, String consumerGroup) {
+
+    Map<String,String> props = Maps.newHashMap();
+
+    props.put(TOPIC_NAME, topic);
+    props.put("kafak.group.id", consumerGroup);
+
+    return props;
+  }
+
 
   public static Map<String,String> getDirectStreamParams(SparkJobContext context) {
 

@@ -19,38 +19,33 @@ import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.spark.kafka.Topics;
 import org.kitesdk.apps.streaming.StreamDescription;
-import org.kitesdk.data.DatasetDescriptor;
 import org.kitesdk.data.event.SmallEvent;
 
-public class StreamingSparkApp extends AbstractApplication {
+public class TopicToTopicApp extends AbstractApplication {
 
   /**
    * Name of the input topic.
    */
-  public static final String TOPIC_NAME = "example_events";
+  public static final String EVENT_TOPIC_NAME = "example_events";
 
   /**
-   * URI of the dataset created by this application.
+   * Name of the input topic.
    */
-  public static final String EVENTS_DS_URI = "dataset:hdfs:///tmp/sparkstreamtest/sparkevents";
+  public static final String PROCESSED_TOPIC_NAME = "processed_events";
+
 
   @Override
   public void setup(AppContext context) {
 
-    DatasetDescriptor descriptor = new DatasetDescriptor.Builder()
-        .schema(SmallEvent.class)
+    Topics.createTopic(context, EVENT_TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
+    Topics.createTopic(context, PROCESSED_TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
+
+    StreamDescription processJob = new StreamDescription.Builder()
+        .jobClass(TopicToTopicJob.class)
+        .withStream("event.stream", Topics.topic(EVENT_TOPIC_NAME))
+        .withStream("processed.stream", Topics.topic(PROCESSED_TOPIC_NAME))
         .build();
 
-    dataset(EVENTS_DS_URI, descriptor);
-
-    Topics.createTopic(context, TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
-
-    StreamDescription streamDescription = new StreamDescription.Builder()
-        .jobClass(StreamingSparkJob.class)
-        .withStream("event.stream", Topics.topic(TOPIC_NAME))
-        .withView("event.output", EVENTS_DS_URI)
-        .build();
-
-    stream(streamDescription);
+    stream(processJob);
   }
 }

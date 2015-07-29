@@ -38,35 +38,17 @@ import java.util.Set;
  */
 public class JobUtil {
 
-  /**
-   *
-   * @param jobName
-   * @param context
-   * @return
-   */
-  public static Map<String,String> toJobSettings(String jobName, AppContext context) {
-
-    // TODO: implement.
-    return context.getSettings();
-  }
-
-  public static Configuration toJobHadoopConf(String jobNAme, AppContext context) {
-
-    // TODO: implement.
-    return context.getHadoopConf();
-  }
-
-  public static Method resolveRunMethod(Object job) {
+  public static Method resolveRunMethod(Class jobClass) {
 
     Method runMethod = null;
 
-    for (Method method: job.getClass().getMethods()) {
+    for (Method method: jobClass.getMethods()) {
 
       if ("run".equals(method.getName())) {
 
         if (runMethod != null)
           throw new AppException("Multiple run methods found on scheduled job class "
-              + job.getClass().getName());
+              + jobClass.getName());
 
         runMethod = method;
       }
@@ -74,7 +56,7 @@ public class JobUtil {
 
     if (runMethod == null)
       throw new AppException("Could not find run method on job class "  +
-          job.getClass().getName());
+          jobClass.getName());
 
     return runMethod;
   }
@@ -190,8 +172,7 @@ public class JobUtil {
 
     Set<Class> types = new HashSet<Class>();
 
-    Method runMethod = resolveRunMethod(job);
-
+    Method runMethod = resolveRunMethod(job.getClass());
 
     for (DataIn input: getInputs(runMethod).values()) {
 
