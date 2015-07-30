@@ -32,7 +32,7 @@ public class DataGeneratorJob extends AbstractSchedulableJob {
     return "example-data-generator";
   }
 
-  public void run(@DataOut(name="example.events", type=ExampleEvent.class) Signalable<ExampleEvent> view) {
+  public void run(@DataOut(name="example_events", type=ExampleEvent.class) Signalable<ExampleEvent> view) {
 
     // Write some test data to the view.
     DatasetWriter<ExampleEvent> writer = view.newWriter();

@@ -69,8 +69,8 @@ public class ScheduledInputOutputApp extends AbstractApplication {
     Schedule schedule = new Schedule.Builder()
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withView("source.users", INPUT_URI_PATTERN, 1)
-        .withView("target.users", OUTPUT_URI_PATTERN, 1)
+        .withView("source_users", INPUT_URI_PATTERN, 1)
+        .withView("target_users", OUTPUT_URI_PATTERN, 1)
         .build();
 
     schedule(schedule);

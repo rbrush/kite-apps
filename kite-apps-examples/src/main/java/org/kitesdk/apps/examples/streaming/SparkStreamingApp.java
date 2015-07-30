@@ -52,8 +52,8 @@ public class SparkStreamingApp extends AbstractApplication {
 
     StreamDescription streamDescription = new StreamDescription.Builder()
         .jobClass(SparkStreamingJob.class)
-        .withStream("event.stream", Topics.topic(TOPIC_NAME))
-        .withView("event.output", EVENTS_DS_URI)
+        .withStream("event_stream", Topics.topic(TOPIC_NAME))
+        .withView("event_output", EVENTS_DS_URI)
         .build();
 
     stream(streamDescription);

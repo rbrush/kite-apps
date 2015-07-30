@@ -67,8 +67,8 @@ public class SparkApp extends AbstractApplication {
     Schedule schedule = new Schedule.Builder()
         .jobClass(SparkJob.class)
         .frequency("* * * * *")
-        .withInput("example.events", EVENT_URI_PATTERN, "* * * * *")
-        .withOutput("odd.users", ODD_USER_URI_PATTERN)
+        .withInput("example_events", EVENT_URI_PATTERN, "* * * * *")
+        .withOutput("odd_users", ODD_USER_URI_PATTERN)
         .build();
 
     schedule(schedule);

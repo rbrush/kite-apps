@@ -13,44 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.spark.apps;
+package org.kitesdk.apps.test.apps;
 
 import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.spark.kafka.Topics;
-import org.kitesdk.apps.streaming.StreamDescription;
+import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.test.KeyValues;
 import org.kitesdk.data.DatasetDescriptor;
-import org.kitesdk.data.event.SmallEvent;
 
-public class StreamingSparkApp extends AbstractApplication {
-
-  /**
-   * Name of the input topic.
-   */
-  public static final String TOPIC_NAME = "example_events";
+public class WriteConfigOutputApp extends AbstractApplication {
 
   /**
    * URI of the dataset created by this application.
    */
-  public static final String EVENTS_DS_URI = "dataset:hdfs:///tmp/sparkstreamtest/sparkevents";
+  public static final String OUTPUT_DATASET = "dataset:hdfs:///tmp/test/keyvalues";
 
-  @Override
+  /**
+   * Pattern for output data set, made public for testing purposes.
+   */
+  public static final String OUTPUT_URI_PATTERN = "view:hdfs:///tmp/test/keyvalues";
+
   public void setup(AppContext context) {
 
     DatasetDescriptor descriptor = new DatasetDescriptor.Builder()
-        .schema(SmallEvent.class)
+        .schema(KeyValues.getClassSchema())
         .build();
 
-    dataset(EVENTS_DS_URI, descriptor);
+    dataset(OUTPUT_DATASET, descriptor);
 
-    Topics.createTopic(context, TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
-
-    StreamDescription streamDescription = new StreamDescription.Builder()
-        .jobClass(StreamingSparkJob.class)
-        .withStream("event_stream", Topics.topic(TOPIC_NAME))
-        .withView("event_output", EVENTS_DS_URI)
+    // Schedule our report to run every five minutes.
+    Schedule schedule = new Schedule.Builder()
+        .jobClass(WriteConfigOutputJob.class)
+        .frequency("0 * * * *")
+        .withOutput("kv-output", OUTPUT_URI_PATTERN)
         .build();
 
-    stream(streamDescription);
+    schedule(schedule);
   }
 }

@@ -47,8 +47,8 @@ public class SparkJob extends AbstractSchedulableSparkJob {
     }
   }
 
-  public void run(@DataIn(name="example.events", type=ExampleEvent.class) View<ExampleEvent> input,
-                  @DataOut(name="odd.users", type=ExampleEvent.class) View<ExampleEvent> output) throws IOException {
+  public void run(@DataIn(name="example_events", type=ExampleEvent.class) View<ExampleEvent> input,
+                  @DataOut(name="odd_users", type=ExampleEvent.class) View<ExampleEvent> output) throws IOException {
 
     Job job = Job.getInstance(getJobContext().getHadoopConf());
     DatasetKeyInputFormat.configure(job).readFrom(input);

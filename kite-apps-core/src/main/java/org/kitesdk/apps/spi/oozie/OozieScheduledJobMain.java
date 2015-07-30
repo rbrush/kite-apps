@@ -60,8 +60,6 @@ public class OozieScheduledJobMain extends Configured implements Tool {
       // hence the necessary prefix.
       conf.addResource(new Path("file://" + configurationLocation));
 
-      DefaultConfiguration.set(conf);
-
       ToolRunner.run(conf, new OozieScheduledJobMain(), args);
 
     } catch (Exception e) {
@@ -95,8 +93,13 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, appContext);
 
+    // Use the configuration customized for the job.
+    Configuration conf = manager.getJobContext().getHadoopConf();
+
+    DefaultConfiguration.set(conf);
+
     // Get the views to be used from Oozie configuration.
-    Map<String, View> views = OozieScheduling.loadViews(manager, getConf());
+    Map<String, View> views = OozieScheduling.loadViews(manager, conf);
 
     manager.run(nominalTime, views);
 

@@ -66,7 +66,7 @@ public class DataGeneratorApp extends AbstractApplication {
     Schedule schedule = new Schedule.Builder()
         .jobClass(DataGeneratorJob.class)
         .frequency("* * * * *")
-        .withOutput("example.events", EVENT_DS_PATTERN)
+        .withOutput("example_events", EVENT_DS_PATTERN)
         .build();
 
     schedule(schedule);

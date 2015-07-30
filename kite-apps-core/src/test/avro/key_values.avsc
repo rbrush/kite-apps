@@ -1,0 +1,23 @@
+{
+  "name": "KeyValues",
+  "namespace": "org.kitesdk.apps.test",
+  "type": "record",
+  "doc": "An avro structure containing key-value tuples for testing purposes.",
+  "fields": [
+    {
+      "name": "jobsettings",
+      "type": ["null",  {"type": "map", "values":"string"}],
+      "default": null
+    },
+    {
+       "name": "inputsettings",
+       "type": ["null", {"type": "map", "values":"string"}],
+       "default": null
+    },
+    {
+       "name": "outputsettings",
+       "type": ["null", {"type": "map", "values":"string"}],
+       "default": null
+    }
+  ]
+}

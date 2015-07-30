@@ -16,7 +16,10 @@
 package org.kitesdk.apps.scheduled;
 
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.avro.generic.GenericData;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -25,9 +28,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.test.KeyValues;
 import org.kitesdk.apps.test.TestScheduler;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
+import org.kitesdk.apps.test.apps.WriteConfigOutputApp;
 import org.kitesdk.data.Dataset;
+import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.MiniDFSTest;
 import org.kitesdk.data.PartitionView;
@@ -37,6 +43,7 @@ import org.kitesdk.data.spi.filesystem.DatasetTestUtilities;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 public class SchedulableJobTest extends MiniDFSTest {
 
@@ -83,6 +90,46 @@ public class SchedulableJobTest extends MiniDFSTest {
     URI uri =  partitions.get(0).getUri();
 
     Assert.assertTrue(uri.toString().endsWith("year=2015&month=5&day=15&hour=12"));
+  }
+
+  @Test
+  public void testJobConfiguration() {
+
+    Map<String,String> settings = ImmutableMap.of("test.app.level.setting", "appvalue",
+        "kite.job.write-config-job.test.job.level.setting", "jobvalue",
+        "kite.job.write-config-job.output.kv-output.test.output.level.setting", "outputvalue");
+
+    AppContext context = new AppContext(settings, getConfiguration());
+
+    TestScheduler scheduler = TestScheduler.load(WriteConfigOutputApp.class, context);
+
+    Instant nominalTime = new DateTime(2015, 5, 15, 12, 0, 0, 0, DateTimeZone.UTC).toInstant();
+
+    scheduler.runScheduledJobs(nominalTime);
+
+    Dataset<KeyValues> ds = Datasets.load(WriteConfigOutputApp.OUTPUT_DATASET, KeyValues.class);
+
+    DatasetReader<KeyValues> reader = ds.newReader();
+
+    try {
+
+      KeyValues kv = reader.next();
+
+      Assert.assertEquals(ImmutableMap.of(
+              "test.app.level.setting", "appvalue",
+              "test.job.level.setting", "jobvalue",
+              "output.kv-output.test.output.level.setting", "outputvalue"),
+          kv.getJobsettings());
+
+      Assert.assertEquals(ImmutableMap.of(
+              "test.app.level.setting", "appvalue",
+              "test.job.level.setting", "jobvalue",
+              "test.output.level.setting", "outputvalue"),
+          kv.getOutputsettings());
+
+    } finally {
+      Closeables.closeQuietly(reader);
+    }
   }
 
 }

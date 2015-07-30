@@ -42,8 +42,8 @@ public class TopicToTopicApp extends AbstractApplication {
 
     StreamDescription processJob = new StreamDescription.Builder()
         .jobClass(TopicToTopicJob.class)
-        .withStream("event.stream", Topics.topic(EVENT_TOPIC_NAME))
-        .withStream("processed.stream", Topics.topic(PROCESSED_TOPIC_NAME))
+        .withStream("event_stream", Topics.topic(EVENT_TOPIC_NAME))
+        .withStream("processed_stream", Topics.topic(PROCESSED_TOPIC_NAME))
         .build();
 
     stream(processJob);

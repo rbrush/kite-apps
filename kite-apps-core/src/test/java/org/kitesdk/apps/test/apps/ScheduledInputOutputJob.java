@@ -36,9 +36,9 @@ public class ScheduledInputOutputJob extends AbstractSchedulableJob {
     return "scheduled-input-output";
   }
 
-  public void run(@DataIn(name="source.users") View<GenericRecord> input,
-                  @DataOut(name="target.users") View<GenericRecord> output) {
-    
+  public void run(@DataIn(name="source_users") View<GenericRecord> input,
+                  @DataOut(name="target_users") View<GenericRecord> output) {
+
     DatasetReader<GenericRecord> reader = input.newReader();
     DatasetWriter<GenericRecord> writer = output.newWriter();
 

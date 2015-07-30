@@ -48,8 +48,8 @@ public class OozieSchedulingTest  {
 
     testSchedule = new Schedule.Builder().jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
-        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     context = new AppContext(Collections.<String,String>emptyMap(), new Configuration());
@@ -153,15 +153,15 @@ public class OozieSchedulingTest  {
     Schedule schedule1 = new Schedule.Builder()
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
-        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     Schedule schedule2 = new Schedule.Builder()
         .jobClass(AltScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
-        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     List<Schedule> schedules = Arrays.asList(schedule1, schedule2);

@@ -67,13 +67,13 @@ public class SparkStreamingAppTest extends MiniAppTest {
 
     Map<String,List<?>> inputs = Maps.newHashMap();
 
-    inputs.put("event.stream", getEvents());
+    inputs.put("event_stream", getEvents());
 
     Map<String,View> outputs = Maps.newHashMap();
 
     Dataset<ExampleEvent> output = Datasets.load(SparkStreamingApp.EVENTS_DS_URI, ExampleEvent.class);
 
-    outputs.put("event.output", output);
+    outputs.put("event_output", output);
 
     runner.runStreams(inputs, outputs);
 

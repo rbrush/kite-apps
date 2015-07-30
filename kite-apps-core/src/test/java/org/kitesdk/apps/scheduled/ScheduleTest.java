@@ -36,8 +36,8 @@ public class ScheduleTest {
     Schedule schedule = new Schedule.Builder()
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
-        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     assertEquals(ScheduledInputOutputJob.class,
@@ -52,14 +52,14 @@ public class ScheduleTest {
 
     assertEquals(2, views.size());
 
-    Schedule.ViewTemplate sourceTemplate = views.get("source.users");
+    Schedule.ViewTemplate sourceTemplate = views.get("source_users");
 
-    assertEquals("source.users", sourceTemplate.getName());
+    assertEquals("source_users", sourceTemplate.getName());
     assertEquals(ScheduledInputOutputApp.INPUT_URI_PATTERN, sourceTemplate.getUriTemplate());
 
-    Schedule.ViewTemplate targetTemplate = views.get("target.users");
+    Schedule.ViewTemplate targetTemplate = views.get("target_users");
 
-    assertEquals("target.users", targetTemplate.getName());
+    assertEquals("target_users", targetTemplate.getName());
     assertEquals(ScheduledInputOutputApp.OUTPUT_URI_PATTERN, targetTemplate.getUriTemplate());
   }
 
@@ -73,8 +73,8 @@ public class ScheduleTest {
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .startAt(startTime)
-        .withInput("source.users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
-        .withOutput("target.users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
         .build();
 
     assertEquals(effectiveStart, schedule.getStartTime());

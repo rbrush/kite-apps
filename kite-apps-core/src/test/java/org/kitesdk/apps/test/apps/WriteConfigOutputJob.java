@@ -17,37 +17,43 @@ package org.kitesdk.apps.test.apps;
 
 import com.google.common.io.Closeables;
 import org.apache.avro.generic.GenericRecord;
-import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
+import org.kitesdk.apps.test.KeyValues;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.DatasetWriter;
 import org.kitesdk.data.View;
 
 /**
- * Alternate scheduled job for testing.
+ * Test job that simply writes configuration for validation purposes.
  */
-public class AltScheduledInputOutputJob extends AbstractSchedulableJob {
-
+public class WriteConfigOutputJob extends AbstractSchedulableJob {
   @Override
   public String getName() {
-    return "alt-scheduled-input-output";
+    return "write-config-job";
   }
 
-  public void run(@DataIn(name="source_users") View<GenericRecord> input,
-                  @DataOut(name="target_users") View<GenericRecord> output) {
+  public void run(@DataOut(name="kv-output", type= KeyValues.class) View<KeyValues> output) {
 
-    DatasetReader<GenericRecord> reader = input.newReader();
-    DatasetWriter<GenericRecord> writer = output.newWriter();
+
+    DatasetWriter<KeyValues> writer = output.newWriter();
 
     try {
-      while (reader.hasNext()) {
 
-        writer.write(reader.next());
-      }
+      JobContext context = getJobContext();
+
+      KeyValues kv = KeyValues.newBuilder()
+          .setJobsettings(context.getSettings())
+          .setOutputsettings(context.getOutputSettings("kv-output"))
+          .build();
+
+      writer.write(kv);
+
     } finally {
 
-      Closeables.closeQuietly(reader);
+
       Closeables.closeQuietly(writer);
     }
   }

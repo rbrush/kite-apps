@@ -33,13 +33,15 @@ public class JobContext {
 
   private final Configuration conf;
 
-  private final Map<String,String> settings;
+  private final Map<String,String> jobSettings;
+
+  private static final String JOB_PREFIX = "kite.job.";
 
   /**
    * Gets the configuration settings for the job.
    */
   public Map<String,String> getSettings() {
-    return settings;
+    return jobSettings;
   }
 
 
@@ -63,14 +65,14 @@ public class JobContext {
 
     String prefix = "input." + dataInputName + ".";
 
-    for (String setting: settings.keySet()) {
+    for (String setting: jobSettings.keySet()) {
 
       if (setting.startsWith(prefix)) {
 
-        inputSettings.put(setting.substring(prefix.length()), settings.get(setting));
+        inputSettings.put(setting.substring(prefix.length()), jobSettings.get(setting));
       } else {
         if (isGeneralSetting(setting)) {
-          inputSettings.put(setting, settings.get(setting));
+          inputSettings.put(setting, jobSettings.get(setting));
         }
       }
     }
@@ -88,14 +90,14 @@ public class JobContext {
 
     String prefix = "output." + dataOutputName + ".";
 
-    for (String setting: settings.keySet()) {
+    for (String setting: jobSettings.keySet()) {
 
       if (setting.startsWith(prefix)) {
 
-        outputSettings.put(setting.substring(prefix.length()), settings.get(setting));
+        outputSettings.put(setting.substring(prefix.length()), jobSettings.get(setting));
       } else {
         if (isGeneralSetting(setting)) {
-          outputSettings.put(setting, settings.get(setting));
+          outputSettings.put(setting, jobSettings.get(setting));
         }
       }
     }
@@ -104,8 +106,6 @@ public class JobContext {
   }
 
   private static Map<String,String> getDefaultSettings(StreamDescription descrip) {
-
-    descrip.getJobClass();
 
     Method runMethod = JobReflection.resolveRunMethod(descrip.getJobClass());
 
@@ -140,38 +140,55 @@ public class JobContext {
    */
   public JobContext(StreamDescription descrip, Job job, Map<String,String> settings, Configuration conf) {
     this.job = job;
-    this.settings = toJobSettings(descrip, job.getName(), settings);
-    this.conf = toJobHadoopConf(job.getName(), conf);
+    this.jobSettings = toJobSettings(job.getName(), getDefaultSettings(descrip), settings);
+    this.conf = toJobHadoopConf(this.jobSettings, conf);
   }
 
 
   public JobContext(Job job, Map<String,String> settings, Configuration conf) {
     this.job = job;
-    this.settings = toJobSettings(job.getName(), settings);
-    this.conf = toJobHadoopConf(job.getName(), conf);
+    this.jobSettings = toJobSettings(job.getName(), Maps.<String,String>newHashMap(), settings);
+    this.conf = toJobHadoopConf(this.jobSettings, conf);
   }
 
-  private static Map<String,String> toJobSettings(String jobName, Map<String,String> settings) {
+  private static Map<String,String> toJobSettings(String jobName, Map<String,String> defaultSettings, Map<String,String> appSettings) {
 
-    // TODO: implement.
-    return settings;
-  }
+    Map<String,String> jobSettings = Maps.newHashMap();
 
-  private static Map<String,String> toJobSettings(StreamDescription description, String jobName,   Map<String,String> appSettings) {
+    jobSettings.putAll(defaultSettings);
 
-    Map<String,String> jobSettings = getDefaultSettings(description);
+    String jobNamePrefix = JOB_PREFIX + jobName + ".";
 
     for (Map.Entry<String,String> entry: appSettings.entrySet()) {
-      // TODO: get qualified settings for the job.
-      jobSettings.put(entry.getKey(), entry.getValue());
+
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      if (!key.startsWith(JOB_PREFIX)) {
+
+        jobSettings.put(key, value);
+
+      } else if (key.startsWith(jobNamePrefix) ) {
+        jobSettings.put(key.substring(jobNamePrefix.length()), value);
+      }
     }
 
     return jobSettings;
   }
 
-  private static Configuration toJobHadoopConf(String jobName, Configuration conf) {
+  private static Configuration toJobHadoopConf(Map<String,String> jobSettings, Configuration conf) {
 
-    // TODO: implement.
-    return conf;
+    Configuration updated = new Configuration(conf);
+
+    // Overwrite given configuration with items defined for the job.
+    for (Map.Entry<String,String> setting: jobSettings.entrySet()) {
+
+      if (setting.getKey().startsWith("hadoop.")) {
+
+        updated.set(setting.getKey().substring("hadoop.".length()), setting.getValue());
+      }
+    }
+
+    return updated;
   }
 }

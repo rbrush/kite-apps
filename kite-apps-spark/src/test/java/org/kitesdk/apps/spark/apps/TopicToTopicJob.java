@@ -32,9 +32,9 @@ public class TopicToTopicJob extends AbstractStreamingSparkJob {
     return "topic-to-topic";
   }
 
-  public void run(@DataIn(name = "event.stream", type = SmallEvent.class)
+  public void run(@DataIn(name = "event_stream", type = SmallEvent.class)
                   JavaDStream<SmallEvent> stream,
-                  @DataOut(name = "processed.stream", type = SmallEvent.class)
+                  @DataOut(name = "processed_stream", type = SmallEvent.class)
                   KafkaOutput<SmallEvent> output) {
 
     output.write(stream);
