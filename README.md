@@ -186,6 +186,63 @@ As data is written, the running example application should consume it and write 
 
 **Note for CDH 5.4 Users:** CDH 5.4.x will have a version of Kite 1.0.x in the /usr/jars folder, which will appear on the classpath of the Spark Streaming executor. This conflicts with the 1.1.0 Kite Jars used by this project. It may be necessary to replace the Kite 1.0 JARS in /usr/jars with their kite 1.1 equivalents. This will be unnecessary in later versions of CDH that upgrade to Kite 1.1 or newer.
 
+## Configuration
+All application configuration is in an app.properties file that can be provided when the application is installed. The property names use the following structure:
+
+#### Application-wide configuration
+Everything from app.properties is visible in the AppContext class provided to applications at runtime.
+
+#### Job-specific configuration
+Configuration specific to jobs take the form ```kite.job.<job-name>.<setting>```. The job name is the string returned by the getName() method on the job implementation. For instance, the following line can will configure the Spark executor memory for a job:
+
+```properties
+kite.job.my-example-job.spark.executor.memory=1g
+```
+
+#### Job input and output configuration
+Configuration specific to named job inputs and outputs live under the an ```kite.job.<job-name>.input.<input-name>``` and ```kite.job.<job-name>.output.<output-name>``` key of jobs. For instance, the following setting is used to point an input to a specific Kafka topic:
+
+```properties
+kite.job.my-example-job.input.my-kafka-input.kite.topic=example_topic
+```
+
+Properties to be passed to the underlying data provider, such as Kafka, can be specified with a kafka prefix. For instance, the Kafka consumer group used for a job input can be specified like this:
+
+```properties
+kite.job.my-example-job.input.my-kafka-input.kafka.group.id=my_group_id
+````
+
+Anything after the kafka prefix is simply passed to the underlying Kafka consumer or producer configuration, for job inputs and outputs respectively.
+
+#### Customized Hadoop configuration
+The ```hadoop``` prefix is used to customize Hadoop configuration in applications and jobs. It can be set as an application-wide settings or at a job-specific setting. For instance, use the following to set ```mapreduce.map.memory.mb``` for the entire application and ```mapreduce.reduce.memory.mb``` for a single job within that application:
+
+```properties
+hadoop.mapreduce.map.memory.mb=2048
+kite.job.my-example-job.hadoop.mapreduce.reduce.memory.mb=4096
+```
+
+These settings will be used as expected in the Hadoop configuration for the job. Job-specific settings will override settings at the application level if they are defined in both places.
+
+#### Spark Configuration
+The ```spark``` prefix is used to customize Spark configuration in applications and jobs. For instance, to set the Spark executor memory for the entire application and RDD compression for a specific job, the following can be done:
+
+```properties
+spark.executor.memory=2g
+kite.job.my-example-job.spark.rdd.compress=true
+```
+
+Since Spark configuration settings already start with a "spark." prefix, we do not require an additional prefix to identify them. So the setting names are ```spark.executor.memory``` rather than ```spark.spark.executor.memory```.
+
+#### Kafka Configuration
+The ```kafka``` prefix is used to customize Kafka configuration in applications and jobs. For instance, to set the Kafka broker list and Zookeeper settings across the application and override the timeout for a specific job:
+
+```properties
+kafka.metadata.broker.list=host1:9092,host2:9092
+kafka.zookeeper.connect=host3:2181,host4:2181,host5:2181
+kite.job.my-example-job.kafka.socket.timeout.ms=5000
+```
+
 ## Kite Apps layout
 Kite Applications are installed to a target directory, which contains the following structure:
 
