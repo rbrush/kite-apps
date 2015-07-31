@@ -16,6 +16,8 @@
 package org.kitesdk.apps.streaming;
 
 import org.apache.hadoop.conf.Configured;
+import org.kitesdk.apps.DataIn;
+import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.JobContext;
 
 public class MockStreamingJob  implements StreamingJob{
@@ -35,5 +37,11 @@ public class MockStreamingJob  implements StreamingJob{
   @Override
   public JobContext getJobContext() {
     return context;
+  }
+
+  public void run(@DataIn(name = "mock_input") Object input,
+                  @DataOut(name = "mock_output") Object output) {
+
+    // Mock implementation does nothing.
   }
 }

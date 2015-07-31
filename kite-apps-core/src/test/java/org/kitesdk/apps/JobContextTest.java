@@ -20,8 +20,11 @@ import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
+import org.kitesdk.apps.streaming.MockStreamingJob;
+import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class JobContextTest {
@@ -111,4 +114,51 @@ public class JobContextTest {
     Assert.assertEquals("4096", conf.get("mapreduce.reduce.memory.mb"));
   }
 
+  @Test
+  public void testStreamSettings() {
+
+
+    AppContext context = context();
+
+    StreamDescription descrip = new StreamDescription.Builder()
+        .jobClass(MockStreamingJob.class)
+        .withStream("mock_input", ImmutableMap.of("input_stream.setting", "input_stream.value",
+            "other.stream.setting", "other.stream.value"))
+        .withStream("mock_output", ImmutableMap.of("output_stream.setting", "output_stream.value"))
+        .build();
+
+    Job job = new MockStreamingJob();
+
+    JobContext jobContext = new JobContext(descrip,
+        job,
+        Collections.<String,String>emptyMap(),
+        context.getHadoopConf());
+
+    Assert.assertEquals(
+        ImmutableMap.of("input_stream.setting", "input_stream.value",
+            "other.stream.setting", "other.stream.value"),
+        jobContext.getInputSettings("mock_input"));
+
+    Assert.assertEquals(
+        ImmutableMap.of("output_stream.setting", "output_stream.value"),
+        jobContext.getOutputSettings("mock_output"));
+
+
+    context = context("kite.job." + job.getName() + ".input.mock_input.input_stream.setting", "overridden_value");
+
+    // test overridden settings
+    jobContext = new JobContext(descrip,
+        job,
+        context.getSettings(),
+        context.getHadoopConf());
+
+    Assert.assertEquals(
+        ImmutableMap.of("input_stream.setting", "overridden_value",
+            "other.stream.setting", "other.stream.value"),
+        jobContext.getInputSettings("mock_input"));
+
+    Assert.assertEquals(
+        ImmutableMap.of("output_stream.setting", "output_stream.value"),
+        jobContext.getOutputSettings("mock_output"));
+  }
 }
