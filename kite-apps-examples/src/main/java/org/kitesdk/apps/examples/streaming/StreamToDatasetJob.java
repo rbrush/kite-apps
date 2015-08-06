@@ -26,7 +26,7 @@ import org.kitesdk.data.Dataset;
 /**
  * Simple job.
  */
-public class SparkStreamingJob extends AbstractStreamingSparkJob {
+public class StreamToDatasetJob extends AbstractStreamingSparkJob {
 
   public void run(@DataIn(name = "event_stream", type = ExampleEvent.class)
                   JavaDStream<ExampleEvent> stream,

@@ -17,31 +17,39 @@ package org.kitesdk.apps.examples.streaming;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
+import org.kitesdk.apps.spark.test.SparkKafkaTestHarness;
 import org.kitesdk.apps.spark.test.SparkTestHarness;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 /**
  *
  */
-public class SparkStreamingAppTest extends MiniAppTest {
+public class StreamToDatasetAppTest extends MiniAppTest {
 
-  SparkTestHarness runner;
+  SparkKafkaTestHarness runner;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
 
-    runner = SparkTestHarness.load(SparkStreamingApp.class, getConfiguration());
+    runner = SparkKafkaTestHarness.load(StreamToDatasetApp.class, getConfiguration());
+  }
+
+  @After
+  public void cleanup() throws IOException {
+    runner.tearDown();
   }
 
   private List<ExampleEvent> getEvents() {
@@ -63,35 +71,39 @@ public class SparkStreamingAppTest extends MiniAppTest {
   }
 
   @Test
-  public void testStream() {
+  public void testStream() throws InterruptedException {
 
-    Map<String,List<?>> inputs = Maps.newHashMap();
+    Dataset<ExampleEvent> output = Datasets.load(StreamToDatasetApp.EVENTS_DS_URI, ExampleEvent.class);
 
-    inputs.put("event_stream", getEvents());
+    runner.writeMessages(StreamToDatasetApp.TOPIC_NAME, getEvents());
 
-    Map<String,View> outputs = Maps.newHashMap();
+    boolean hasRecords = false;
 
-    Dataset<ExampleEvent> output = Datasets.load(SparkStreamingApp.EVENTS_DS_URI, ExampleEvent.class);
+    for (int i = 0; i < 10; ++i) {
 
-    outputs.put("event_output", output);
+      Thread.sleep(2000);
 
-    runner.runStreams(inputs, outputs);
+      // Verify the output contains the expected content.
+      DatasetReader<ExampleEvent> reader = output.newReader();
 
-    // Verify the output contains the expected content.
-    DatasetReader<ExampleEvent> reader = output.newReader();
+      try {
 
-    try {
+        int count = 0;
 
-      int count = 0;
+        for (ExampleEvent event: reader) {
+          ++count;
+        }
 
-      for (ExampleEvent event: reader) {
-        ++count;
+        if (count == 10) {
+          hasRecords = true;
+          break;
+        }
+
+      } finally {
+        reader.close();
       }
-
-      Assert.assertEquals(10, count);
-
-    } finally {
-      reader.close();
     }
+
+    Assert.assertTrue("Expected output records not found", hasRecords);
   }
 }

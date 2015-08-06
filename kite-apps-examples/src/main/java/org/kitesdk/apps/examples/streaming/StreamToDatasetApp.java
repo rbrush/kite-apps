@@ -15,6 +15,7 @@
  */
 package org.kitesdk.apps.examples.streaming;
 
+import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
@@ -26,7 +27,7 @@ import org.kitesdk.data.DatasetDescriptor;
 /**
  * Example application that creates a spark streaming job.
  */
-public class SparkStreamingApp extends AbstractApplication {
+public class StreamToDatasetApp extends AbstractApplication {
 
   /**
    * Name of the input topic.
@@ -47,11 +48,10 @@ public class SparkStreamingApp extends AbstractApplication {
 
     dataset(EVENTS_DS_URI, descriptor);
 
-    // TODO: need to handle this in the testing framework.
-    // KafkaUtils.createTopic(TOPIC_NAME);
+    Topics.createTopic(context, TOPIC_NAME, 1, 1, ExampleEvent.getClassSchema());
 
     StreamDescription streamDescription = new StreamDescription.Builder()
-        .jobClass(SparkStreamingJob.class)
+        .jobClass(StreamToDatasetJob.class)
         .withStream("event_stream", Topics.topic(TOPIC_NAME))
         .withView("event_output", EVENTS_DS_URI)
         .build();
