@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
@@ -40,11 +41,34 @@ public class JarCommand extends BaseCommand {
   @Parameter(description = "<app jar path> <class name> <app-args>")
   List<String> args;
 
+  @Parameter(names = "--jars", description = "comma-separated list of JAR files to include")
+  String jars;
 
   private final Logger console;
 
   public JarCommand(Logger console) {
     this.console = console;
+  }
+
+  private URLClassLoader getClassLoader(File appJarFile) throws MalformedURLException {
+
+    URL appJarURL = appJarFile.toURI().toURL();
+
+    String[] jarNames = jars.split(",");
+
+    URL[] urls = new URL[jarNames.length + 1];
+
+    urls[0] = appJarURL;
+
+    for (int i = 1; i < urls.length; ++i) {
+
+      File file = new File(jarNames[i - 1]);
+
+      urls[i] = file.toURI().toURL();
+    }
+
+    return new URLClassLoader(urls,
+        Thread.currentThread().getContextClassLoader());
   }
 
   @Override
@@ -62,10 +86,7 @@ public class JarCommand extends BaseCommand {
       return 1;
     }
 
-    URL appJarURL = appJarFile.toURI().toURL();
-
-    URLClassLoader loader = new URLClassLoader(new URL[] {appJarURL},
-        Thread.currentThread().getContextClassLoader());
+    URLClassLoader loader = getClassLoader(appJarFile);
 
     try {
       Class target = loader.loadClass(className);

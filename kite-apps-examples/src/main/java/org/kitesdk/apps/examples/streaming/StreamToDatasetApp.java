@@ -37,7 +37,7 @@ public class StreamToDatasetApp extends AbstractApplication {
   /**
    * URI of the dataset created by this application.
    */
-  static final String EVENTS_DS_URI = "dataset:hive:example/sparkevents";
+  public static final String EVENTS_DS_URI = "dataset:hive:example/sparkevents";
 
   @Override
   public void setup(AppContext context) {
