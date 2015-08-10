@@ -53,7 +53,7 @@ public class ShareLibs {
 
     FileStatus[] files = fs.listStatus(rootDir, directoryFilter);
     for (FileStatus file : files) {
-      String name = file.getPath().getName().toString();
+      String name = file.getPath().getName();
       String time = name.substring("lib_".length());
       Date d = null;
       try {

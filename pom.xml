@@ -45,6 +45,7 @@
     <javaVersion>1.7</javaVersion>
     <targetJavaVersion>1.6</targetJavaVersion>
     <Xdoclint /> <!-- set by the java8 profile to turn off doclint -->
+    <findbugs.excludes.location>${project.basedir}/src/etc/findbugs-exclude.xml</findbugs.excludes.location>
 
     <kite.version>1.1.0</kite.version>
 
@@ -473,6 +474,26 @@
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>findbugs-maven-plugin</artifactId>
+        <version>3.0.1</version>
+        <configuration>
+          <effort>Max</effort>
+          <threshold>Low</threshold>
+          <onlyAnalyze>org.kitesdk.apps.-</onlyAnalyze>
+          <excludeFilterFile>${findbugs.excludes.location}</excludeFilterFile>
+        </configuration>
+        <executions>
+          <execution>
+            <id>failing-on-high</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>      
     </plugins>
     <pluginManagement>
       <plugins>

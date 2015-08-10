@@ -29,8 +29,6 @@ import java.util.Set;
  */
 public class JobContext {
 
-  private final Job job;
-
   private final Configuration conf;
 
   private final Map<String,String> jobSettings;
@@ -65,14 +63,14 @@ public class JobContext {
 
     String prefix = "input." + dataInputName + ".";
 
-    for (String setting: jobSettings.keySet()) {
+    for (Map.Entry<String, String> setting: jobSettings.entrySet()) {
+      String key = setting.getKey();
+      if (key.startsWith(prefix)) {
 
-      if (setting.startsWith(prefix)) {
-
-        inputSettings.put(setting.substring(prefix.length()), jobSettings.get(setting));
+        inputSettings.put(key.substring(prefix.length()), setting.getValue());
       } else {
-        if (isGeneralSetting(setting)) {
-          inputSettings.put(setting, jobSettings.get(setting));
+        if (isGeneralSetting(key)) {
+          inputSettings.put(key, setting.getValue());
         }
       }
     }
@@ -90,14 +88,14 @@ public class JobContext {
 
     String prefix = "output." + dataOutputName + ".";
 
-    for (String setting: jobSettings.keySet()) {
+    for (Map.Entry<String,String> setting: jobSettings.entrySet()) {
+      String key = setting.getKey();
+      if (key.startsWith(prefix)) {
 
-      if (setting.startsWith(prefix)) {
-
-        outputSettings.put(setting.substring(prefix.length()), jobSettings.get(setting));
+        outputSettings.put(key.substring(prefix.length()), setting.getValue());
       } else {
-        if (isGeneralSetting(setting)) {
-          outputSettings.put(setting, jobSettings.get(setting));
+        if (isGeneralSetting(key)) {
+          outputSettings.put(key, setting.getValue());
         }
       }
     }
@@ -139,14 +137,12 @@ public class JobContext {
    * Creates a context with the given settings and Hadoop configuration.
    */
   public JobContext(StreamDescription descrip, Job job, Map<String,String> settings, Configuration conf) {
-    this.job = job;
     this.jobSettings = toJobSettings(job.getName(), getDefaultSettings(descrip), settings);
     this.conf = toJobHadoopConf(this.jobSettings, conf);
   }
 
 
   public JobContext(Job job, Map<String,String> settings, Configuration conf) {
-    this.job = job;
     this.jobSettings = toJobSettings(job.getName(), Maps.<String,String>newHashMap(), settings);
     this.conf = toJobHadoopConf(this.jobSettings, conf);
   }
