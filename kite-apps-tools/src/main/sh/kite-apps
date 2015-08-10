@@ -30,6 +30,12 @@ bin=`dirname $0`
 bin=`cd ${bin} && pwd`
 lib="`dirname ${bin}`/lib/*"
 
+if [ -z ${KITE_APPS_HOME} ]; then
+   KITE_APPS_HOME="$bin"/..
+fi
+
+debug "Using KITE_APPS_HOME=${KITE_APPS_HOME}"
+
 # Find paths to our dependency systems. If they are unset, use CDH defaults.
 
 if [ -z "${HADOOP_COMMON_HOME}" ]; then
@@ -165,7 +171,7 @@ export HIVE_HOME
 export SPARK_HOME
 
 if [ -x "$HADOOP_COMMON_HOME/bin/hadoop" ]; then
-  exec ${HADOOP_COMMON_HOME}/bin/hadoop jar lib/kite-apps-cli-*-SNAPSHOT.jar $flags org.kitesdk.apps.cli.Main --dollar-zero "$0" "$@"
+  exec ${HADOOP_COMMON_HOME}/bin/hadoop jar ${KITE_APPS_HOME}/lib/kite-apps-cli-*-SNAPSHOT.jar $flags org.kitesdk.apps.cli.Main --dollar-zero "$0" "$@"
 else
   echo "ERROR: Cannot find Hadoop installation!"
   echo "You can fix this warning by setting HADOOP_HOME"
