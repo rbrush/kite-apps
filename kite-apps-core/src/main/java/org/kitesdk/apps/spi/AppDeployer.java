@@ -167,6 +167,8 @@ public class AppDeployer {
     }
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings(
+    value="UPM_UNCALLED_PRIVATE_METHOD", justification="Future work")
   private Configuration filterConfig(Configuration conf) {
 
     Configuration appConfig = new Configuration(conf);
