@@ -16,11 +16,20 @@
 package org.kitesdk.apps.examples.itests;
 
 import com.google.common.collect.Lists;
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.javaapi.producer.Producer;
+import kafka.message.MessageAndMetadata;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
+import org.apache.avro.Schema;
+import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecord;
@@ -32,7 +41,10 @@ import org.kitesdk.data.View;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -145,5 +157,68 @@ class DataUtil {
     }
 
     return expected.equals(actual);
+  }
+
+  /**
+   * Create a consumer to test outputs to topic.
+   */
+  static ConsumerConnector createConnector(String zookeeperConnect) {
+
+    Properties props = new Properties();
+
+    // TODO: do we need better group or consumer ID here?
+    props.setProperty("group.id", "test_group");
+    props.put("consumer.id", "test_consumer");
+    props.put("zookeeper.connect", zookeeperConnect);
+    props.put("socket.timeout.ms", "5000");
+    props.put("auto.offset.reset", "smallest");
+
+    return Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+  }
+
+  /**
+   * Opens a stream
+   */
+  static KafkaStream<byte[],byte[]> openStream(ConsumerConnector connector, String outputTopic) {
+
+    Map<String, List<KafkaStream<byte[], byte[]>>> streams =  connector.createMessageStreams(Collections.singletonMap(outputTopic, 1));
+
+    return streams.get(outputTopic).get(0);
+  }
+
+  /**
+   * Checks if the topic contains the expected messages within a timeout period.
+   */
+  static boolean checkMessages(KafkaStream<byte[],byte[]> stream, List<ExampleEvent> expected, int timeoutSeconds) throws IOException, InterruptedException {
+
+    List<ExampleEvent> actual = readRecords(stream, expected.size());
+
+    return expected.equals(actual);
+  }
+
+  private static List<ExampleEvent> readRecords(KafkaStream<byte[],byte[]> stream, int expected) throws IOException {
+
+    List<ExampleEvent> records = com.clearspring.analytics.util.Lists.newArrayList();
+
+    Iterator it = stream.iterator();
+
+    // Use loader for the expected event to make sure it is visible.
+    SpecificData data = new SpecificData(ExampleEvent.class.getClassLoader());
+
+    DatumReader<ExampleEvent> reader = data.createDatumReader(ExampleEvent.getClassSchema());
+
+    for (int i = 0; i < expected; ++i) {
+
+      MessageAndMetadata<byte[],byte[]> message = (MessageAndMetadata<byte[], byte[]>) it.next();
+
+      BinaryDecoder binaryDecoder = DecoderFactory.get().binaryDecoder(message.message(),  null);
+
+      ExampleEvent record = reader.read(null, binaryDecoder);
+
+      records.add(record);
+    }
+
+    return records;
+
   }
 }

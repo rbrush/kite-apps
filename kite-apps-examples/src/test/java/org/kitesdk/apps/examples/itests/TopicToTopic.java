@@ -15,33 +15,37 @@
  */
 package org.kitesdk.apps.examples.itests;
 
+import kafka.consumer.KafkaStream;
+import kafka.javaapi.consumer.ConsumerConnector;
 import kafka.javaapi.producer.Producer;
 import org.kitesdk.apps.example.event.ExampleEvent;
-import org.kitesdk.apps.examples.streaming.StreamToDatasetApp;
-import org.kitesdk.data.Datasets;
-import org.kitesdk.data.RefinableView;
-import org.kitesdk.data.View;
+import org.kitesdk.apps.examples.streaming.totopic.TopicToTopicApp;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Integration test for the stream-to-dataset application.
- */
-public class StreamToDataset {
+public class TopicToTopic {
 
   public static int main(String[] args) throws IOException {
 
-    if (args.length != 4) {
-      System.out.println("Usage: <brokerList> <topic> <count> <timeout>");
+    if (args.length != 5) {
+      System.out.println("Usage: <brokerList> <zookeeperConnect> <environment> <count> <timeout>");
       return 1;
     }
 
     String brokerList = args[0];
-    String topic = args[1];
-    int count = Integer.parseInt(args[2]);
-    int timeout = Integer.parseInt(args[3]);
+    String zookeeperConnect = args[1];
+    String environment = args[2];
+    String inputTopic = environment + "." + TopicToTopicApp.INPUT_TOPIC;
+    String outputTopic = environment + "." + TopicToTopicApp.OUTPUT_TOPIC;
+    int count = Integer.parseInt(args[3]);
+    int timeout = Integer.parseInt(args[4]);
+
+    // Open the output stream so we see produced data.
+    ConsumerConnector connector = DataUtil.createConnector(zookeeperConnect);
+
+    KafkaStream<byte[],byte[]> stream = DataUtil.openStream(connector, outputTopic);
 
     // Create a random session ID for testing.
     String sessionId = UUID.randomUUID().toString();
@@ -52,23 +56,19 @@ public class StreamToDataset {
 
     System.out.println("Generating " + count + " messages with session ID " + sessionId);
 
-    DataUtil.sendMessages(topic, producer, events);
-
-    RefinableView<ExampleEvent> dataset = Datasets.load(StreamToDatasetApp.EVENTS_DS_URI, ExampleEvent.class);
-
-    View<ExampleEvent> view = dataset.with("session_id", sessionId);
+    DataUtil.sendMessages(inputTopic, producer, events);
 
     try {
 
       System.out.println("Checking for expected output.");
-      boolean foundMessages = DataUtil.checkMessages(view, events, timeout);
+      boolean foundMessages = DataUtil.checkMessages(stream, events, timeout);
 
       if (foundMessages) {
         System.out.println("Found test messages.");
         return 0;
       } else {
         System.out.println("Expected test messages not found");
-        System.out.println("Dataset: " + StreamToDatasetApp.EVENTS_DS_URI);
+        System.out.println("Topic: " + outputTopic);
         System.out.println("Session ID: " + sessionId);
         return 1;
       }
@@ -77,4 +77,5 @@ public class StreamToDataset {
       return 1;
     }
   }
+
 }

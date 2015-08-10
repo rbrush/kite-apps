@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.examples.streaming;
+package org.kitesdk.apps.examples.streaming.totopic;
 
 import org.apache.spark.streaming.api.java.JavaDStream;
-import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
-import org.kitesdk.apps.spark.SparkDatasets;
-import org.kitesdk.data.Dataset;
+import org.kitesdk.apps.spark.kafka.KafkaOutput;
 
-/**
- * Simple job.
- */
-public class StreamToDatasetJob extends AbstractStreamingSparkJob {
-
-  public void run(@DataIn(name = "event_stream", type = ExampleEvent.class)
-                  JavaDStream<ExampleEvent> stream,
-                  @DataOut(name = "event_output", type = ExampleEvent.class)
-                  Dataset<ExampleEvent> output) {
-
-    SparkDatasets.save(stream, output);
-  }
+public class TopicToTopicJob  extends AbstractStreamingSparkJob {
 
   @Override
   public String getName() {
-    return "test-event-stream";
+    return "topic-to-topic";
+  }
+
+  public void run(@DataIn(name = "example_input_stream", type = ExampleEvent.class)
+                  JavaDStream<ExampleEvent> stream,
+                  @DataOut(name = "example_output_stream", type = ExampleEvent.class)
+                  KafkaOutput<ExampleEvent> output) {
+
+    output.write(stream);
   }
 }

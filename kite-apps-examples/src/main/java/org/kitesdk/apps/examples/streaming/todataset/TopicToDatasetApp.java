@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.examples.streaming;
+package org.kitesdk.apps.examples.streaming.todataset;
 
-import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.kitesdk.apps.AbstractApplication;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.example.event.ExampleEvent;
@@ -27,7 +26,7 @@ import org.kitesdk.data.DatasetDescriptor;
 /**
  * Example application that creates a spark streaming job.
  */
-public class StreamToDatasetApp extends AbstractApplication {
+public class TopicToDatasetApp extends AbstractApplication {
 
   /**
    * Name of the input topic.
@@ -51,7 +50,7 @@ public class StreamToDatasetApp extends AbstractApplication {
     Topics.createTopic(context, TOPIC_NAME, 1, 1, ExampleEvent.getClassSchema());
 
     StreamDescription streamDescription = new StreamDescription.Builder()
-        .jobClass(StreamToDatasetJob.class)
+        .jobClass(TopicToDatasetJob.class)
         .withStream("event_stream", Topics.topic(TOPIC_NAME))
         .withView("event_output", EVENTS_DS_URI)
         .build();

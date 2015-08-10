@@ -13,38 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.examples.streaming;
+package org.kitesdk.apps.examples.streaming.todataset;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
+import org.kitesdk.apps.examples.streaming.todataset.TopicToDatasetApp;
 import org.kitesdk.apps.spark.test.SparkKafkaTestHarness;
-import org.kitesdk.apps.spark.test.SparkTestHarness;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetReader;
 import org.kitesdk.data.Datasets;
-import org.kitesdk.data.View;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  *
  */
-public class StreamToDatasetAppTest extends MiniAppTest {
+public class TopicToDatasetAppTest extends MiniAppTest {
 
   SparkKafkaTestHarness runner;
 
   @Before
   public void setup() throws IOException {
 
-    runner = SparkKafkaTestHarness.load(StreamToDatasetApp.class, getConfiguration());
+    runner = SparkKafkaTestHarness.load(TopicToDatasetApp.class, getConfiguration());
   }
 
   @After
@@ -73,9 +70,9 @@ public class StreamToDatasetAppTest extends MiniAppTest {
   @Test
   public void testStream() throws InterruptedException {
 
-    Dataset<ExampleEvent> output = Datasets.load(StreamToDatasetApp.EVENTS_DS_URI, ExampleEvent.class);
+    Dataset<ExampleEvent> output = Datasets.load(TopicToDatasetApp.EVENTS_DS_URI, ExampleEvent.class);
 
-    runner.writeMessages(StreamToDatasetApp.TOPIC_NAME, getEvents());
+    runner.writeMessages(TopicToDatasetApp.TOPIC_NAME, getEvents());
 
     boolean hasRecords = false;
 
