@@ -17,7 +17,7 @@ package org.kitesdk.apps.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
-import com.beust.jcommander.internal.Maps;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
@@ -25,24 +25,24 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.AppDeployer;
 import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.cli.commands.BaseCommand;
 import org.slf4j.Logger;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import com.google.common.io.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 @Parameters(commandDescription="Installs a Kite application.")
 public class InstallCommand extends BaseCommand {
@@ -53,10 +53,66 @@ public class InstallCommand extends BaseCommand {
   @Parameter(description = "Configuration properties file.", names={"--properties-file"})
   String propertiesFileName;
 
+  @Parameter(description = "A configuration setting to be used by the application. " +
+      "In the form of --conf key=value. " +
+      "May be specified multiple times.", names={"--conf"})
+  List<String> settings;
+
   private final Logger console;
 
   public InstallCommand(Logger console) {
     this.console = console;
+  }
+
+  /**
+   * Returns a complete properties file with contents to be used for the
+   * application properties, or null if no properties are set.
+   */
+  private File completePropertiesFile() throws IOException {
+    File settingsFile = propertiesFileName != null ?
+        new File(propertiesFileName) :
+        null;
+
+    // No explicit settings, so just use the original file.
+    if (settings == null || settings.size() == 0) {
+
+      return settingsFile;
+    }
+
+    // We append the specified settings to the properties file
+    // so any comments or formatting are preserved.
+    File appendedFile = File.createTempFile("kite", "props");
+
+    appendedFile.deleteOnExit();
+
+    FileOutputStream stream = new FileOutputStream(appendedFile);
+    OutputStreamWriter streamWriter = new OutputStreamWriter(stream, Charsets.UTF_8);
+    BufferedWriter writer = new BufferedWriter(streamWriter);
+
+    try {
+      if (settingsFile != null) {
+
+        Files.copy(settingsFile, stream);
+        writer.newLine();
+      }
+
+      for (String setting: settings) {
+
+        // Validate the setting.
+        String[] parts = setting.split("=");
+
+        if (parts.length != 2)
+          throw new IllegalArgumentException("Malformed input setting: " + setting);
+
+        writer.append(setting);
+        writer.newLine();
+      }
+
+    } finally {
+      Closeables.closeQuietly(writer);
+    }
+
+    return appendedFile;
   }
 
   @Override
@@ -98,16 +154,7 @@ public class InstallCommand extends BaseCommand {
       return 1;
     }
 
-    File settingsFile = propertiesFileName != null ?
-        new File(propertiesFileName) :
-        null;
-
-    if (settingsFile != null &&
-        (!settingsFile.exists() || !settingsFile.isFile())) {
-
-      console.error("File {} is not a valid properties file.", propertiesFileName);
-      return 1;
-    }
+    File settingsFile = completePropertiesFile();
 
     Map<String,String> settings = settingsFile != null ?
         PropertyFiles.load(settingsFile) :
