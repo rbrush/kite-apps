@@ -41,6 +41,8 @@ import org.kitesdk.apps.streaming.StreamingJob;
 import org.kitesdk.data.Datasets;
 import org.kitesdk.data.View;
 import org.kitesdk.spark.backport.launcher.SparkLauncher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,7 +51,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -58,9 +59,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class SparkStreamingJobManager implements StreamingJobManager<AbstractStreamingSparkJob> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(SparkStreamingJobManager.class);
 
   private final StreamDescription description;
 
@@ -285,17 +291,18 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       Process process = launcher.launch();
 
-      // Redirect the spark-submit output to be visible to the reader.
-      Thread stdoutThread = writeOutput(process.getInputStream(), System.out);
-      Thread stderrThread = writeOutput(process.getErrorStream(), System.err);
+      AtomicBoolean isRunning = new AtomicBoolean(false);
 
-      int result = process.waitFor();
+      // Redirect the spark-submit output to be visible to the reader. We will
+      // return when we detect that the job is in a running state.
+      Thread stdoutThread = redirectOutput(process.getInputStream(), isRunning);
+      Thread stderrThread = redirectError(process.getErrorStream(), isRunning);
 
       stdoutThread.join();
       stderrThread.join();
 
-      if (result != 0) {
-        throw new AppException("spark-submit returned error status: " + result);
+      if (!isRunning.get()) {
+        throw new AppException("spark-submit failed; see YARN logs for details");
       }
 
     } catch (IOException e) {
@@ -305,10 +312,13 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     }
   }
 
+  private static final Pattern RUNNING_PATTERN = Pattern.compile(".*RUNNING.*");
+
   /**
-   * Writes the output to std out.
+   * Redirect output to stdout and set isRunning to true when the underlying
+   * process is running.
    */
-  private static Thread writeOutput(final InputStream stream, final PrintStream target) {
+  private static Thread redirectError(final InputStream stream, final AtomicBoolean isRunning) {
 
     Thread thread = new Thread("spark-submit-output-redirect") {
 
@@ -316,8 +326,58 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
         Scanner scanner = new Scanner(stream);
 
-        while (scanner.hasNextLine()) {
-          target.println(scanner.nextLine());
+        try {
+          while (scanner.hasNextLine() && !isRunning.get()) {
+
+            String line = scanner.nextLine();
+
+            // The launcher program runs indefinitely, so we look for
+            // a running status to indicate the application is launched.
+            Matcher matcher = RUNNING_PATTERN.matcher(line);
+
+            if (matcher.matches()) {
+              isRunning.set(true);
+            }
+
+            System.err.println(line);
+          }
+
+        } finally {
+          scanner.close();
+        }
+      }
+    };
+
+    thread.setDaemon(true);
+    thread.start();
+
+    return thread;
+  }
+
+  private static Thread redirectOutput(final InputStream input, final AtomicBoolean isRunning) {
+
+    Thread thread = new Thread("spark-submit-stderr-redirect") {
+
+      public void run() {
+
+        try {
+
+          while (!isRunning.get()) {
+
+            if (input.available() > 0) {
+
+              int value = input.read();
+              System.out.write(value);
+
+            } else {
+
+              // No data, so sleep briefly to avoid CPU saturation.
+              Thread.sleep(500);
+            }
+          }
+
+        } catch (Exception e) {
+          LOGGER.warn("Exception redirecting stdout", e);
         }
       }
     };
