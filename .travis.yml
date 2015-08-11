@@ -1,0 +1,11 @@
+language: java
+jdk:
+  - oraclejdk7
+
+cache:
+  directories:
+    - $HOME/.m2
+
+before_script: umask 0022
+before_install: echo "127.0.0.1 "`hostname` | sudo tee -a /etc/hosts
+script: mvn install
