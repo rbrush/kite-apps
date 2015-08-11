@@ -262,6 +262,15 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     launcher.setConf("spark.hadoop.hive.metastore.uris",
         sparkJobContext.getHadoopConf().get("hive.metastore.uris"));
 
+    // Add provided Spark arguments to the job.
+    for (Map.Entry<String,String> setting: sparkJobContext.getSettings().entrySet()) {
+
+      if (setting.getKey().startsWith("spark.")) {
+
+        launcher.setConf(setting.getKey(), setting.getValue());
+      }
+    }
+
     // Add the Avro classes.
     List<Schema> schemas = JobReflection.getSchemas(job);
     StringBuilder avroClassesArg = new StringBuilder();
