@@ -48,10 +48,12 @@ public class AppDeployer {
 
   private final AppContext context;
 
+  private final Random random;
 
   public AppDeployer(FileSystem fs, AppContext context) {
     this.fs = fs;
     this.context = context;
+    this.random = new Random();
   }
 
 
@@ -103,7 +105,7 @@ public class AppDeployer {
     // Install to a temporary destination and rename it to avoid
     // potential races against other installers.
     String tempBase = context.getHadoopConf().get("hadoop.tmp.dir", "/tmp");
-    Path tempDestination =  new Path(tempBase, "kite-" + (new Random().nextInt() & Integer.MAX_VALUE));
+    Path tempDestination =  new Path(tempBase, "kite-" + (random.nextInt() & Integer.MAX_VALUE));
 
     try {
 
@@ -165,6 +167,8 @@ public class AppDeployer {
     }
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings(
+    value="UPM_UNCALLED_PRIVATE_METHOD", justification="Future work")
   private Configuration filterConfig(Configuration conf) {
 
     Configuration appConfig = new Configuration(conf);

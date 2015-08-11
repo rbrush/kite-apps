@@ -46,8 +46,9 @@ import java.util.Properties;
 public class KafkaOutput<T extends SpecificRecord> implements Serializable {
 
   private static final String PREFIX = "kafka.";
+  private static final long serialVersionUID = 2953583026881050675L;
 
-  private static Properties toKafkaProps(Map<String,String> settings) {
+    private static Properties toKafkaProps(Map<String,String> settings) {
 
     Properties props = new Properties();
 
@@ -136,6 +137,8 @@ public class KafkaOutput<T extends SpecificRecord> implements Serializable {
   }
 
   class KafkaWriter implements VoidFunction<Iterator<T>> {
+
+    private static final long serialVersionUID = 7056089420805558340L;
 
     @Override
     public void call(Iterator<T> iterator) throws Exception {

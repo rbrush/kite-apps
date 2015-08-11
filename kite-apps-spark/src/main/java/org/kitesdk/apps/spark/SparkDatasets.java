@@ -67,7 +67,9 @@ public class SparkDatasets {
 
   static final class ToPairFn implements PairFunction {
 
-    @Override
+    private static final long serialVersionUID = -2107715101057738583L;
+
+      @Override
     public Tuple2 call(Object o) throws Exception {
       return new Tuple2(o, null);
     }
