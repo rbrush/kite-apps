@@ -17,6 +17,7 @@ package org.kitesdk.apps.cli.commands;
 
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.Parameters;
+import com.beust.jcommander.converters.IParameterSplitter;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -43,9 +44,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 @Parameters(commandDescription="Installs a Kite application.")
 public class InstallCommand extends BaseCommand {
+
+  public static class SingletonSplitter implements IParameterSplitter {
+
+    @Override
+    public List<String> split(String value) {
+      return Collections.singletonList(value);
+    }
+  }
 
   @Parameter(description = "<app jar path> <class name> <destination>")
   List<String> args;
@@ -55,7 +65,9 @@ public class InstallCommand extends BaseCommand {
 
   @Parameter(description = "A configuration setting to be used by the application. " +
       "In the form of --conf key=value. " +
-      "May be specified multiple times.", names={"--conf"})
+      "May be specified multiple times.",
+      names={"--conf"},
+      splitter = SingletonSplitter.class) // Do not split a single --conf setting into multiple values.
   List<String> settings;
 
   private final Logger console;
@@ -155,6 +167,18 @@ public class InstallCommand extends BaseCommand {
     }
 
     File settingsFile = completePropertiesFile();
+
+    if (console.isDebugEnabled()) {
+
+      console.debug("Using the given settings:");
+
+      List<String> lines = Files.readLines(settingsFile, Charsets.UTF_8);
+
+      for (String line: lines) {
+
+        console.debug(line);
+      }
+    }
 
     Map<String,String> settings = settingsFile != null ?
         PropertyFiles.load(settingsFile) :
