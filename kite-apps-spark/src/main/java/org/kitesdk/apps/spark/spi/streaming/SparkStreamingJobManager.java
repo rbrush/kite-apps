@@ -15,6 +15,7 @@
  */
 package org.kitesdk.apps.spark.spi.streaming;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.avro.Schema;
@@ -92,60 +93,34 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     return new Path (appRoot, "streaming/" + jobName + ".json");
   }
 
-
-  public static StreamDescription loadDescription(FileSystem fs, Path appRoot, String jobName) {
+  public static StreamDescription loadDescription(FileSystem fs, Path appRoot, String jobName)  {
 
     Path streamingJobPath = jobDescriptionFile(appRoot, jobName);
 
     StringBuilder builder = new StringBuilder();
-    InputStream input = null;
-
     try {
-      input = fs.open(streamingJobPath);
+      InputStream input = fs.open(streamingJobPath);
 
-      InputStreamReader streamReader = new InputStreamReader(input);
+      InputStreamReader streamReader = new InputStreamReader(input, Charsets.UTF_8);
 
       BufferedReader reader = new BufferedReader(streamReader);
 
+      try {
 
+        String line;
 
-      String line;
+        while ((line = reader.readLine()) != null) {
 
-      while ((line = reader.readLine()) != null) {
-
-        builder.append(line);
+          builder.append(line);
+        }
+      } finally {
+        reader.close();
       }
-    } catch(IOException e) {
+    } catch (IOException e) {
       throw new AppException(e);
-    } finally {
-      Closeables.closeQuietly(input);
     }
 
     return StreamDescription.parseJson(builder.toString());
-  }
-
-  private static void writeDescription(FileSystem fs, Path appRoot, StreamDescription description) {
-
-    Path streamingJobPath = jobDescriptionFile(appRoot, description.getJobName());
-
-    try {
-      fs.mkdirs(streamingJobPath.getParent());
-    } catch (IOException e) {
-      throw new AppException(e);
-    }
-
-    OutputStream output = null;
-
-    try {
-      output = fs.append(streamingJobPath);
-      OutputStreamWriter writer = new OutputStreamWriter(output);
-      writer.write(description.toString());
-
-    } catch (IOException e) {
-      throw new AppException(e);
-    } finally {
-      Closeables.closeQuietly(output);
-    }
   }
 
   public static SparkStreamingJobManager create(StreamDescription description,
@@ -166,28 +141,6 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     return new SparkStreamingJobManager(description, job, runMethod, context);
   }
 
-  private static final List<File> getLibraryJars() {
-
-    // Current implementation assumes that library files
-    // are in the same directory, so locate it and
-    // include it in the project library.
-
-    // This is ugly, using the jobConf logic to identify the containing
-    // JAR. There should be a better way to do this.
-    JobConf jobConf = new JobConf();
-    jobConf.setJarByClass(StreamingJob.class);
-    String containingJar = jobConf.getJar();
-
-    if (containingJar == null)
-      return Collections.emptyList();
-
-    File file = new File(containingJar).getParentFile();
-
-    File[] jarFiles = file.listFiles();
-
-    return Arrays.asList(jarFiles);
-  }
-
   @Override
   public void install(FileSystem fs, Path appRoot) {
 
@@ -196,16 +149,14 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     try {
 
       OutputStream output = fs.create(descriptionFile);
+      OutputStreamWriter writer = new OutputStreamWriter(output, Charsets.UTF_8);
 
       try {
 
-        OutputStreamWriter writer = new OutputStreamWriter(output);
-
         writer.append(description.toString());
-        writer.flush();
 
       } finally {
-        output.close();
+        writer.close();
       }
 
     } catch (IOException e) {
@@ -333,7 +284,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
       public void run() {
 
-        Scanner scanner = new Scanner(stream);
+        Scanner scanner = new Scanner(stream, Charsets.UTF_8.name());
 
         try {
           while (scanner.hasNextLine() && !isRunning.get()) {
@@ -385,7 +336,9 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
             }
           }
 
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+          LOGGER.warn("Exception redirecting stdout", e);
+        } catch (IOException e) {
           LOGGER.warn("Exception redirecting stdout", e);
         }
       }
@@ -407,8 +360,6 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
   }
 
   private JavaDStream load(Map<String,String> inputSettings, StreamDescription description, DataIn input) {
-
-    StreamDescription.Stream stream = description.getStreams().get(input.name());
 
     // Currently on Kafka is the only stream type supported.
     // Future enhancements may determine a different loader based

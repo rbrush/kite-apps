@@ -37,6 +37,8 @@ public class TriggeredJob extends AbstractCrunchJob {
 
   public static class KeepOddUsers extends FilterFn<ExampleEvent> {
 
+    private static final long serialVersionUID = 1;
+
     @Override
     public boolean accept(ExampleEvent event) {
       // Keep only odd users.

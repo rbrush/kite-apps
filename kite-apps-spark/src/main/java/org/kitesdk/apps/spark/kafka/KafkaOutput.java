@@ -123,6 +123,8 @@ public class KafkaOutput<T extends SpecificRecord> implements Serializable {
    * Writes the content of the stream to the Kafka topic
    * behind this producer.
    */
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings(
+      value="SE_INNER_CLASS", justification="Uses state from outer class.")
   public void write (JavaDStream<T> stream) {
 
     stream.foreachRDD(new Function<JavaRDD<T>, Void>() {
@@ -136,6 +138,8 @@ public class KafkaOutput<T extends SpecificRecord> implements Serializable {
     });
   }
 
+  @edu.umd.cs.findbugs.annotations.SuppressWarnings(
+      value="SE_INNER_CLASS", justification="Uses state from outer class.")
   class KafkaWriter implements VoidFunction<Iterator<T>> {
 
     private static final long serialVersionUID = 7056089420805558340L;

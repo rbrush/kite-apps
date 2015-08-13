@@ -37,7 +37,7 @@ public class DataGeneratorApp extends AbstractApplication {
   /**
    * Schedule pattern.
    */
-  private final String EVENT_DS_PATTERN = "view:hive:example/events" +
+  private static final String EVENT_DS_PATTERN = "view:hive:example/events" +
       "?year=${YEAR}&month=${MONTH}&day=${DAY}&hour=${HOUR}&minute=${MINUTE}";
 
   @Override

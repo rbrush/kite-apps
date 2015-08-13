@@ -38,6 +38,8 @@ public class ScheduledReportJob extends AbstractCrunchJob {
 
   public static class GetEventId extends MapFn<ExampleEvent, Long> {
 
+    private static final long serialVersionUID = 1;
+
     @Override
     public Long map(ExampleEvent exampleEvent) {
       return exampleEvent.getUserId();
@@ -45,6 +47,9 @@ public class ScheduledReportJob extends AbstractCrunchJob {
   }
 
   public static class ToUserReport extends MapFn<Pair<Long, Long>, GenericData.Record> {
+
+    private static final long serialVersionUID = 1;
+
     @Override
     public GenericData.Record map (Pair < Long, Long > pair){
 

@@ -236,6 +236,9 @@ class SparkJobManager extends SchedulableJobManager {
 
     File[] jarFiles = file.listFiles();
 
+    if (jarFiles == null)
+      throw new AppException("Unable to list jar files at " + file.getAbsolutePath());
+
     return Arrays.asList(jarFiles);
   }
 

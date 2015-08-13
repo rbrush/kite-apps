@@ -45,6 +45,8 @@ public class SparkKafkaStreamLoader {
 
   static class ToAvroFunction implements Function<Tuple2<byte[],byte[]>, Object> {
 
+    private static final long serialVersionUID = 1;
+
     private Schema schema;
 
     private void writeObject(ObjectOutputStream output) throws IOException {
@@ -72,14 +74,13 @@ public class SparkKafkaStreamLoader {
     }
   }
 
-  public JavaDStream load(Schema schema, Map<String, String> properties, JobContext jobContext)  {
+  @SuppressWarnings("unchecked")
+  public JavaDStream load(Schema schema, Map<String, String> properties, SparkJobContext jobContext)  {
 
-    // JavaPairReceiverInputDStream<String, String> stream =  KafkaUtils.createStream(DefaultSparkContext.getStreamingContext(), "foo", "bar", null);
-
-    JavaStreamingContext ctx = ((SparkJobContext) jobContext).getSparkStreamingContext();
+    JavaStreamingContext ctx = jobContext.getSparkStreamingContext();
 
 
-    Map<String, String> params = Topics.getDirectStreamParams((SparkJobContext) jobContext);
+    Map<String, String> params = Topics.getDirectStreamParams(jobContext);
 
 
     Set<String> topics = new HashSet<String>();

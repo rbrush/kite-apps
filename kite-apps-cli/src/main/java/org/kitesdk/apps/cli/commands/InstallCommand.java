@@ -26,6 +26,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.spi.AppDeployer;
 import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.cli.commands.BaseCommand;
@@ -244,6 +245,9 @@ public class InstallCommand extends BaseCommand {
     File file = new File(containingJar).getParentFile();
 
     File[] jarFiles = file.listFiles();
+
+    if (jarFiles == null)
+      throw new AppException("Unable to list jar files in folder: " + file);
 
     return Arrays.asList(jarFiles);
   }

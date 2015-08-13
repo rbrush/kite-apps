@@ -41,6 +41,8 @@ public class SparkJob extends AbstractSchedulableSparkJob {
 
   public static class KeepOddUsers implements Function<Tuple2<ExampleEvent, Void>, Boolean> {
 
+    private static final long serialVersionUID = 1;
+
     @Override
     public Boolean call(Tuple2<ExampleEvent, Void> input) throws Exception {
       return input._1().getUserId() % 2 == 1;
