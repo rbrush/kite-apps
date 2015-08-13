@@ -61,6 +61,13 @@
     <artifact.hbase-test-deps>kite-hbase-cdh5-test-dependencies</artifact.hbase-test-deps>
 
     <vers.rat>0.9</vers.rat>
+    <vers.enforcer>1.4</vers.enforcer>
+    <vers.shade>2.4.1</vers.shade>
+    <vers.jar>2.6</vers.jar>
+    <vers.javadoc>2.10.3</vers.javadoc>
+    <vers.source>2.4</vers.source>
+    <vers.compiler>3.3</vers.compiler>
+    <vers.findbugs>3.0.1</vers.findbugs>
     <vers.junit>4.10</vers.junit>
     <vers.maven-surefire-plugin>2.14.1</vers.maven-surefire-plugin>
     <vers.jodatime>2.3</vers.jodatime>
@@ -514,6 +521,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>${vers.compiler}</version>
           <configuration>
             <source>1.6</source>
             <target>${targetJavaVersion}</target>
@@ -571,6 +579,36 @@
             </excludes>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>${vers.enforcer}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${vers.source}</version>
+        </plugin>        
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${vers.javadoc}</version>
+        </plugin>                
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>${vers.shade}</version>
+        </plugin>                
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${vers.jar}</version>
+        </plugin> 
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>findbugs-maven-plugin</artifactId>
+          <version>${vers.jar}</version>
+        </plugin> 
       </plugins>
     </pluginManagement>
   </build>

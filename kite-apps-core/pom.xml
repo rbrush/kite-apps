@@ -195,16 +195,6 @@
     </dependency>
 
     <!-- Test Dependencies -->
-
-    <dependency>
-      <groupId>org.kitesdk</groupId>
-      <artifactId>kite-data-core</artifactId>
-      <version>${kite.version}</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
