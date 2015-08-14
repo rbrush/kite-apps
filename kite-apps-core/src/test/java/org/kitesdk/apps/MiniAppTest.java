@@ -18,8 +18,6 @@ package org.kitesdk.apps;
 import org.junit.After;
 import org.junit.Before;
 import org.kitesdk.data.MiniDFSTest;
-import org.kitesdk.data.spi.DatasetRepositories;
-import org.kitesdk.data.spi.DatasetRepository;
 import org.kitesdk.data.spi.DefaultConfiguration;
 import org.kitesdk.data.spi.hive.MetaStoreUtil;
 

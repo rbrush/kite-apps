@@ -16,7 +16,6 @@
 package org.kitesdk.apps.test;
 
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;

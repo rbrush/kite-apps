@@ -15,7 +15,6 @@
  */
 package org.kitesdk.apps.scheduled;
 
-import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
 import org.kitesdk.apps.JobContext;
 

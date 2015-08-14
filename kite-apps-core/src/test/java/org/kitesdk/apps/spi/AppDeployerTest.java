@@ -17,7 +17,6 @@ package org.kitesdk.apps.spi;
 
 
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
 import junit.framework.Assert;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;

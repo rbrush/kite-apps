@@ -18,7 +18,6 @@ package org.kitesdk.apps.scheduled;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.avro.generic.GenericData;
 import org.joda.time.DateTime;

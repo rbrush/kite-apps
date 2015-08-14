@@ -15,7 +15,6 @@
  */
 package org.kitesdk.apps;
 
-import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.streaming.StreamDescription;
 

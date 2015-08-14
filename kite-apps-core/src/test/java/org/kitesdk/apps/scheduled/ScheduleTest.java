@@ -15,15 +15,13 @@
  */
 package org.kitesdk.apps.scheduled;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
+import org.joda.time.Instant;
 import org.junit.Test;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.test.apps.BadNameJob;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
-import org.joda.time.Instant;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;

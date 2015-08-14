@@ -17,7 +17,6 @@
 package org.kitesdk.apps.cli;
 
 import com.beust.jcommander.JCommander;
-
 import com.beust.jcommander.MissingCommandException;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
@@ -26,7 +25,6 @@ import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
@@ -34,7 +32,6 @@ import org.apache.log4j.PropertyConfigurator;
 import org.kitesdk.apps.cli.commands.InstallCommand;
 import org.kitesdk.apps.cli.commands.JarCommand;
 import org.kitesdk.cli.Command;
-import org.kitesdk.cli.Help;
 import org.kitesdk.data.DatasetIOException;
 import org.kitesdk.data.DatasetNotFoundException;
 import org.kitesdk.data.ValidationException;
