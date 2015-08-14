@@ -19,11 +19,13 @@ import org.apache.avro.generic.GenericData;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.MiniAppTest;
 import org.kitesdk.apps.example.event.ExampleEvent;
 import org.kitesdk.apps.examples.generate.DataGeneratorApp;
+import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.test.TestScheduler;
 import org.kitesdk.data.Dataset;
 import org.kitesdk.data.DatasetReader;
@@ -35,6 +37,13 @@ import java.util.Collections;
 
 
 public class ScheduledReportAppTest extends MiniAppTest {
+
+  @Before
+  @After
+  public void clearSparkContext() {
+
+    SparkContextFactory.shutdown();
+  }
 
   @Test
   public void testGenerateAndRunReport() {

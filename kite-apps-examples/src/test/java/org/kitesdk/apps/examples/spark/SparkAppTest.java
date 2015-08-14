@@ -46,8 +46,9 @@ public class SparkAppTest extends MiniAppTest {
     DefaultConfiguration.set(getConfiguration());
   }
 
+  @Before
   @After
-  public void stopSparkContext() {
+  public void clearSparkContext() {
 
     SparkContextFactory.shutdown();
   }
