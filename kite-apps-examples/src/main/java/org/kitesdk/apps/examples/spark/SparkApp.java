@@ -65,6 +65,7 @@ public class SparkApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("example-spark")
         .jobClass(SparkJob.class)
         .frequency("* * * * *")
         .withInput("example_events", EVENT_URI_PATTERN, "* * * * *")

@@ -44,7 +44,9 @@ public class OozieSparkSchedulingTest {
   @Before
   public void createTestSchedule() {
 
-    testSchedule = new Schedule.Builder().jobClass(SimpleSparkJob.class)
+    testSchedule = new Schedule.Builder()
+        .jobName("simple-spark-job")
+        .jobClass(SimpleSparkJob.class)
         .frequency("0 * * * *")
         .withView("source.users", SimpleSparkApp.INPUT_URI_PATTERN, 1)
         .withView("target.users", SimpleSparkApp.OUTPUT_URI_PATTERN, 1)

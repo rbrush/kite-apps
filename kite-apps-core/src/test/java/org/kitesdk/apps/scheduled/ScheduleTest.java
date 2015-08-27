@@ -32,6 +32,7 @@ public class ScheduleTest {
   public void testBuildSchedule() {
 
     Schedule schedule = new Schedule.Builder()
+        .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
@@ -68,6 +69,7 @@ public class ScheduleTest {
     Instant effectiveStart = Instant.parse("2015-06-10T03:00:00.00Z");
 
     Schedule schedule = new Schedule.Builder()
+        .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .startAt(startTime)
@@ -82,13 +84,16 @@ public class ScheduleTest {
   @Test(expected = AppException.class)
   public void testBadJobName() {
 
-    new Schedule.Builder().jobClass(BadNameJob.class);
+    new Schedule.Builder()
+        .jobName("invalid.name.with.periods")
+        .jobClass(BadNameJob.class);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testNoSuchName() {
 
     new Schedule.Builder()
+        .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
         .withView("bogus.name", ScheduledInputOutputApp.INPUT_URI_PATTERN, 60)
         .build();
@@ -97,6 +102,7 @@ public class ScheduleTest {
   @Test(expected = IllegalArgumentException.class)
   public void testViewNotProvided() {
     new Schedule.Builder()
+        .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
         .build();
   }

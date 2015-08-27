@@ -67,6 +67,7 @@ public class ScheduledInputOutputApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("test-job")
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .withView("source_users", INPUT_URI_PATTERN, 1)

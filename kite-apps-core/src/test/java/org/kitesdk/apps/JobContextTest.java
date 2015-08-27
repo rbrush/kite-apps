@@ -29,9 +29,7 @@ import java.util.Map;
 
 public class JobContextTest {
 
-  private static final Job JOB = new ScheduledInputOutputJob();
-
-  private static final String JOB_NAME = JOB.getName();
+  private static final String JOB_NAME = "test-job-name";
 
   private AppContext context(String... settings) {
 
@@ -50,8 +48,7 @@ public class JobContextTest {
 
   private JobContext jobContext(AppContext context) {
 
-
-    return new JobContext(JOB, context.getSettings(), context.getHadoopConf());
+    return new JobContext(JOB_NAME, context.getSettings(), context.getHadoopConf());
   }
 
   @Test
@@ -121,6 +118,7 @@ public class JobContextTest {
     AppContext context = context();
 
     StreamDescription descrip = new StreamDescription.Builder()
+        .jobName(JOB_NAME)
         .jobClass(MockStreamingJob.class)
         .withStream("mock_input", ImmutableMap.of("input_stream.setting", "input_stream.value",
             "other.stream.setting", "other.stream.value"))
@@ -130,7 +128,6 @@ public class JobContextTest {
     Job job = new MockStreamingJob();
 
     JobContext jobContext = new JobContext(descrip,
-        job,
         Collections.<String,String>emptyMap(),
         context.getHadoopConf());
 
@@ -144,11 +141,10 @@ public class JobContextTest {
         jobContext.getOutputSettings("mock_output"));
 
 
-    context = context("kite.job." + job.getName() + ".input.mock_input.input_stream.setting", "overridden_value");
+    context = context("kite.job." + JOB_NAME + ".input.mock_input.input_stream.setting", "overridden_value");
 
     // test overridden settings
     jobContext = new JobContext(descrip,
-        job,
         context.getSettings(),
         context.getHadoopConf());
 

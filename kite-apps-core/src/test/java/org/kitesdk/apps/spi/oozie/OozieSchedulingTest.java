@@ -46,7 +46,9 @@ public class OozieSchedulingTest  {
   @Before
   public void createTestSchedule() {
 
-    testSchedule = new Schedule.Builder().jobClass(ScheduledInputOutputJob.class)
+    testSchedule = new Schedule.Builder()
+        .jobName("scheduled-input-output")
+        .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
         .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
@@ -97,6 +99,7 @@ public class OozieSchedulingTest  {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
     SchedulableJobManager manager = JobManagers.createSchedulable(ScheduledInputOutputJob.class,
+        "scheduled-input-output",
         new AppContext(new Configuration()));
 
     OozieScheduling.writeCoordinator(testSchedule, manager, output);
@@ -151,6 +154,7 @@ public class OozieSchedulingTest  {
 
 
     Schedule schedule1 = new Schedule.Builder()
+        .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
@@ -158,6 +162,7 @@ public class OozieSchedulingTest  {
         .build();
 
     Schedule schedule2 = new Schedule.Builder()
+        .jobName("alt-scheduled-input-output")
         .jobClass(AltScheduledInputOutputJob.class)
         .frequency("0 * * * *")
         .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")

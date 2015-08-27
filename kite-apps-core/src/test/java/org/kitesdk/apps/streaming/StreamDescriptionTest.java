@@ -32,6 +32,7 @@ public class StreamDescriptionTest {
     props.put("setting2", "value2");
 
     StreamDescription descrip = new StreamDescription.Builder()
+        .jobName("mock-job")
         .jobClass(MockStreamingJob.class)
         .withStream("example.stream", props)
         .withView("example.view", "dataset:hive:example/view").build();
@@ -62,13 +63,12 @@ public class StreamDescriptionTest {
     props.put("setting2", "value2");
 
     StreamDescription descrip = new StreamDescription.Builder()
+        .jobName("mock-job")
         .jobClass(MockStreamingJob.class)
         .withStream("example.stream", props)
         .withView("example.view", "dataset:hive:example/view").build();
 
     String json = descrip.toString();
-
-    System.out.println(json);
 
     StreamDescription readDescrip = StreamDescription.parseJson(json);
 

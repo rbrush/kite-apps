@@ -49,6 +49,7 @@ public class TopicToTopicApp extends AbstractApplication {
     Topics.createTopic(context, outputTopic, 1, 1, ExampleEvent.getClassSchema());
 
     StreamDescription processJob = new StreamDescription.Builder()
+        .jobName("topic-to-topic")
         .jobClass(TopicToTopicJob.class)
         .withStream("example_input_stream", Topics.topic(inputTopic))
         .withStream("example_output_stream", Topics.topic(outputTopic))

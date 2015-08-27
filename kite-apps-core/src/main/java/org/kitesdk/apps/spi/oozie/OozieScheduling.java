@@ -154,7 +154,7 @@ public class OozieScheduling {
     writer.addAttribute("retry-interval", "1");
 
     // Write the appropriate action to be used in the job.
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), context);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), schedule.getName(), context);
     manager.writeOozieActionBlock(writer, schedule);
 
     element(writer, "ok", "to", "end");

@@ -27,6 +27,7 @@ public interface Job<T extends JobContext> {
    * This name will be used in job-specific configuration files and
    * be visible in system management tooling.
    */
+  @Deprecated
   String getName();
 
   /**

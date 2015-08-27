@@ -53,6 +53,7 @@ class SparkJobManager extends SchedulableJobManager {
 
 
   public static SparkJobManager create(Class<? extends AbstractSchedulableSparkJob> jobClass,
+                                       String jobName,
                                        AppContext context) {
 
     AbstractSchedulableSparkJob job;
@@ -65,13 +66,11 @@ class SparkJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
-
-    return new SparkJobManager(job, runMethod, context);
+    return new SparkJobManager(job, jobName, context);
   }
 
-  SparkJobManager(SchedulableJob job, Method runMethod, AppContext context) {
-    super(job, runMethod, context);
+  SparkJobManager(SchedulableJob job, String jobName, AppContext context) {
+    super(job, jobName, context);
 
   }
 
@@ -79,7 +78,7 @@ class SparkJobManager extends SchedulableJobManager {
   public JobContext getJobContext() {
 
     if (sparkJobContext == null) {
-      sparkJobContext = new SparkJobContext(job, context);
+      sparkJobContext = new SparkJobContext(jobName, context);
     }
 
     return sparkJobContext;
@@ -90,6 +89,8 @@ class SparkJobManager extends SchedulableJobManager {
 
 
     try {
+
+      Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
       job.setNominalTime(nominalTime);
       job.setJobContext(getJobContext());
@@ -144,6 +145,7 @@ class SparkJobManager extends SchedulableJobManager {
     element(writer, "jar",  jarName);
     element(writer, "spark-opts", getSparkConfString(schedule));
     element(writer, "arg", schedule.getJobClass().getName());
+    element(writer, "arg", schedule.getName());
 
     writer.endElement(); // spark
   }

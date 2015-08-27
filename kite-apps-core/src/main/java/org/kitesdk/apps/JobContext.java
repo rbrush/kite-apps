@@ -29,11 +29,18 @@ import java.util.Set;
  */
 public class JobContext {
 
+  private final String jobName;
+
   private final Configuration conf;
 
   private final Map<String,String> jobSettings;
 
   private static final String JOB_PREFIX = "kite.job.";
+
+  /**
+   * Gets the name of the job.
+   */
+  public String getJobName() {return jobName; }
 
   /**
    * Gets the configuration settings for the job.
@@ -105,9 +112,7 @@ public class JobContext {
 
   private static Map<String,String> getDefaultSettings(StreamDescription descrip) {
 
-    Method runMethod = JobReflection.resolveRunMethod(descrip.getJobClass());
-
-    Set<String> inputNames = JobReflection.getInputs(runMethod).keySet();
+    Set<String> inputNames = JobReflection.getInputs(descrip.getJobClass()).keySet();
 
     Map<String,String> settings = Maps.newHashMap();
 
@@ -136,25 +141,27 @@ public class JobContext {
   /**
    * Creates a context with the given settings and Hadoop configuration.
    */
-  public JobContext(StreamDescription descrip, Job job, Map<String,String> settings, Configuration conf) {
-    this.jobSettings = toJobSettings(job.getName(), getDefaultSettings(descrip), settings);
+  public JobContext(StreamDescription descrip, Map<String,String> settings, Configuration conf) {
+    this.jobSettings = toJobSettings(descrip.getJobName(), getDefaultSettings(descrip), settings);
     this.conf = toJobHadoopConf(this.jobSettings, conf);
+    this.jobName = descrip.getJobName();
   }
 
 
-  public JobContext(Job job, Map<String,String> settings, Configuration conf) {
-    this.jobSettings = toJobSettings(job.getName(), Maps.<String,String>newHashMap(), settings);
+  public JobContext(String jobName, Map<String,String> settings, Configuration conf) {
+    this.jobSettings = toJobSettings(jobName, Maps.<String,String>newHashMap(), settings);
     this.conf = toJobHadoopConf(this.jobSettings, conf);
+    this.jobName = jobName;
   }
 
   private static Map<String,String> toJobSettings(String jobName, Map<String,String> defaultSettings, Map<String,String> appSettings) {
 
     Map<String,String> jobSettings = Maps.newHashMap();
 
+    // Put all of the default settings.
     jobSettings.putAll(defaultSettings);
 
-    String jobNamePrefix = JOB_PREFIX + jobName + ".";
-
+    // Put all of the settings that do not use the job-specific override.
     for (Map.Entry<String,String> entry: appSettings.entrySet()) {
 
       String key = entry.getKey();
@@ -162,9 +169,21 @@ public class JobContext {
 
       if (!key.startsWith(JOB_PREFIX)) {
 
+        System.out.println("PUTTING:" + key + ": " + value);
         jobSettings.put(key, value);
 
-      } else if (key.startsWith(jobNamePrefix) ) {
+      }
+    }
+    String jobNamePrefix = JOB_PREFIX + jobName + ".";
+
+    // Now put the settings overridden for the job.
+    for (Map.Entry<String,String> entry: appSettings.entrySet()) {
+
+      String key = entry.getKey();
+      String value = entry.getValue();
+
+      if (key.startsWith(jobNamePrefix) ) {
+
         jobSettings.put(key.substring(jobNamePrefix.length()), value);
       }
     }

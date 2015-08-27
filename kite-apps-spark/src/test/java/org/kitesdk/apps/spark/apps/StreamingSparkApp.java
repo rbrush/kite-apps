@@ -46,6 +46,7 @@ public class StreamingSparkApp extends AbstractApplication {
     Topics.createTopic(context, TOPIC_NAME, 1, 1, SmallEvent.getClassSchema());
 
     StreamDescription streamDescription = new StreamDescription.Builder()
+        .jobName("simple-spark-streaming")
         .jobClass(StreamingSparkJob.class)
         .withStream("event_stream", Topics.topic(TOPIC_NAME))
         .withView("event_output", EVENTS_DS_URI)

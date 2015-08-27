@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.data.ValidationException;
@@ -66,6 +67,10 @@ public class StreamDescription {
                             String jobName,
                             Map<String,Stream> streams,
                             Map<String,URI> viewUris) {
+
+    Preconditions.checkNotNull(jobClass, "Job class must be provided.");
+    Preconditions.checkNotNull(jobName, "Job name must be provided.");
+
     this.jobClass = jobClass;
     this.jobName = jobName;
     this.streams = streams;
@@ -124,6 +129,12 @@ public class StreamDescription {
 
     private final Map<String,URI> viewUris = Maps.newHashMap();
 
+    public Builder jobName(String jobName) {
+      this.jobName = jobName;
+
+      return this;
+    }
+
     /**
      * Sets the class of the {@link org.kitesdk.apps.streaming.StreamingJob}
      * being configured.
@@ -133,16 +144,6 @@ public class StreamDescription {
     public Builder jobClass(Class<? extends StreamingJob> jobClass) {
 
       this.jobClass = jobClass;
-
-      try {
-        StreamingJob job = jobClass.newInstance();
-        jobName = job.getName();
-
-      } catch (InstantiationException e) {
-        throw new AppException(e);
-      } catch (IllegalAccessException e) {
-        throw new AppException(e);
-      }
 
       return this;
     }
@@ -217,6 +218,10 @@ public class StreamDescription {
 
     StreamDescription.Builder builder = new StreamDescription.Builder();
 
+    String jobName = parent.get(NAME).asText();
+
+    builder.jobName(jobName);
+
     String className = parent.get(JOBCLASS).asText();
 
     try {
@@ -269,6 +274,7 @@ public class StreamDescription {
 
     ObjectNode root = js.objectNode();
 
+    root.put(NAME, getJobName());
     root.put(JOBCLASS, getJobClass().getName());
 
     ArrayNode streamsArray = js.arrayNode();

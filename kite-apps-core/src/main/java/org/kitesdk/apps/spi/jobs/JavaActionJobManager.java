@@ -39,16 +39,17 @@ import static org.kitesdk.apps.spi.oozie.OozieScheduling.property;
 class JavaActionJobManager extends SchedulableJobManager {
 
 
-  public JavaActionJobManager(SchedulableJob job, Method runMethod, AppContext context) {
-    super(job, runMethod, context);
+  public JavaActionJobManager(SchedulableJob job, String jobName, AppContext context) {
+    super(job, jobName, context);
   }
 
   @Override
   public JobContext getJobContext() {
-    return new JobContext(job, context.getSettings(), context.getHadoopConf());
+    return new JobContext(jobName, context.getSettings(), context.getHadoopConf());
   }
 
   public static JavaActionJobManager create(Class<? extends SchedulableJob> jobClass,
+                                            String jobName,
                                             AppContext context) {
 
     SchedulableJob job;
@@ -61,16 +62,13 @@ class JavaActionJobManager extends SchedulableJobManager {
       throw new AppException(e);
     }
 
-
-//    job.setJobContext(context);
-
-    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
-
-    return new JavaActionJobManager(job, runMethod, context);
+    return new JavaActionJobManager(job, jobName, context);
   }
 
   @Override
   public void run(Instant nominalTime, Map<String,View> views) {
+
+    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
 
     job.setNominalTime(nominalTime);
     job.setJobContext(getJobContext());
@@ -118,6 +116,7 @@ class JavaActionJobManager extends SchedulableJobManager {
 
     element(writer, "main-class", OozieScheduledJobMain.class.getCanonicalName());
     element(writer, "arg", schedule.getJobClass().getName());
+    element(writer, "arg", schedule.getName());
 
     writer.endElement(); // java
   }

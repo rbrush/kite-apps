@@ -45,26 +45,26 @@ public abstract class JobManagers {
     }
 
     @Override
-    public SchedulableJobManager createManager(Class jobClass, AppContext context) {
-      return JavaActionJobManager.create(jobClass, context);
+    public SchedulableJobManager createManager(Class jobClass, String jobName, AppContext context) {
+      return JavaActionJobManager.create(jobClass, jobName, context);
     }
   }
 
   private static final SchedulableJobManagerFactory DEFAULT_INSTANCE = new DefaultSchedulableJobManagerFactory();
 
-  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, AppContext context) {
+  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, String jobName, AppContext context) {
 
     for (SchedulableJobManagerFactory factory: SCHEDULABLE_FACTORIES) {
 
       if (factory.supports(jobClass))
-        return factory.createManager(jobClass, context);
+        return factory.createManager(jobClass, jobName, context);
     }
 
     if (!DEFAULT_INSTANCE.supports(jobClass)) {
       throw new IllegalArgumentException("Job class " + jobClass + " not supported by any scheduled job manager.");
     }
 
-    return DEFAULT_INSTANCE.createManager(jobClass, context);
+    return DEFAULT_INSTANCE.createManager(jobClass, jobName, context);
   }
 
   public static StreamingJobManager createStreaming(StreamDescription description, AppContext context) {

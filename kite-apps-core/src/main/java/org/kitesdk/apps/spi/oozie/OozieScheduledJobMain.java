@@ -87,11 +87,13 @@ public class OozieScheduledJobMain extends Configured implements Tool {
 
     String jobClassName = args[0];
 
+    String jobName = args[1];
+
     ClassLoader loader = OozieScheduledJobMain.class.getClassLoader();
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, appContext);
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, jobName, appContext);
 
     // Use the configuration customized for the job.
     Configuration conf = manager.getJobContext().getHadoopConf();

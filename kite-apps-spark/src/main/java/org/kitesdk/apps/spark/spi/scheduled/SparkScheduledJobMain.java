@@ -40,6 +40,7 @@ public class SparkScheduledJobMain {
   public static void main(String[] args) throws Exception {
 
     String jobClassName = args[0];
+    String jobName = args[1];
 
     SparkConf sparkConf = new SparkConf().setAppName(jobClassName);
 
@@ -65,7 +66,7 @@ public class SparkScheduledJobMain {
 
     Class jobClass = loader.loadClass(jobClassName);
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, appContext);
+    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, jobName, appContext);
 
     // Get the views to be used from Oozie configuration.
     Map<String, View> views = OozieScheduling.loadViews(manager, conf);

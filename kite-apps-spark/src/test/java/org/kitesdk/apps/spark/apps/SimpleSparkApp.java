@@ -68,6 +68,7 @@ public class SimpleSparkApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("simple-spark-job")
         .jobClass(SimpleSparkJob.class)
         .frequency("0 * * * *")
         .withView("source.users", INPUT_URI_PATTERN, 1)

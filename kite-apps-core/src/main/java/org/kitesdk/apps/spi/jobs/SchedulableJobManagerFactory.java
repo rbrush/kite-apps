@@ -24,5 +24,5 @@ public interface SchedulableJobManagerFactory {
 
   public abstract boolean supports(Class jobClass);
 
-  public abstract SchedulableJobManager createManager(Class jobClass, AppContext context);
+  public abstract SchedulableJobManager createManager(Class jobClass, String jobName, AppContext context);
 }

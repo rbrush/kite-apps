@@ -23,8 +23,10 @@ import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.CronConverter;
+import parquet.Preconditions;
 
 import java.util.Collections;
 import java.util.Map;
@@ -169,8 +171,6 @@ public class Schedule {
 
     private Class jobClass = null;
 
-    private SchedulableJobManager manager;
-
     private String frequency = null;
 
     private String name;
@@ -178,6 +178,20 @@ public class Schedule {
     private Instant startTime = new Instant();
 
     private Map<String,ViewTemplate> views = Maps.newHashMap();
+
+    /**
+     * Sets the name of the schedulable job. This name will be used in job-specific
+     * configuration files and visible in system management tooling.
+
+     */
+    public Builder jobName(String jobName) {
+
+      if (!NAME_PATTERN.matcher(jobName).matches())
+        throw new AppException("Job name " + jobName + " must match pattern " + NAME_PATTERN + ".");
+
+      this.name = jobName;
+      return this;
+    }
 
     /**
      * Sets the class of the {@link org.kitesdk.apps.scheduled.SchedulableJob}
@@ -188,15 +202,6 @@ public class Schedule {
     public Builder jobClass(Class jobClass) {
 
       this.jobClass = jobClass;
-
-      manager = JobManagers.createSchedulable(jobClass, new AppContext(new Configuration()));
-
-      String name = manager.getName();
-
-      if (!NAME_PATTERN.matcher(name).matches())
-        throw new AppException("App name " + name + " must match pattern " + NAME_PATTERN + ".");
-
-      this.name = name;
 
       return this;
     }
@@ -260,9 +265,9 @@ public class Schedule {
     @Deprecated
     public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
-      Map<String,DataIn> inputs = manager.getInputs();
+      Map<String,DataIn> inputs = JobReflection.getInputs(jobClass);
 
-      Map<String,DataOut> outputs = manager.getOutputs();
+      Map<String,DataOut> outputs = JobReflection.getOutputs(jobClass);
 
       Class type = inputs.containsKey(name) ? inputs.get(name).type() :
           outputs.containsKey(name) ? outputs.get(name).type() : null;
@@ -292,7 +297,7 @@ public class Schedule {
      */
     public Builder withInput(String name, String uriTemplate, String cronFrequency) {
 
-      DataIn input = manager.getInputs().get(name);
+      DataIn input = JobReflection.getInputs(jobClass).get(name);
 
       if (input == null)
         throw new IllegalArgumentException("Named input parameter " + name +
@@ -315,7 +320,7 @@ public class Schedule {
      */
     public Builder withOutput(String name, String uriTemplate) {
 
-      DataOut output = manager.getOutputs().get(name);
+      DataOut output = JobReflection.getOutputs(jobClass).get(name);
 
       if (output == null)
         throw new IllegalArgumentException("Named output parameter " + name +
@@ -334,15 +339,18 @@ public class Schedule {
      */
     public Schedule build() {
 
-      for (String viewName: manager.getInputs().keySet()) {
+      for (String viewName: JobReflection.getInputs(jobClass).keySet()) {
         if (!views.containsKey(viewName))
           throw new IllegalArgumentException("Named input " + viewName + " not provided in schedule");
       }
 
-      for (String viewName: manager.getOutputs().keySet()) {
+      for (String viewName: JobReflection.getOutputs(jobClass).keySet()) {
         if (!views.containsKey(viewName))
           throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
       }
+
+      Preconditions.checkNotNull(jobClass, "Job class must be provided.");
+      Preconditions.checkNotNull(name, "Job name must be provided.");
 
       // Use the next start time that aligns with the cron schedule.
       Instant effectiveStartTime = CronConverter.nextInstant(frequency, startTime);

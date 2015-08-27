@@ -60,6 +60,7 @@ public class ScheduledReportApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("example-scheduled-report")
         .jobClass(ScheduledReportJob.class)
         .frequency("*/5 * * * *")
         .build();

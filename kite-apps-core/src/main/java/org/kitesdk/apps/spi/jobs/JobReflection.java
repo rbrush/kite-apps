@@ -59,7 +59,9 @@ public class JobReflection {
     return runMethod;
   }
 
-  public static Map<String, DataIn> getInputs(Method runMethod) {
+  public static Map<String, DataIn> getInputs(Class jobClass) {
+
+    Method runMethod = resolveRunMethod(jobClass);
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
 
@@ -75,7 +77,9 @@ public class JobReflection {
     return inputs;
   }
 
-  public static Map<String, DataOut> getOutputs(Method runMethod) {
+  public static Map<String, DataOut> getOutputs(Class jobClass) {
+
+    Method runMethod = resolveRunMethod(jobClass);
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
 
@@ -94,7 +98,9 @@ public class JobReflection {
   /**
    * Gets a map of named parameters to their types.
    */
-  public static Map<String,Class> getTypes(Method runMethod) {
+  public static Map<String,Class> getTypes(Class jobClass) {
+
+    Method runMethod = resolveRunMethod(jobClass);
 
     Annotation[][] paramAnnotations = runMethod.getParameterAnnotations();
 
@@ -163,6 +169,8 @@ public class JobReflection {
     return args;
   }
 
+
+
   /**
    * Gets a list of all schemas used by a job.
    */
@@ -170,16 +178,14 @@ public class JobReflection {
 
     Set<Class> types = new HashSet<Class>();
 
-    Method runMethod = resolveRunMethod(job.getClass());
-
-    for (DataIn input: getInputs(runMethod).values()) {
+    for (DataIn input: getInputs(job.getClass()).values()) {
 
       if (SpecificRecord.class.isAssignableFrom(input.type())) {
         types.add(input.type());
       }
     }
 
-    for (DataOut output: getOutputs(runMethod).values()) {
+    for (DataOut output: getOutputs(job.getClass()).values()) {
 
       if (SpecificRecord.class.isAssignableFrom(output.type())) {
         types.add(output.type());

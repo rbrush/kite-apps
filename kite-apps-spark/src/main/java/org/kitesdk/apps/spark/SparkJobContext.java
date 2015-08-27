@@ -44,14 +44,14 @@ public class SparkJobContext extends JobContext {
   /**
    * Creates a context with the given settings and Hadoop configuration.
    */
-  public SparkJobContext(Job job, AppContext context) {
-    super(job, context.getSettings(), context.getHadoopConf());
+  public SparkJobContext(String jobName, AppContext context) {
+    super(jobName, context.getSettings(), context.getHadoopConf());
 
     this.appContext = context;
   }
 
-  public SparkJobContext(StreamDescription descrip, Job job, AppContext context) {
-    super(descrip, job, context.getSettings(), context.getHadoopConf());
+  public SparkJobContext(StreamDescription descrip, AppContext context) {
+    super(descrip, context.getSettings(), context.getHadoopConf());
 
     this.appContext = context;
   }

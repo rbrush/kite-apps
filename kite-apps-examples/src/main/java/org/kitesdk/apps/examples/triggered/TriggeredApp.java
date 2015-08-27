@@ -66,6 +66,7 @@ public class TriggeredApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("example-triggered")
         .jobClass(TriggeredJob.class)
         .frequency("* * * * *")
         .withInput("example_events", EVENT_URI_PATTERN, "* * * * *")

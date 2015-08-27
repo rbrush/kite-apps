@@ -50,6 +50,7 @@ public class TopicToDatasetApp extends AbstractApplication {
     Topics.createTopic(context, TOPIC_NAME, 1, 1, ExampleEvent.getClassSchema());
 
     StreamDescription streamDescription = new StreamDescription.Builder()
+        .jobName("test-event-stream")
         .jobClass(TopicToDatasetJob.class)
         .withStream("event_stream", Topics.topic(TOPIC_NAME))
         .withView("event_output", EVENTS_DS_URI)

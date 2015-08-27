@@ -86,7 +86,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
     this.job = job;
     this.runMethod = runMethod;
     this.appContext = context;
-    this.sparkJobContext = new SparkJobContext(description, job, context);
+    this.sparkJobContext = new SparkJobContext(description, context);
   }
 
   public static Path jobDescriptionFile(Path appRoot, String jobName) {
@@ -387,11 +387,11 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
    */
   public void run()  {
 
-    Map<String, Class> sourceTypes = JobReflection.getTypes(runMethod);
+    Map<String, Class> sourceTypes = JobReflection.getTypes(job.getClass());
 
     Map<String,Object> parameters = Maps.newHashMap();
 
-    for(DataIn input: JobReflection.getInputs(runMethod).values()) {
+    for(DataIn input: JobReflection.getInputs(job.getClass()).values()) {
 
       if (isStream(sourceTypes.get(input.name()))) {
 
@@ -407,7 +407,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       }
     }
 
-    for (DataOut output: JobReflection.getOutputs(runMethod).values()) {
+    for (DataOut output: JobReflection.getOutputs(job.getClass()).values()) {
 
       if (isStream(sourceTypes.get(output.name()))) {
 

@@ -39,13 +39,13 @@ public abstract class SchedulableJobManager {
 
   protected final AppContext context;
 
-  protected final Method runMethod;
+  protected final String jobName;
 
   protected SchedulableJobManager(SchedulableJob job,
-                                  Method runMethod,
+                                  String jobName,
                                   AppContext context) {
     this.job = job;
-    this.runMethod = runMethod;
+    this.jobName = jobName;
     this.context = context;
   }
 
@@ -55,7 +55,7 @@ public abstract class SchedulableJobManager {
    * @return the name of the scheduled job
    */
   public String getName() {
-    return job.getName();
+    return jobName;
   }
 
   /**
@@ -64,7 +64,7 @@ public abstract class SchedulableJobManager {
    */
   public Map<String, DataIn> getInputs() {
 
-    return JobReflection.getInputs(runMethod);
+    return JobReflection.getInputs(job.getClass());
   }
 
   /**
@@ -85,7 +85,7 @@ public abstract class SchedulableJobManager {
    */
   public Map<String,DataOut> getOutputs() {
 
-    return JobReflection.getOutputs(runMethod);
+    return JobReflection.getOutputs(job.getClass());
   }
 
   /**

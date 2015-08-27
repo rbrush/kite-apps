@@ -62,6 +62,7 @@ public class DataGeneratorApp extends AbstractApplication {
     // the job's "generate.target" argument to the pattern so it will
     // be invoked with the corresponding view.
     Schedule schedule = new Schedule.Builder()
+        .jobName("example-data-generator")
         .jobClass(DataGeneratorJob.class)
         .frequency("* * * * *")
         .withOutput("example_events", EVENT_DS_PATTERN)

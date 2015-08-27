@@ -43,6 +43,7 @@ public class WriteConfigOutputApp extends AbstractApplication {
 
     // Schedule our report to run every five minutes.
     Schedule schedule = new Schedule.Builder()
+        .jobName("write-config-job")
         .jobClass(WriteConfigOutputJob.class)
         .frequency("0 * * * *")
         .withOutput("kv-output", OUTPUT_URI_PATTERN)

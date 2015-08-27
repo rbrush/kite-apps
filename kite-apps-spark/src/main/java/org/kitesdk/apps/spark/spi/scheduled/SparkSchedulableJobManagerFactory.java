@@ -33,8 +33,8 @@ public class SparkSchedulableJobManagerFactory implements SchedulableJobManagerF
   }
 
   @Override
-  public SchedulableJobManager createManager(Class jobClass, AppContext context) {
+  public SchedulableJobManager createManager(Class jobClass, String jobName, AppContext context) {
 
-    return SparkJobManager.create(jobClass, context);
+    return SparkJobManager.create(jobClass, jobName, context);
   }
 }
