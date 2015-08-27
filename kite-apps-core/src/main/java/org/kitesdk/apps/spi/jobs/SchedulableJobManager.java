@@ -21,6 +21,7 @@ import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.data.Signalable;
@@ -58,13 +59,13 @@ public abstract class SchedulableJobManager {
     return jobName;
   }
 
-  /**
-   * Gets a map of job input names to the {@link DataIn} annotations
-   * that declared them.
-   */
-  public Map<String, DataIn> getInputs() {
 
-    return JobReflection.getInputs(job.getClass());
+  /**
+   * Returns the input and output parameters used to run the job.
+   */
+  public JobParameters getJobParameters() {
+
+    return job.getParameters();
   }
 
   /**
@@ -80,20 +81,11 @@ public abstract class SchedulableJobManager {
   public abstract JobContext getJobContext();
 
   /**
-   * Gets a map of job output names to the {@link DataOut} annotations
-   * that declared them.
-   */
-  public Map<String,DataOut> getOutputs() {
-
-    return JobReflection.getOutputs(job.getClass());
-  }
-
-  /**
    * Signal the produced views as ready for downstream processing.
    */
   protected void signalOutputViews(Map<String,View> views) {
 
-    Set<String> outputNames = getOutputs().keySet();
+    Set<String> outputNames = getJobParameters().getOutputNames();
 
     for (String outputName: outputNames) {
 

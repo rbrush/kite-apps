@@ -16,20 +16,21 @@
 package org.kitesdk.apps.scheduled;
 
 import org.joda.time.Instant;
-import org.kitesdk.apps.Job;
 import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.JobParameters;
+
+import java.util.Map;
 
 /**
  * Interface for schedulable jobs. Implementations of this interface
  * must provide a nullary constructor.
  */
-public interface SchedulableJob<T extends JobContext> extends Job<T> {
+public interface SchedulableJob<T extends JobContext> {
 
-  /** Returns the nominal time at which the job is run. */
-  Instant getNominalTime();
-
-  /** Sets the nominal time at which the job is run. This is called
-   * before the job is run.
+  /**
+   * Gets the parameters used to run the job.
    */
-  void setNominalTime(Instant instant);
+  JobParameters getParameters();
+
+  public void runJob(Map<String,?>  params, T jobContext, Instant nominalTime);
 }

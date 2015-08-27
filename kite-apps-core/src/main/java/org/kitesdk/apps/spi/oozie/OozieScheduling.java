@@ -24,8 +24,7 @@ import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.DataIn;
-import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.scheduled.Schedule;
 
 import org.codehaus.plexus.util.WriterFactory;
@@ -40,9 +39,9 @@ import org.kitesdk.data.View;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -257,15 +256,15 @@ public class OozieScheduling {
 
     writer.endElement(); // datasets
 
-    Collection<DataIn> inputs = manager.getInputs().values();
+    Set<String> inputNames = manager.getJobParameters().getInputNames();
 
-    if (!inputs.isEmpty()) {
+    if (!inputNames.isEmpty()) {
       writer.startElement("input-events");
 
-      for (DataIn input: inputs) {
+      for (String inputName: inputNames) {
         writer.startElement("data-in");
-        writer.addAttribute("name", "datain_" + toIdentifier(input.name()));
-        writer.addAttribute("dataset", "ds_" + toIdentifier(input.name()));
+        writer.addAttribute("name", "datain_" + toIdentifier(inputName));
+        writer.addAttribute("dataset", "ds_" + toIdentifier(inputName));
         element(writer, "instance", "${coord:current(0)}");
         writer.endElement(); // data-in
       }
@@ -273,15 +272,16 @@ public class OozieScheduling {
       writer.endElement(); // input-events
     }
 
-    Collection<DataOut> outputs = manager.getOutputs().values();
+    Set<String> outputNames = manager.getJobParameters().getOutputNames();
 
-    if (!outputs.isEmpty()) {
+
+    if (!outputNames.isEmpty()) {
       writer.startElement("output-events");
 
-      for (DataOut output: outputs) {
+      for (String outputName: outputNames) {
         writer.startElement("data-out");
-        writer.addAttribute("name", "dataout_" + toIdentifier(output.name()));
-        writer.addAttribute("dataset", "ds_" + toIdentifier(output.name()));
+        writer.addAttribute("name", "dataout_" + toIdentifier(outputName));
+        writer.addAttribute("dataset", "ds_" + toIdentifier(outputName));
         element(writer, "instance", "${coord:current(0)}");
         writer.endElement(); // data-out
       }
@@ -331,16 +331,16 @@ public class OozieScheduling {
     property(writer, COORD_NOMINAL_TIME, "${coord:nominalTime()}");
 
     // Include the dataset inputs to make them visible to the workflow.
-    for (DataIn dataIn: manager.getInputs().values()) {
+    for (String inputName: manager.getJobParameters().getInputNames()) {
 
-      property(writer, "coord_" + toIdentifier(dataIn.name()),
-          "${coord:dataIn('datain_" + toIdentifier(dataIn.name()) + "')}");
+      property(writer, "coord_" + toIdentifier(inputName),
+          "${coord:dataIn('datain_" + toIdentifier(inputName) + "')}");
     }
 
-    for (DataOut dataOut: manager.getOutputs().values()) {
+    for (String outputName: manager.getJobParameters().getOutputNames()) {
 
-      property(writer, "coord_" + toIdentifier(dataOut.name()),
-          "${coord:dataOut('dataout_" + toIdentifier(dataOut.name()) + "')}");
+      property(writer, "coord_" + toIdentifier(outputName),
+          "${coord:dataOut('dataout_" + toIdentifier(outputName) + "')}");
     }
 
     writer.endElement(); // configuration
@@ -438,24 +438,22 @@ public class OozieScheduling {
 
     Map<String,View> views = Maps.newHashMap();
 
-    Collection<DataIn> inputs = manager.getInputs().values();
+    JobParameters params = manager.getJobParameters();
 
-    for (DataIn input: inputs) {
+    for (String inputName: params.getInputNames()) {
 
-      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(input.name()));
+      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(inputName));
 
-      views.put(input.name(),
-          Datasets.load(uri, input.type()));
+      views.put(inputName,
+          Datasets.load(uri, params.getRecordType(inputName)));
     }
 
-    Collection<DataOut> outputs = manager.getOutputs().values();
+    for (String outputName: params.getOutputNames()) {
 
-    for (DataOut output: outputs) {
+      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(outputName));
 
-      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(output.name()));
-
-      views.put(output.name(),
-          Datasets.load(uri, output.type()));
+      views.put(outputName,
+          Datasets.load(uri, params.getRecordType(outputName)));
     }
 
     return views;

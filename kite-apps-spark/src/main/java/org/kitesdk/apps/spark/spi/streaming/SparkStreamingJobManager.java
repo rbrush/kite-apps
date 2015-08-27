@@ -30,6 +30,7 @@ import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.spark.AbstractStreamingSparkJob;
 import org.kitesdk.apps.spark.SparkJobContext;
 import org.kitesdk.apps.spark.kafka.KafkaOutput;
@@ -73,18 +74,15 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
 
   private final AbstractStreamingSparkJob job;
 
-  private final Method runMethod;
-
   private final SparkJobContext sparkJobContext;
 
   private final AppContext appContext;
 
   public SparkStreamingJobManager(StreamDescription description,
-                                  AbstractStreamingSparkJob job, Method runMethod, AppContext context) {
+                                  AbstractStreamingSparkJob job, AppContext context) {
 
     this.description = description;
     this.job = job;
-    this.runMethod = runMethod;
     this.appContext = context;
     this.sparkJobContext = new SparkJobContext(description, context);
   }
@@ -136,9 +134,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       throw new AppException(e);
     }
 
-    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
-
-    return new SparkStreamingJobManager(description, job, runMethod, context);
+    return new SparkStreamingJobManager(description, job, context);
   }
 
   @Override
@@ -359,21 +355,17 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
         KafkaOutput.class.isAssignableFrom(sourceType);
   }
 
-  private JavaDStream load(Map<String,String> inputSettings, StreamDescription description, DataIn input) {
+  private JavaDStream load(Map<String,String> inputSettings, StreamDescription description, String inputName, Class recordType) {
 
     // Currently on Kafka is the only stream type supported.
     // Future enhancements may determine a different loader based
     // on properties provided by the caller.
     SparkKafkaStreamLoader loader = new SparkKafkaStreamLoader();
 
-    if (input.type() == null) {
-      throw new AppException("Job " + description.getJobClass().getName() +
-      " must specify a type for input " + input.name());
-    }
 
-    if (SpecificRecord.class.isAssignableFrom(input.type())) {
+    if (SpecificRecord.class.isAssignableFrom(recordType)) {
 
-      Schema schema = SpecificData.get().getSchema(input.type());
+      Schema schema = SpecificData.get().getSchema(recordType);
 
       return loader.load(schema, inputSettings, sparkJobContext);
 
@@ -387,19 +379,21 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
    */
   public void run()  {
 
-    Map<String, Class> sourceTypes = JobReflection.getTypes(job.getClass());
-
     Map<String,Object> parameters = Maps.newHashMap();
 
-    for(DataIn input: JobReflection.getInputs(job.getClass()).values()) {
+    JobParameters jobParams = job.getParameters();
 
-      if (isStream(sourceTypes.get(input.name()))) {
+    for(String inputName: jobParams.getInputNames()) {
 
-        Map<String,String> inputSettings = sparkJobContext.getInputSettings(input.name());
+      if (isStream(jobParams.getParameterType(inputName))) {
 
-        JavaDStream stream = load(inputSettings, description, input);
+        Map<String,String> inputSettings = sparkJobContext.getInputSettings(inputName);
 
-        parameters.put(input.name(), stream);
+        Class inputType = jobParams.getRecordType(inputName);
+
+        JavaDStream stream = load(inputSettings, description, inputName, inputType);
+
+        parameters.put(inputName, stream);
 
       } else {
 
@@ -407,40 +401,29 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
       }
     }
 
-    for (DataOut output: JobReflection.getOutputs(job.getClass()).values()) {
+    for (String outputName: jobParams.getOutputNames()) {
 
-      if (isStream(sourceTypes.get(output.name()))) {
+      if (isStream(jobParams.getParameterType(outputName))) {
 
-        Map<String,String> outputSettings = sparkJobContext.getOutputSettings(output.name());
+        Map<String,String> outputSettings = sparkJobContext.getOutputSettings(outputName);
 
-        Schema schema = SpecificData.get().getSchema(output.type());
+        Schema schema = SpecificData.get().getSchema(jobParams.getRecordType(outputName));
 
-        parameters.put(output.name(), new KafkaOutput(schema, outputSettings));
+        parameters.put(outputName, new KafkaOutput(schema, outputSettings));
 
       } else {
 
-        URI uri = description.getViewUris().get(output.name());
+        URI uri = description.getViewUris().get(outputName);
 
         if (uri == null)
-          throw new AppException("No URI defined for output: " + output.name());
+          throw new AppException("No URI defined for output: " + outputName);
 
         View view = Datasets.load(uri);
 
-        parameters.put(output.name(), view);
+        parameters.put(outputName, view);
       }
     }
 
-    Object[] args = JobReflection.getArgs(runMethod, parameters);
-
-    job.setJobContext(sparkJobContext);
-
-    // Run the job itself.
-    try {
-      runMethod.invoke(job, args);
-    } catch (IllegalAccessException e) {
-      throw new AppException(e);
-    } catch (InvocationTargetException e) {
-      throw new AppException(e);
-    }
+    job.runJob(parameters, sparkJobContext);
   }
 }

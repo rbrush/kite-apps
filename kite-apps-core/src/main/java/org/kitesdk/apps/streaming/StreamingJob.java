@@ -15,13 +15,27 @@
  */
 package org.kitesdk.apps.streaming;
 
-import org.kitesdk.apps.Job;
 import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.JobParameters;
+
+import java.util.Map;
 
 /**
  * Marker interface for streaming jobs. Implementations of this interface
  * must provide a nullary constructor.
  */
-public interface StreamingJob<T extends JobContext> extends Job<T> {
+public interface StreamingJob<T extends JobContext> {
 
+  /**
+   * Gets the parameters used to run the job.
+   */
+  JobParameters getParameters();
+
+  /**
+   * Runs the given streaming job.
+   *
+   * @param params map of job parameters by name
+   * @param context the context in which the job is running.
+   */
+  public void runJob(Map<String,?> params, T context);
 }

@@ -87,23 +87,7 @@ class SparkJobManager extends SchedulableJobManager {
   @Override
   public void run(Instant nominalTime, Map<String,View> views) {
 
-
-    try {
-
-      Method runMethod = JobReflection.resolveRunMethod(job.getClass());
-
-      job.setNominalTime(nominalTime);
-      job.setJobContext(getJobContext());
-
-      Object[] args = JobReflection.getArgs(runMethod, views);
-
-      runMethod.invoke(job, args);
-    } catch (IllegalAccessException e) {
-      throw new AppException(e);
-    } catch (InvocationTargetException e) {
-      throw new AppException(e);
-    } finally {
-    }
+    job.runJob(views, getJobContext(), nominalTime);
 
     signalOutputViews(views);
   }

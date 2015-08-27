@@ -18,7 +18,6 @@ package org.kitesdk.apps.spark;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.kitesdk.apps.AppContext;
-import org.kitesdk.apps.Job;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.spark.spi.SparkContextFactory;
 import org.kitesdk.apps.streaming.StreamDescription;

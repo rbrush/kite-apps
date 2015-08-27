@@ -22,7 +22,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.kitesdk.apps.streaming.MockStreamingJob;
 import org.kitesdk.apps.streaming.StreamDescription;
-import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 
 import java.util.Collections;
 import java.util.Map;
@@ -125,7 +124,7 @@ public class JobContextTest {
         .withStream("mock_output", ImmutableMap.of("output_stream.setting", "output_stream.value"))
         .build();
 
-    Job job = new MockStreamingJob();
+    MockStreamingJob job = new MockStreamingJob();
 
     JobContext jobContext = new JobContext(descrip,
         Collections.<String,String>emptyMap(),

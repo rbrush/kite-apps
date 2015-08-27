@@ -17,15 +17,22 @@ package org.kitesdk.apps.spark;
 
 import org.apache.avro.Schema;
 import org.joda.time.Instant;
+import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobContext;
+import org.kitesdk.apps.JobParameters;
+import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.spi.jobs.JobReflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract base class for a schedulable Spark job.
  */
-public abstract class AbstractSchedulableSparkJob  implements SchedulableJob<SparkJobContext> {
+public abstract class AbstractSchedulableSparkJob implements SchedulableJob<SparkJobContext> {
 
   private SparkJobContext context;
 
@@ -43,24 +50,35 @@ public abstract class AbstractSchedulableSparkJob  implements SchedulableJob<Spa
     return JobReflection.getSchemas(this);
   }
 
-  @Override
-  public Instant getNominalTime() {
+  protected final Instant getNominalTime() {
     return nominalTime;
   }
 
-  @Override
-  public void setNominalTime(Instant nominalTime) {
-
-    this.nominalTime = nominalTime;
-  }
-
-  @Override
-  public void setJobContext(SparkJobContext context) {
-    this.context = context;
-  }
-
-  @Override
-  public SparkJobContext getJobContext() {
+  protected final SparkJobContext getJobContext() {
     return context;
+  }
+
+  @Override
+  public JobParameters getParameters() {
+    return JobReflection.getParameters(getClass());
+  }
+
+  public final void runJob(Map<String,?> params, SparkJobContext jobContext, Instant nominalTime) {
+
+    this.context = jobContext;
+    this.nominalTime = nominalTime;
+
+    Method runMethod = JobReflection.resolveRunMethod(getClass());
+
+    Object[] args = JobReflection.getArgs(runMethod, params);
+
+    try {
+      runMethod.invoke(this, args);
+
+    } catch (IllegalAccessException e) {
+      throw new AppException(e);
+    } catch (InvocationTargetException e) {
+      throw new AppException(e);
+    }
   }
 }

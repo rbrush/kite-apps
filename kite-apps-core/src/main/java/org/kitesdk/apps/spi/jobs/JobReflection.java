@@ -23,6 +23,9 @@ import org.apache.avro.specific.SpecificRecord;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
+import org.kitesdk.apps.JobParameters;
+import org.kitesdk.apps.scheduled.SchedulableJob;
+import org.kitesdk.apps.streaming.StreamingJob;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -129,6 +132,37 @@ public class JobReflection {
     return outputs;
   }
 
+  public static JobParameters getParameters(Class jobClass) {
+
+    JobParameters.Builder builder = new JobParameters.Builder();
+
+    Map<String,Class> paramTypes = getTypes(jobClass);
+
+    Map<String, DataIn> inputs = getInputs(jobClass);
+
+    for (DataIn input: inputs.values()) {
+
+      Schema schema = SpecificRecord.class.isAssignableFrom(input.type()) ?
+          SpecificData.get().getSchema(input.type()) :
+          null;
+
+      builder.input(input.name(), schema, input.type(), paramTypes.get(input.name()));
+    }
+
+    Map<String, DataOut> outputs = getOutputs(jobClass);
+
+    for (DataOut output: outputs.values())  {
+
+      Schema schema = SpecificRecord.class.isAssignableFrom(output.type()) ?
+          SpecificData.get().getSchema(output.type()) :
+          null;
+
+      builder.output(output.name(), schema, output.type(), paramTypes.get(output.name()));
+    }
+
+    return builder.build();
+  }
+
   /**
    * Returns the arguments to be passed to a job's run method.
    */
@@ -169,8 +203,6 @@ public class JobReflection {
     return args;
   }
 
-
-
   /**
    * Gets a list of all schemas used by a job.
    */
@@ -202,5 +234,27 @@ public class JobReflection {
     }
 
     return schemas;
+  }
+
+  public static StreamingJob createStreamingJob(Class<? extends StreamingJob> jobClass) {
+
+    try {
+      return jobClass.newInstance();
+    } catch (InstantiationException e) {
+      throw new AppException(e);
+    } catch (IllegalAccessException e) {
+      throw new AppException(e);
+    }
+  }
+
+  public static SchedulableJob createSchedulableJob(Class<? extends SchedulableJob> jobClass) {
+
+    try {
+      return jobClass.newInstance();
+    } catch (InstantiationException e) {
+      throw new AppException(e);
+    } catch (IllegalAccessException e) {
+      throw new AppException(e);
+    }
   }
 }

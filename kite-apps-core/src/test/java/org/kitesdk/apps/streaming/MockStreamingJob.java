@@ -20,19 +20,7 @@ import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.JobContext;
 
-public class MockStreamingJob  implements StreamingJob{
-
-  private JobContext context;
-
-  @Override
-  public void setJobContext(JobContext jobContext) {
-    this.context = context;
-  }
-
-  @Override
-  public JobContext getJobContext() {
-    return context;
-  }
+public class MockStreamingJob extends AbstractStreamingJob{
 
   public void run(@DataIn(name = "mock_input") Object input,
                   @DataOut(name = "mock_output") Object output) {

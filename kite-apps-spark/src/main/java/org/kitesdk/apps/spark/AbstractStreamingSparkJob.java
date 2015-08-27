@@ -16,10 +16,15 @@
 package org.kitesdk.apps.spark;
 
 import org.apache.avro.Schema;
+import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.streaming.StreamingJob;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract base class for a streaming Spark job.
@@ -40,13 +45,32 @@ public abstract class AbstractStreamingSparkJob implements StreamingJob<SparkJob
     return JobReflection.getSchemas(this);
   }
 
+  protected final SparkJobContext getJobContext() {
+    return context;
+  }
+
+
   @Override
-  public void setJobContext(SparkJobContext context) {
-    this.context = context;
+  public JobParameters getParameters() {
+    return JobReflection.getParameters(getClass());
   }
 
   @Override
-  public SparkJobContext getJobContext() {
-    return context;
+  public void runJob(Map<String, ?> params, SparkJobContext jobContext) {
+
+    this.context = jobContext;
+
+    Method runMethod = JobReflection.resolveRunMethod(getClass());
+
+    Object[] args = JobReflection.getArgs(runMethod, params);
+
+    try {
+      runMethod.invoke(this, args);
+
+    } catch (IllegalAccessException e) {
+      throw new AppException(e);
+    } catch (InvocationTargetException e) {
+      throw new AppException(e);
+    }
   }
 }

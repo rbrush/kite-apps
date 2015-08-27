@@ -68,20 +68,7 @@ class JavaActionJobManager extends SchedulableJobManager {
   @Override
   public void run(Instant nominalTime, Map<String,View> views) {
 
-    Method runMethod = JobReflection.resolveRunMethod(job.getClass());
-
-    job.setNominalTime(nominalTime);
-    job.setJobContext(getJobContext());
-
-    Object[] args = JobReflection.getArgs(runMethod, views);
-
-    try {
-      runMethod.invoke(job, args);
-    } catch (IllegalAccessException e) {
-      throw new AppException(e);
-    } catch (InvocationTargetException e) {
-      throw new AppException(e);
-    }
+    job.runJob(views, getJobContext(), nominalTime);
 
     signalOutputViews(views);
   }

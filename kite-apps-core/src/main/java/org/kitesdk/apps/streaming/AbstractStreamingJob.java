@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.kitesdk.apps.scheduled;
+package org.kitesdk.apps.streaming;
+
 
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
@@ -26,20 +27,12 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
- * Abstract base class for schedulable jobs.
+ * Abstract class for streaming jobs.
  */
-public abstract class AbstractSchedulableJob implements SchedulableJob<JobContext> {
+public abstract class AbstractStreamingJob implements StreamingJob<JobContext> {
+
 
   private JobContext context;
-
-  private Instant nominalTime;
-
-  /**
-   * Gets the nominal time at which this job is scheduled.
-   */
-  public Instant getNominalTime() {
-    return nominalTime;
-  }
 
   /**
    * Gets the context for the job.
@@ -48,21 +41,22 @@ public abstract class AbstractSchedulableJob implements SchedulableJob<JobContex
     return context;
   }
 
+  @Override
   public final JobParameters getParameters() {
-
     return JobReflection.getParameters(getClass());
   }
 
-  public final void runJob(Map<String,?> params, JobContext jobContext, Instant nominalTime) {
+  @Override
+  public final void runJob(Map params, JobContext context) {
 
-    this.context = jobContext;
-    this.nominalTime = nominalTime;
+    this.context = context;
 
     Method runMethod = JobReflection.resolveRunMethod(getClass());
 
     Object[] args = JobReflection.getArgs(runMethod, params);
 
     try {
+
       runMethod.invoke(this, args);
 
     } catch (IllegalAccessException e) {

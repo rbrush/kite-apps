@@ -16,15 +16,10 @@
 package org.kitesdk.apps.scheduled;
 
 import com.google.common.collect.Maps;
-import org.apache.hadoop.conf.Configuration;
 import org.joda.time.Instant;
-import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
-import org.kitesdk.apps.DataIn;
-import org.kitesdk.apps.DataOut;
-import org.kitesdk.apps.spi.jobs.JobManagers;
+import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.spi.jobs.JobReflection;
-import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
 import org.kitesdk.apps.spi.oozie.CronConverter;
 import parquet.Preconditions;
 
@@ -171,6 +166,8 @@ public class Schedule {
 
     private Class jobClass = null;
 
+    private JobParameters params = null;
+
     private String frequency = null;
 
     private String name;
@@ -202,6 +199,8 @@ public class Schedule {
     public Builder jobClass(Class jobClass) {
 
       this.jobClass = jobClass;
+
+      this.params = JobReflection.createSchedulableJob(jobClass).getParameters();
 
       return this;
     }
@@ -265,12 +264,7 @@ public class Schedule {
     @Deprecated
     public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
 
-      Map<String,DataIn> inputs = JobReflection.getInputs(jobClass);
-
-      Map<String,DataOut> outputs = JobReflection.getOutputs(jobClass);
-
-      Class type = inputs.containsKey(name) ? inputs.get(name).type() :
-          outputs.containsKey(name) ? outputs.get(name).type() : null;
+      Class type = params.getRecordType(name);
 
       if (type == null)
         throw new IllegalArgumentException("Named parameters " + name +
@@ -297,13 +291,11 @@ public class Schedule {
      */
     public Builder withInput(String name, String uriTemplate, String cronFrequency) {
 
-      DataIn input = JobReflection.getInputs(jobClass).get(name);
-
-      if (input == null)
+      if (!params.getInputNames().contains(name))
         throw new IllegalArgumentException("Named input parameter " + name +
             " not used in job " + jobClass.getName());
 
-      views.put(name, new ViewTemplate(name, uriTemplate, input.type(), cronFrequency));
+      views.put(name, new ViewTemplate(name, uriTemplate, params.getRecordType(name), cronFrequency));
 
       return this;
     }
@@ -320,13 +312,11 @@ public class Schedule {
      */
     public Builder withOutput(String name, String uriTemplate) {
 
-      DataOut output = JobReflection.getOutputs(jobClass).get(name);
-
-      if (output == null)
+      if (!params.getOutputNames().contains(name))
         throw new IllegalArgumentException("Named output parameter " + name +
             " not used in job " + jobClass.getName());
 
-      views.put(name, new ViewTemplate(name, uriTemplate, output.type(), frequency));
+      views.put(name, new ViewTemplate(name, uriTemplate, params.getRecordType(name), frequency));
 
       return this;
     }
@@ -339,12 +329,12 @@ public class Schedule {
      */
     public Schedule build() {
 
-      for (String viewName: JobReflection.getInputs(jobClass).keySet()) {
+      for (String viewName: params.getInputNames()) {
         if (!views.containsKey(viewName))
           throw new IllegalArgumentException("Named input " + viewName + " not provided in schedule");
       }
 
-      for (String viewName: JobReflection.getOutputs(jobClass).keySet()) {
+      for (String viewName: params.getOutputNames()) {
         if (!views.containsKey(viewName))
           throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
       }
