@@ -29,11 +29,6 @@ import org.kitesdk.data.View;
  */
 public class AltScheduledInputOutputJob extends AbstractSchedulableJob {
 
-  @Override
-  public String getName() {
-    return "alt-scheduled-input-output";
-  }
-
   public void run(@DataIn(name="source_users") View<GenericRecord> input,
                   @DataOut(name="target_users") View<GenericRecord> output) {
 

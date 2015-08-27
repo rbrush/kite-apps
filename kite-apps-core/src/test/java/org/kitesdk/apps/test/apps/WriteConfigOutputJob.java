@@ -30,10 +30,6 @@ import org.kitesdk.data.View;
  * Test job that simply writes configuration for validation purposes.
  */
 public class WriteConfigOutputJob extends AbstractSchedulableJob {
-  @Override
-  public String getName() {
-    return "write-config-job";
-  }
 
   public void run(@DataOut(name="kv-output", type= KeyValues.class) View<KeyValues> output) {
 

@@ -34,11 +34,6 @@ import java.io.IOException;
  */
 public class SparkJob extends AbstractSchedulableSparkJob {
 
-  @Override
-  public String getName() {
-    return "example-spark";
-  }
-
   public static class KeepOddUsers implements Function<Tuple2<ExampleEvent, Void>, Boolean> {
 
     private static final long serialVersionUID = 1;

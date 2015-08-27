@@ -23,14 +23,6 @@ package org.kitesdk.apps;
 public interface Job<T extends JobContext> {
 
   /**
-   * The name of the schedulable job, which may be the class name.
-   * This name will be used in job-specific configuration files and
-   * be visible in system management tooling.
-   */
-  @Deprecated
-  String getName();
-
-  /**
    * Sets the context for the job. This is called before the job is run.
    */
   void setJobContext(T jobContext);

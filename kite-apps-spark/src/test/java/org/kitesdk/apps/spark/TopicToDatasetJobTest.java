@@ -190,7 +190,7 @@ public class TopicToDatasetJobTest extends MiniDFSTest {
     Path confFile = new Path(testDirectory, "conf/app.properties");
     junit.framework.Assert.assertTrue(fs.exists(confFile));
 
-    String jobName = new StreamingSparkJob().getName();
+    String jobName = "simple-spark-streaming";
 
     Path streamDescription = SparkStreamingJobManager.jobDescriptionFile(testDirectory,
         jobName);

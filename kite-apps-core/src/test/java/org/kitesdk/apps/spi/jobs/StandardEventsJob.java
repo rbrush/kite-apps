@@ -26,11 +26,6 @@ import org.kitesdk.data.event.StandardEvent;
 
 public class StandardEventsJob extends AbstractSchedulableJob {
 
-  @Override
-  public String getName() {
-    return "scheduled-input-output";
-  }
-
   public void run(@DataIn(name="source.events", type=StandardEvent.class) View<StandardEvent> input,
                   @DataOut(name="target.events", type=StandardEvent.class) View<StandardEvent> output) {
 

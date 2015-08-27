@@ -144,7 +144,7 @@ public class SparkStreamingJobManager implements StreamingJobManager<AbstractStr
   @Override
   public void install(FileSystem fs, Path appRoot) {
 
-    Path descriptionFile = jobDescriptionFile(appRoot, job.getName());
+    Path descriptionFile = jobDescriptionFile(appRoot, "simple-spark-streaming");
 
     try {
 

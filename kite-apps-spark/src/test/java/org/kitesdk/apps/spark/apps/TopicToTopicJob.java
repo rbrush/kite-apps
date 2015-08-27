@@ -27,11 +27,6 @@ import org.kitesdk.data.event.SmallEvent;
  */
 public class TopicToTopicJob extends AbstractStreamingSparkJob {
 
-  @Override
-  public String getName() {
-    return "topic-to-topic";
-  }
-
   public void run(@DataIn(name = "event_stream", type = SmallEvent.class)
                   JavaDStream<SmallEvent> stream,
                   @DataOut(name = "processed_stream", type = SmallEvent.class)

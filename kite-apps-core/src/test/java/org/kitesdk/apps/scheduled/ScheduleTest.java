@@ -44,9 +44,6 @@ public class ScheduleTest {
 
     assertEquals("0 * * * *", schedule.getFrequency());
 
-    assertEquals(new ScheduledInputOutputJob().getName(),
-        schedule.getName());
-
     Map<String, Schedule.ViewTemplate> views = schedule.getViewTemplates();
 
     assertEquals(2, views.size());

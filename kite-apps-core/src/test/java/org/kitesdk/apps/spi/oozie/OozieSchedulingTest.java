@@ -181,10 +181,10 @@ public class OozieSchedulingTest  {
     XPath xpath = XMLUtil.getXPath();
 
     // Check expected coordinator names.
-    assertEquals(new ScheduledInputOutputJob().getName(),
+    assertEquals(schedule1.getName(),
         xpath.evaluate("bn:bundle-app/bn:coordinator[1]/@name", bundle));
 
-    assertEquals(new AltScheduledInputOutputJob().getName(),
+    assertEquals(schedule2.getName(),
         xpath.evaluate("bn:bundle-app/bn:coordinator[2]/@name", bundle));
 
     // Entries for the coordinator paths should exist.

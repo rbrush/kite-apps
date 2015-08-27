@@ -30,11 +30,6 @@ import org.kitesdk.data.crunch.CrunchDatasets;
  */
 public class TriggeredJob extends AbstractCrunchJob {
 
-  @Override
-  public String getName() {
-    return "example-triggered";
-  }
-
   public static class KeepOddUsers extends FilterFn<ExampleEvent> {
 
     private static final long serialVersionUID = 1;

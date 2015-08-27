@@ -22,11 +22,6 @@ import org.kitesdk.apps.scheduled.AbstractSchedulableJob;
  */
 public class BadNameJob extends AbstractSchedulableJob  {
 
-  @Override
-  public String getName() {
-    return "invalid.name.with.periods";
-  }
-
   public void run() {
     // Do nothing.
   }

@@ -25,11 +25,6 @@ public class MockStreamingJob  implements StreamingJob{
   private JobContext context;
 
   @Override
-  public String getName() {
-    return "mock-job";
-  }
-
-  @Override
   public void setJobContext(JobContext jobContext) {
     this.context = context;
   }

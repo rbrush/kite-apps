@@ -33,11 +33,6 @@ import java.io.IOException;
  */
 public class SimpleSparkJob extends AbstractSchedulableSparkJob {
 
-  @Override
-  public String getName() {
-    return "simple-spark-job";
-  }
-
   public void run(@DataIn(name="source.users") View<GenericRecord> input,
                   @DataOut(name="target.users") View<GenericRecord> output) throws IOException {
 

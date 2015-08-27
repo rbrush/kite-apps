@@ -24,11 +24,6 @@ import org.kitesdk.apps.spark.kafka.KafkaOutput;
 
 public class TopicToTopicJob  extends AbstractStreamingSparkJob {
 
-  @Override
-  public String getName() {
-    return "topic-to-topic";
-  }
-
   public void run(@DataIn(name = "example_input_stream", type = ExampleEvent.class)
                   JavaDStream<ExampleEvent> stream,
                   @DataOut(name = "example_output_stream", type = ExampleEvent.class)
