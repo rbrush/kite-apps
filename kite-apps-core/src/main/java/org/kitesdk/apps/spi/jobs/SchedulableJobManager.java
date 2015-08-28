@@ -85,15 +85,22 @@ public abstract class SchedulableJobManager {
    */
   protected void signalOutputViews(Map<String,View> views) {
 
-    Set<String> outputNames = getJobParameters().getOutputNames();
+    // If the job specified output parameters,
+    // signal them when we complete.
+    JobParameters params = getJobParameters();
 
-    for (String outputName: outputNames) {
+    if (params != null) {
 
-      View view = views.get(outputName);
+      Set<String> outputNames = getJobParameters().getOutputNames();
 
-      if (view instanceof Signalable) {
+      for (String outputName: outputNames) {
 
-        ((Signalable) view).signalReady();
+        View view = views.get(outputName);
+
+        if (view instanceof Signalable) {
+
+          ((Signalable) view).signalReady();
+        }
       }
     }
   }

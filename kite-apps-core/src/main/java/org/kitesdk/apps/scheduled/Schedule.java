@@ -16,6 +16,7 @@
 package org.kitesdk.apps.scheduled;
 
 import com.google.common.collect.Maps;
+import org.apache.avro.generic.GenericRecord;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobParameters;
@@ -277,6 +278,51 @@ public class Schedule {
       return this;
     }
 
+    private void checkParamType(String name, Class recordType) {
+
+      if (!params.getRecordType(name).equals(recordType))
+        throw new IllegalArgumentException("Job expected parameter " + name +
+            " to be of type " + params.getRecordType(name).getName() +
+            " but was given " + recordType.getName());
+    }
+
+    /**
+     * If the job specifies input parameters, check that the given name
+     * is included.
+     */
+    private void checkInputParam(String name, Class recordType) {
+
+      if (params != null) {
+
+        if (!params.getInputNames().contains(name))
+          throw new IllegalArgumentException("Named input parameter " + name +
+              " not used in job " + jobClass.getName());
+
+        checkParamType(name, recordType);
+      }
+    }
+
+    /**
+     * If the job specifies input parameters, check that the given name
+     * is included.
+     */
+    private void checkOutputParam(String name, Class recordType) {
+
+      if (params != null) {
+
+        if (!params.getOutputNames().contains(name))
+          throw new IllegalArgumentException("Named output parameter " + name +
+              " not used in job " + jobClass.getName());
+
+        checkParamType(name, recordType);
+      }
+    }
+
+    private Class getRecordType(String name) {
+
+      return params != null ? params.getRecordType(name) : GenericRecord.class;
+    }
+
     /**
      * Configures a view defined by a name and URI template to be used
      * as an input for the scheduled job. The caller must also specify
@@ -291,11 +337,27 @@ public class Schedule {
      */
     public Builder withInput(String name, String uriTemplate, String cronFrequency) {
 
-      if (!params.getInputNames().contains(name))
-        throw new IllegalArgumentException("Named input parameter " + name +
-            " not used in job " + jobClass.getName());
+      return withInput(name, uriTemplate, cronFrequency,  getRecordType(name));
+    }
 
-      views.put(name, new ViewTemplate(name, uriTemplate, params.getRecordType(name), cronFrequency));
+    /**
+     * Configures a view defined by a name and URI template to be used
+     * as an input for the scheduled job. The caller must also specify
+     * a cron-style frequency for when data for that input arrives.
+     *
+     * @param name the name of the data parameter for the job.
+     * @param uriTemplate the Oozie-style URI template identifying the input
+     * @param cronFrequency the frequency in minutes with which instances of
+     *                         the view are expected to be created.
+     * @param recordType The class of the record used by the view
+     *
+     * @return An instance of the builder for method chaining.
+     */
+    public Builder withInput(String name, String uriTemplate, String cronFrequency, Class recordType) {
+
+      checkInputParam(name, recordType);
+
+      views.put(name, new ViewTemplate(name, uriTemplate, recordType, cronFrequency));
 
       return this;
     }
@@ -312,11 +374,25 @@ public class Schedule {
      */
     public Builder withOutput(String name, String uriTemplate) {
 
-      if (!params.getOutputNames().contains(name))
-        throw new IllegalArgumentException("Named output parameter " + name +
-            " not used in job " + jobClass.getName());
+      return withOutput(name, uriTemplate, getRecordType(name));
+    }
 
-      views.put(name, new ViewTemplate(name, uriTemplate, params.getRecordType(name), frequency));
+    /**
+     * Configures a view defined by a name and URI template to be used as
+     * an output the scheduled job. The frequency for the output is the
+     * same for the job itself.
+     *
+     * @param name the name of the data parameter for the job.
+     * @param uriTemplate the Oozie-style URI template identifying the input
+     * @param recordType The class of the record used by the view
+     *
+     * @return An instance of the builder for method chaining.
+     */
+    public Builder withOutput(String name, String uriTemplate, Class recordType) {
+
+      checkOutputParam(name, recordType);
+
+      views.put(name, new ViewTemplate(name, uriTemplate, recordType, frequency));
 
       return this;
     }
@@ -329,15 +405,20 @@ public class Schedule {
      */
     public Schedule build() {
 
-      for (String viewName: params.getInputNames()) {
-        if (!views.containsKey(viewName))
-          throw new IllegalArgumentException("Named input " + viewName + " not provided in schedule");
+      // If the job specified its parameters, make sure everything is in place.
+      if (params != null) {
+
+        for (String viewName: params.getInputNames()) {
+          if (!views.containsKey(viewName))
+            throw new IllegalArgumentException("Named input " + viewName + " not provided in schedule");
+        }
+
+        for (String viewName: params.getOutputNames()) {
+          if (!views.containsKey(viewName))
+            throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
+        }
       }
 
-      for (String viewName: params.getOutputNames()) {
-        if (!views.containsKey(viewName))
-          throw new IllegalArgumentException("Named output " + viewName + " not provided in schedule");
-      }
 
       Preconditions.checkNotNull(jobClass, "Job class must be provided.");
       Preconditions.checkNotNull(name, "Job name must be provided.");
