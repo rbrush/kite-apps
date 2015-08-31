@@ -153,7 +153,7 @@ public class OozieScheduling {
     writer.addAttribute("retry-interval", "1");
 
     // Write the appropriate action to be used in the job.
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), schedule.getName(), context);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule, context);
     manager.writeOozieActionBlock(writer, schedule);
 
     element(writer, "ok", "to", "end");
@@ -438,22 +438,12 @@ public class OozieScheduling {
 
     Map<String,View> views = Maps.newHashMap();
 
-    JobParameters params = manager.getJobParameters();
+    for (Schedule.ViewTemplate view: manager.getSchedule().getViewTemplates().values()) {
 
-    for (String inputName: params.getInputNames()) {
+      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(view.getName()));
 
-      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(inputName));
-
-      views.put(inputName,
-          Datasets.load(uri, params.getRecordType(inputName)));
-    }
-
-    for (String outputName: params.getOutputNames()) {
-
-      String uri = conf.get("wf_" + OozieScheduling.toIdentifier(outputName));
-
-      views.put(outputName,
-          Datasets.load(uri, params.getRecordType(outputName)));
+      views.put(view.getName(),
+          Datasets.load(uri, view.getInputType()));
     }
 
     return views;

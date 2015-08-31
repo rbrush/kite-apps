@@ -76,7 +76,7 @@ public class OozieSchedulingTest  {
     assertEquals(OozieScheduledJobMain.class.getName(),
         xpath.evaluate("wf:workflow-app/wf:action/wf:java/wf:main-class", workflow));
 
-    assertEquals(ScheduledInputOutputJob.class.getName(),
+    assertEquals(testSchedule.getName(),
         xpath.evaluate("wf:workflow-app/wf:action/wf:java/wf:arg", workflow));
 
     // Check that the nominal time and source and target datasets are passed
@@ -98,8 +98,7 @@ public class OozieSchedulingTest  {
   public void testWriteCoordinator() throws Exception {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(ScheduledInputOutputJob.class,
-        "scheduled-input-output",
+    SchedulableJobManager manager = JobManagers.createSchedulable(testSchedule,
         new AppContext(new Configuration()));
 
     OozieScheduling.writeCoordinator(testSchedule, manager, output);

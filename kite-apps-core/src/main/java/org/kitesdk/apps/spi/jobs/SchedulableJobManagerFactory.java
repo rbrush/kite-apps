@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spi.jobs;
 
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.scheduled.Schedule;
 
 /**
  * Factory for creating schedulable job managers that support the given implementation class.
@@ -24,5 +25,5 @@ public interface SchedulableJobManagerFactory {
 
   public abstract boolean supports(Class jobClass);
 
-  public abstract SchedulableJobManager createManager(Class jobClass, String jobName, AppContext context);
+  public abstract SchedulableJobManager createManager(Schedule schedule, AppContext context);
 }

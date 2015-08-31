@@ -76,7 +76,7 @@ public class OozieSparkSchedulingTest {
     assertEquals(SparkScheduledJobMain.class.getName(),
         xpath.evaluate("wf:workflow-app/wf:action/sp:spark/sp:class", workflow));
 
-    assertEquals(SimpleSparkJob.class.getName(),
+    assertEquals(testSchedule.getName(),
         xpath.evaluate("wf:workflow-app/wf:action/sp:spark/sp:arg", workflow));
 
     String sparkOptions = xpath.evaluate("wf:workflow-app/wf:action/sp:spark/sp:spark-opts/text()", workflow);

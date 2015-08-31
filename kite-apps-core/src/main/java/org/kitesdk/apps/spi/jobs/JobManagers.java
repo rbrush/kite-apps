@@ -20,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.scheduled.SchedulableJob;
+import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.apps.streaming.StreamingJob;
 
@@ -45,26 +46,26 @@ public abstract class JobManagers {
     }
 
     @Override
-    public SchedulableJobManager createManager(Class jobClass, String jobName, AppContext context) {
-      return JavaActionJobManager.create(jobClass, jobName, context);
+    public SchedulableJobManager createManager(Schedule schedule, AppContext context) {
+      return JavaActionJobManager.create(schedule, context);
     }
   }
 
   private static final SchedulableJobManagerFactory DEFAULT_INSTANCE = new DefaultSchedulableJobManagerFactory();
 
-  public static SchedulableJobManager createSchedulable(Class<? extends SchedulableJob> jobClass, String jobName, AppContext context) {
+  public static SchedulableJobManager createSchedulable(Schedule schedule, AppContext context) {
 
     for (SchedulableJobManagerFactory factory: SCHEDULABLE_FACTORIES) {
 
-      if (factory.supports(jobClass))
-        return factory.createManager(jobClass, jobName, context);
+      if (factory.supports(schedule.getJobClass()))
+        return factory.createManager(schedule, context);
     }
 
-    if (!DEFAULT_INSTANCE.supports(jobClass)) {
-      throw new IllegalArgumentException("Job class " + jobClass + " not supported by any scheduled job manager.");
+    if (!DEFAULT_INSTANCE.supports(schedule.getJobClass())) {
+      throw new IllegalArgumentException("Job class " + schedule.getJobClass() + " not supported by any scheduled job manager.");
     }
 
-    return DEFAULT_INSTANCE.createManager(jobClass, jobName, context);
+    return DEFAULT_INSTANCE.createManager(schedule, context);
   }
 
   public static StreamingJobManager createStreaming(StreamDescription description, AppContext context) {

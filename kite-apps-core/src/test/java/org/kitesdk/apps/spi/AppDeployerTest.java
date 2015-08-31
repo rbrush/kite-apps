@@ -16,6 +16,7 @@
 package org.kitesdk.apps.spi;
 
 
+import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import junit.framework.Assert;
 import org.apache.hadoop.fs.FileStatus;
@@ -24,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.oozie.XMLUtil;
 import org.kitesdk.apps.test.apps.ScheduledInputOutputApp;
 import org.kitesdk.data.MiniDFSTest;
@@ -39,6 +41,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.Properties;
 import java.util.Random;
@@ -115,14 +118,18 @@ public class AppDeployerTest extends MiniDFSTest {
     Path coordDir = new Path(appPath, "oozie/coordinators");
     Path bundleFile = new Path(appPath, "oozie/bundle.xml");
     Path confFile = new Path(appPath, "conf/app.properties");
+    Path schedule = new Path(appPath, "schedules/test-job.json");
 
     Assert.assertTrue(fs.exists(appPath));
     Assert.assertTrue(fs.exists(workflowDir));
     Assert.assertTrue(fs.exists(coordDir));
     Assert.assertTrue(fs.exists(bundleFile));
     Assert.assertTrue(fs.exists(confFile));
+    Assert.assertTrue(fs.exists(schedule));
 
     validatePropertyFile(fs, confFile);
+
+    validateSchedule(fs, schedule);
 
     // Make sure the expected application path is set.
     InputStream input = fs.open(bundleFile);
@@ -187,6 +194,27 @@ public class AppDeployerTest extends MiniDFSTest {
       props.load(input);
 
       Assert.assertTrue(props.stringPropertyNames().size() > 0);
+
+    } catch (IOException e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      Closeables.closeQuietly(input);
+    }
+  }
+
+  private void validateSchedule(FileSystem fs, Path path) {
+
+    InputStream input = null;
+
+    try {
+      input = fs.open(path);
+
+      String json = CharStreams.toString(new InputStreamReader(input));
+
+
+      Schedule schedule = Schedule.parseJson(json);
+
+      Assert.assertEquals("test-job", schedule.getName());
 
     } catch (IOException e) {
       Assert.fail(e.getMessage());

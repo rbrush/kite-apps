@@ -16,8 +16,12 @@
 package org.kitesdk.apps.spi;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.oozie.client.OozieClient;
@@ -25,6 +29,7 @@ import org.apache.oozie.client.OozieClientException;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.Application;
+import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
@@ -35,6 +40,8 @@ import org.kitesdk.apps.streaming.StreamDescription;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -134,6 +141,8 @@ public class AppDeployer {
 
     for (Schedule schedule: schedules) {
 
+      writeSchedule(tempDestination, schedule);
+
       installWorkflow(tempDestination, schedule);
 
       installCoordinator(tempDestination, schedule);
@@ -164,6 +173,32 @@ public class AppDeployer {
 
     } catch (IOException e) {
       throw new AppException(e);
+    }
+  }
+
+  private void writeSchedule(Path tempDestination, Schedule schedule)  {
+
+    Path scheduleFile = SchedulableJobManager.scheduleFile(tempDestination, schedule.getName());
+
+    Writer writer = null;
+
+    try {
+
+      fs.mkdirs(scheduleFile.getParent());
+
+      FSDataOutputStream output = fs.create(scheduleFile);
+
+      writer = new OutputStreamWriter(output, Charsets.UTF_8);
+
+      writer.write(schedule.toString());
+
+    } catch (IOException e) {
+
+      throw new AppException(e);
+
+    } finally {
+
+      Closeables.closeQuietly(writer);
     }
   }
 
@@ -254,7 +289,7 @@ public class AppDeployer {
 
   private void installCoordinator(Path appPath, Schedule schedule) {
 
-    SchedulableJobManager manager = JobManagers.createSchedulable(schedule.getJobClass(), schedule.getName(), context);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule, context);
 
     Path coordDirectory = new Path (appPath, OozieScheduling.coordPath(schedule));
 

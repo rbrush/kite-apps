@@ -52,25 +52,24 @@ class SparkJobManager extends SchedulableJobManager {
   private volatile SparkJobContext sparkJobContext;
 
 
-  public static SparkJobManager create(Class<? extends AbstractSchedulableSparkJob> jobClass,
-                                       String jobName,
+  public static SparkJobManager create(Schedule schedule,
                                        AppContext context) {
 
     AbstractSchedulableSparkJob job;
 
     try {
-      job = jobClass.newInstance();
+      job = (AbstractSchedulableSparkJob) schedule.getJobClass().newInstance();
     } catch (InstantiationException e) {
       throw new AppException(e);
     } catch (IllegalAccessException e) {
       throw new AppException(e);
     }
 
-    return new SparkJobManager(job, jobName, context);
+    return new SparkJobManager(job, schedule, context);
   }
 
-  SparkJobManager(SchedulableJob job, String jobName, AppContext context) {
-    super(job, jobName, context);
+  SparkJobManager(SchedulableJob job, Schedule schedule, AppContext context) {
+    super(job, schedule, context);
 
   }
 
@@ -78,7 +77,7 @@ class SparkJobManager extends SchedulableJobManager {
   public JobContext getJobContext() {
 
     if (sparkJobContext == null) {
-      sparkJobContext = new SparkJobContext(jobName, context);
+      sparkJobContext = new SparkJobContext(schedule.getName(), context);
     }
 
     return sparkJobContext;
@@ -128,7 +127,6 @@ class SparkJobManager extends SchedulableJobManager {
 
     element(writer, "jar",  jarName);
     element(writer, "spark-opts", getSparkConfString(schedule));
-    element(writer, "arg", schedule.getJobClass().getName());
     element(writer, "arg", schedule.getName());
 
     writer.endElement(); // spark
@@ -151,6 +149,9 @@ class SparkJobManager extends SchedulableJobManager {
           .append(setting.getValue())
           .append(" ");
     }
+
+    // Include the Kite application root in the configuration.
+    builder.append("--conf spark.hadoop.kiteAppRoot=${kiteAppRoot} ");
 
     // Include the comma-separated JARs to be used.
     builder.append("--jars ")

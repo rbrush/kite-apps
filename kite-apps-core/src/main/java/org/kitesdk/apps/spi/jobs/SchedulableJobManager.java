@@ -15,18 +15,27 @@
  */
 package org.kitesdk.apps.spi.jobs;
 
+import com.google.common.base.Charsets;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
+import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobContext;
 import org.kitesdk.apps.DataIn;
 import org.kitesdk.apps.DataOut;
 import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.scheduled.SchedulableJob;
 import org.kitesdk.apps.scheduled.Schedule;
+import org.kitesdk.apps.streaming.StreamDescription;
 import org.kitesdk.data.Signalable;
 import org.kitesdk.data.View;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
@@ -40,13 +49,13 @@ public abstract class SchedulableJobManager {
 
   protected final AppContext context;
 
-  protected final String jobName;
+  protected final Schedule schedule;
 
   protected SchedulableJobManager(SchedulableJob job,
-                                  String jobName,
+                                  Schedule schedule,
                                   AppContext context) {
     this.job = job;
-    this.jobName = jobName;
+    this.schedule = schedule;
     this.context = context;
   }
 
@@ -56,9 +65,16 @@ public abstract class SchedulableJobManager {
    * @return the name of the scheduled job
    */
   public String getName() {
-    return jobName;
+    return schedule.getName();
   }
 
+
+  /**
+   * Gets the schedule for the job.
+   */
+  public Schedule getSchedule() {
+    return schedule;
+  }
 
   /**
    * Returns the input and output parameters used to run the job.
@@ -120,4 +136,44 @@ public abstract class SchedulableJobManager {
    * Crunch jobs may use a Java action and Spark jobs could use a Spark action.
    */
   public abstract void writeOozieActionBlock(XMLWriter writer, Schedule schedule);
+
+  /**
+   * Returns the path of the scheduled job file.
+   */
+  public static Path scheduleFile(Path appRoot, String jobName) {
+    return new Path (appRoot, "schedules/" + jobName + ".json");
+  }
+
+  /**
+   * Loads the schedule for the given application root.
+   */
+  public static Schedule loadSchedule(FileSystem fs, Path appRoot, String jobName)  {
+
+    Path streamingJobPath = scheduleFile(appRoot, jobName);
+
+    StringBuilder builder = new StringBuilder();
+    try {
+      InputStream input = fs.open(streamingJobPath);
+
+      InputStreamReader streamReader = new InputStreamReader(input, Charsets.UTF_8);
+
+      BufferedReader reader = new BufferedReader(streamReader);
+
+      try {
+
+        String line;
+
+        while ((line = reader.readLine()) != null) {
+
+          builder.append(line);
+        }
+      } finally {
+        reader.close();
+      }
+    } catch (IOException e) {
+      throw new AppException(e);
+    }
+
+    return Schedule.parseJson(builder.toString());
+  }
 }

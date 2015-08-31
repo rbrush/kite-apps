@@ -25,6 +25,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.joda.time.Instant;
 import org.kitesdk.apps.AppContext;
 import org.kitesdk.apps.AppException;
+import org.kitesdk.apps.scheduled.Schedule;
 import org.kitesdk.apps.spi.PropertyFiles;
 import org.kitesdk.apps.spi.jobs.JobManagers;
 import org.kitesdk.apps.spi.jobs.SchedulableJobManager;
@@ -75,25 +76,23 @@ public class OozieScheduledJobMain extends Configured implements Tool {
   @Override
   public int run(String[] args) throws Exception {
 
+    FileSystem fs = FileSystem.get(getConf());
+
     String kiteAppRoot = getConf().get("kiteAppRoot");
 
     Path propertiesPath = new Path(kiteAppRoot, "conf/app.properties");
 
-    Map<String,String> settings = PropertyFiles.loadIfExists(FileSystem.get(getConf()), propertiesPath);
+    Map<String,String> settings = PropertyFiles.loadIfExists(fs, propertiesPath);
 
     AppContext appContext = new AppContext(settings, getConf());
 
     Instant nominalTime = OozieScheduling.getNominalTime(getConf());
 
-    String jobClassName = args[0];
+    String jobName = args[0];
 
-    String jobName = args[1];
+    Schedule schedule = SchedulableJobManager.loadSchedule(fs, new Path(kiteAppRoot), jobName);
 
-    ClassLoader loader = OozieScheduledJobMain.class.getClassLoader();
-
-    Class jobClass = loader.loadClass(jobClassName);
-
-    SchedulableJobManager manager = JobManagers.createSchedulable(jobClass, jobName, appContext);
+    SchedulableJobManager manager = JobManagers.createSchedulable(schedule, appContext);
 
     // Use the configuration customized for the job.
     Configuration conf = manager.getJobContext().getHadoopConf();
