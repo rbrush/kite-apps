@@ -71,8 +71,8 @@ public class SimpleSparkApp extends AbstractApplication {
         .jobName("simple-spark-job")
         .jobClass(SimpleSparkJob.class)
         .frequency("0 * * * *")
-        .withView("source.users", INPUT_URI_PATTERN, 1)
-        .withView("target.users", OUTPUT_URI_PATTERN, 1)
+        .withInput("source.users", INPUT_URI_PATTERN, "* * * * *")
+        .withOutput("target.users", OUTPUT_URI_PATTERN)
         .build();
 
     schedule(schedule);

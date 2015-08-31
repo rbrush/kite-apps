@@ -15,15 +15,31 @@
  */
 package org.kitesdk.apps.scheduled;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.kitesdk.apps.AppException;
 import org.kitesdk.apps.JobParameters;
 import org.kitesdk.apps.spi.jobs.JobReflection;
 import org.kitesdk.apps.spi.oozie.CronConverter;
+import org.kitesdk.data.ValidationException;
 import parquet.Preconditions;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -103,6 +119,161 @@ public class Schedule {
    */
   public Map<String,ViewTemplate> getViewTemplates() { return views; }
 
+  // JSON field names.
+  private static final String NAME = "name";
+  private static final String JOBCLASS = "jobclass";
+  private static final String URI = "uri";
+  private static final String FREQUENCY = "frequency";
+  private static final String TYPE = "type";
+  private static final String VIEWS = "views";
+  private static final String IS_INPUT = "isinput";
+  private static final String START_TIME = "starttime";
+
+  private static final DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm'Z'")
+      .withZone(DateTimeZone.UTC);
+
+  private TreeNode toJson() {
+
+    JsonNodeFactory js = JsonNodeFactory.instance;
+
+    ObjectNode root = js.objectNode();
+
+    root.put(NAME, getName());
+    root.put(JOBCLASS, getJobClass().getName());
+    root.put(START_TIME, formatter.print(getStartTime()));
+    root.put(FREQUENCY, getFrequency());
+
+    ArrayNode views = js.arrayNode();
+
+    for (ViewTemplate template: getViewTemplates().values()) {
+
+      ObjectNode viewNode = views.addObject();
+
+      viewNode.put(NAME, template.getName());
+      viewNode.put(URI, template.getUriTemplate());
+      viewNode.put(FREQUENCY, template.getFrequency());
+      viewNode.put(TYPE, template.getInputType().getName());
+      viewNode.put(IS_INPUT, template.isInput);
+    }
+
+    root.put(VIEWS, views);
+
+    return root;
+  }
+
+  /**
+   * Parse the JSON representation of the schedule.
+   */
+  public static Schedule parseJson (String json) {
+
+    ObjectMapper mapper = new ObjectMapper();
+
+    JsonNode parent;
+
+    try {
+      parent = mapper.readValue(json, JsonNode.class);
+    } catch (JsonParseException e) {
+      throw new ValidationException("Invalid JSON", e);
+    } catch (JsonMappingException e) {
+      throw new ValidationException("Invalid JSON", e);
+    } catch (IOException e) {
+      throw new AppException(e);
+    }
+
+    Schedule.Builder builder = new Schedule.Builder();
+
+    String jobName = parent.get(NAME).asText();
+    builder.jobName(jobName);
+
+    String className = parent.get(JOBCLASS).asText();
+
+    try {
+      Class jobClass = Thread.currentThread().getContextClassLoader().loadClass(className);
+
+      builder.jobClass(jobClass);
+
+    } catch (ClassNotFoundException e) {
+      throw new AppException(e);
+    }
+
+    String startTime = parent.get(START_TIME).asText();
+    builder.startAt(new Instant(formatter.parseMillis(startTime)));
+
+    String jobFrequency = parent.get(FREQUENCY).asText();
+    builder.frequency(jobFrequency);
+
+    // Read the views.
+    ArrayNode views = (ArrayNode) parent.get(VIEWS);
+
+    for (JsonNode view: views) {
+
+      String name = view.get(NAME).asText();
+      String uri = view.get(URI).asText();
+      String frequency = view.get(FREQUENCY).asText();
+      String type = view.get(TYPE).asText();
+      boolean isInput = view.get(IS_INPUT).asBoolean();
+
+      Class viewType;
+
+      try {
+        viewType = Thread.currentThread().getContextClassLoader().loadClass(type);
+      } catch (ClassNotFoundException e) {
+        throw new AppException(e);
+      }
+
+      if (isInput) {
+        builder.withInput(name, uri, frequency, viewType);
+      } else {
+        builder.withOutput(name, uri, viewType);
+      }
+    }
+
+    return builder.build();
+  }
+
+  public String toString() {
+
+    StringWriter writer = new StringWriter();
+
+    try {
+
+      JsonGenerator gen = new JsonFactory().createGenerator(writer);
+      gen.setCodec(new ObjectMapper());
+      gen.writeTree(toJson());
+
+      gen.close();
+    } catch (IOException e) {
+      // An IOException should not be possible against a local buffer.
+      throw new AssertionError(e);
+    }
+
+    return writer.toString();
+  }
+
+  @Override
+  public boolean equals(Object that) {
+    if (this == that) {
+      return true;
+    }
+
+    if (!(that instanceof Schedule))
+      return false;
+
+    Schedule _that = (Schedule) that;
+
+    return this.name.equals(_that.name) &&
+        this.jobClass.equals(_that.jobClass) &&
+        this.frequency.equals(_that.frequency) &&
+        this.startTime.equals(_that.startTime) &&
+        this.views.equals(_that.views);
+  }
+
+  @Override
+  public int hashCode() {
+    return 37 * name.hashCode() * jobClass.hashCode() * frequency.hashCode()
+        * startTime.hashCode() * views.hashCode();
+  }
+
   /**
    * A template for views used by the scheduled job.
    */
@@ -112,12 +283,15 @@ public class Schedule {
     private final String uriTemplate;
     private final String frequency;
     private final Class inputType;
+    private final boolean isInput;
 
-    ViewTemplate(String name, String uriTemplate, Class inputType, String frequency) {
+
+    ViewTemplate(String name, String uriTemplate, Class inputType, String frequency, boolean isInput) {
       this.name = name;
       this.uriTemplate = uriTemplate;
       this.inputType = inputType;
       this.frequency = frequency;
+      this.isInput = isInput;
     }
 
     /**
@@ -157,6 +331,37 @@ public class Schedule {
      */
     public Class getInputType() {
       return inputType;
+    }
+
+    /**
+     * Returns true if the view is for a job input, false if the view is for output.
+     */
+    public boolean isInput() { return isInput; }
+
+    @Override
+    public boolean equals(Object that) {
+
+      if (this == that) {
+        return true;
+      }
+
+      if (!(that instanceof ViewTemplate)) {
+        return false;
+      }
+
+      ViewTemplate _that = (ViewTemplate) that;
+
+      return this.name.equals(_that.name) &&
+          this.frequency.equals(_that.frequency) &&
+          this.inputType.equals(_that.inputType) &&
+          this.uriTemplate.equals(_that.uriTemplate) &&
+          this.isInput == _that.isInput;
+    }
+
+    @Override
+    public int hashCode() {
+      return 37 * this.name.hashCode() * this.frequency.hashCode() *
+          this.inputType.hashCode() * this.uriTemplate.hashCode();
     }
   }
 
@@ -251,33 +456,6 @@ public class Schedule {
       return this;
     }
 
-    /**
-     * Deprecated. Configures a view defined by a name and URI template to be used
-     * by the scheduled job.
-     *
-     * @param name the name of the data parameter for the job.
-     * @param uriTemplate the Oozie-style URI template identifying the input
-     * @param frequencyMinutes the frequency in minutes with which instances of
-     *                         the view are expected to be created.
-     *
-     * @return An instance of the builder for method chaining.
-     */
-    @Deprecated
-    public Builder withView(String name, String uriTemplate, int frequencyMinutes) {
-
-      Class type = params.getRecordType(name);
-
-      if (type == null)
-        throw new IllegalArgumentException("Named parameters " + name +
-            " not used in job " + jobClass.getName());
-
-      String cronFrequency = Integer.toString(frequencyMinutes) + " * * * *";
-
-      views.put(name, new ViewTemplate(name, uriTemplate, type, cronFrequency));
-
-      return this;
-    }
-
     private void checkParamType(String name, Class recordType) {
 
       if (!params.getRecordType(name).equals(recordType))
@@ -357,7 +535,7 @@ public class Schedule {
 
       checkInputParam(name, recordType);
 
-      views.put(name, new ViewTemplate(name, uriTemplate, recordType, cronFrequency));
+      views.put(name, new ViewTemplate(name, uriTemplate, recordType, cronFrequency, true));
 
       return this;
     }
@@ -392,7 +570,7 @@ public class Schedule {
 
       checkOutputParam(name, recordType);
 
-      views.put(name, new ViewTemplate(name, uriTemplate, recordType, frequency));
+      views.put(name, new ViewTemplate(name, uriTemplate, recordType, frequency, false));
 
       return this;
     }

@@ -25,6 +25,7 @@ import org.kitesdk.apps.test.apps.ScheduledInputOutputJob;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class ScheduleTest {
 
@@ -77,6 +78,60 @@ public class ScheduleTest {
     assertEquals(effectiveStart, schedule.getStartTime());
   }
 
+  @Test
+  public void testEquality() {
+    Instant startTime = Instant.parse("2015-06-10T03:00:00.00Z");
+
+    Schedule schedule1 = new Schedule.Builder()
+        .jobName("scheduled-input-output")
+        .jobClass(ScheduledInputOutputJob.class)
+        .frequency("0 * * * *")
+        .startAt(startTime)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .build();
+
+    Schedule schedule2 = new Schedule.Builder()
+        .jobName("scheduled-input-output")
+        .frequency("0 * * * *")
+        .jobClass(ScheduledInputOutputJob.class)
+        .startAt(startTime)
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .build();
+
+    Schedule unequal = new Schedule.Builder()
+        .jobName("scheduled-input-output")
+        .frequency("0 * * * *")
+        .jobClass(ScheduledInputOutputJob.class)
+        .startAt(startTime)
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "1 * * * *")
+        .build();
+
+    assertEquals(schedule1, schedule2);
+
+    assertFalse(schedule1.equals(unequal));
+  }
+
+  @Test
+  public void testSerialization() {
+
+    Instant startTime = Instant.parse("2015-06-10T03:00:00.00Z");
+
+    Schedule schedule = new Schedule.Builder()
+        .jobName("scheduled-input-output")
+        .jobClass(ScheduledInputOutputJob.class)
+        .frequency("0 * * * *")
+        .startAt(startTime)
+        .withInput("source_users", ScheduledInputOutputApp.INPUT_URI_PATTERN, "0 * * * *")
+        .withOutput("target_users", ScheduledInputOutputApp.OUTPUT_URI_PATTERN)
+        .build();
+
+    Schedule deserialzied = Schedule.parseJson(schedule.toString());
+
+    assertEquals(schedule, deserialzied);
+  }
 
   @Test(expected = AppException.class)
   public void testBadJobName() {
@@ -92,7 +147,7 @@ public class ScheduleTest {
     new Schedule.Builder()
         .jobName("scheduled-input-output")
         .jobClass(ScheduledInputOutputJob.class)
-        .withView("bogus.name", ScheduledInputOutputApp.INPUT_URI_PATTERN, 60)
+        .withOutput("bogus.name", ScheduledInputOutputApp.INPUT_URI_PATTERN)
         .build();
   }
 

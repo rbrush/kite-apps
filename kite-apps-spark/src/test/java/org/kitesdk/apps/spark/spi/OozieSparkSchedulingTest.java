@@ -48,8 +48,8 @@ public class OozieSparkSchedulingTest {
         .jobName("simple-spark-job")
         .jobClass(SimpleSparkJob.class)
         .frequency("0 * * * *")
-        .withView("source.users", SimpleSparkApp.INPUT_URI_PATTERN, 1)
-        .withView("target.users", SimpleSparkApp.OUTPUT_URI_PATTERN, 1)
+        .withInput("source.users", SimpleSparkApp.INPUT_URI_PATTERN, "* * * * *")
+        .withOutput("target.users", SimpleSparkApp.OUTPUT_URI_PATTERN)
         .build();
   }
 

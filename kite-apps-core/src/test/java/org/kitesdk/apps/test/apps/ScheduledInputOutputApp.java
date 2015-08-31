@@ -70,8 +70,8 @@ public class ScheduledInputOutputApp extends AbstractApplication {
         .jobName("test-job")
         .jobClass(ScheduledInputOutputJob.class)
         .frequency("0 * * * *")
-        .withView("source_users", INPUT_URI_PATTERN, 1)
-        .withView("target_users", OUTPUT_URI_PATTERN, 1)
+        .withInput("source_users", INPUT_URI_PATTERN, "* * * * *")
+        .withOutput("target_users", OUTPUT_URI_PATTERN)
         .build();
 
     schedule(schedule);
