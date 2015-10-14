@@ -1,3 +1,6 @@
+## Refactoring in progress
+This code here is in the process of being refactored into another project that will be available as open source but has not yet been published. I will leave this repository online for reference and link to the new project when it is available.
+
 ## Kite Apps [![Build Status](https://travis-ci.org/rbrush/kite-apps.png?branch=master)]
 Kite Apps is a prescriptive approach for writing, deploying and managing applications on Hadoop and Kite. Developers use a simple fluent Java API to schedule Crunch or Spark jobs, wiring them to Kite views as inputs and outputs. This library handles all scheduling work, generating and deploying the needed Oozie coordinators, workflows, and application libraries itself.
 
